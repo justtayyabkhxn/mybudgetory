@@ -299,7 +299,7 @@ export default function Dashboard() {
           <AddTransactionForm onAdd={fetchTransactions} />
 
           {/* Recent Transactions */}
-          <div className="bg-[#111]/80 backdrop-blur-sm border border-gray-900 rounded-xl p-6 shadow-lg ">
+          <div className="bg-gradient-to-br from-gray-900 via-black to-gray-800 rounded-xl p-6 shadow-lg ">
             <div className="flex items-center gap-2 mb-4">
               <RefreshCcwDot color="#ec4899" />
               <h2 className="text-xl font-semibold ">Recent Transactions</h2>
