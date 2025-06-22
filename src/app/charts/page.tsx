@@ -247,10 +247,9 @@ const ChartsPage = () => {
             </div>
           </div>
         </div>
-
         {/* Charts Section */}
         <div className="grid grid-cols-1 gap-8">
-          <div className="bg-[#111]/80 backdrop-blur-md border border-gray-800 rounded-xl shadow-xl p-6 space-y-6">
+          <div className="bg-gradient-to-br from-gray-900 via-black to-gray-800 rounded-xl shadow-xl p-6 space-y-6">
             <h2 className="text-2xl tracking-tight font-bold text-white flex items-center gap-2">
               <BarChartBig className="w-8 h-8 text-indigo-400" />
               Visual Summary
