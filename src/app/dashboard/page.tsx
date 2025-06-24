@@ -21,9 +21,12 @@ import {
   ArrowUpCircle,
   Wallet,
   RefreshCw,
+  HandMetal,
 } from "lucide-react";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
+import { jwtDecode } from "jwt-decode";
+import axios from "axios";
 
 const categoryIcons = {
   Food: Utensils,
@@ -34,6 +37,10 @@ const categoryIcons = {
   Entertainment: Clapperboard,
   Travel: Plane,
   Others: BanknoteArrowUp,
+};
+
+type DecodedToken = {
+  email: string;
 };
 
 interface Transaction {
@@ -48,9 +55,9 @@ interface Transaction {
 }
 
 type User = {
-  id: string;
+  name: string;
   email: string;
-  // Add any other fields you decode from the token
+  phone: string;
 };
 
 export default function Dashboard() {
@@ -154,7 +161,30 @@ export default function Dashboard() {
         if (data.transactions) setTxs(data.transactions);
       })
       .catch(console.error);
-  }, [user]);
+
+    const fetchProfile = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          alert("No token found. Please login.");
+          return;
+        }
+
+        const decoded: DecodedToken = jwtDecode(token);
+
+        const { data } = await axios.get("/api/user/profile", {
+          params: { email: decoded.email },
+        });
+
+        setUser(data);
+      } catch (err) {
+        console.error(err);
+        alert("Failed to fetch profile" + err);
+      }
+    };
+
+    fetchProfile();
+  }, []);
 
   const handleDelete = async (id: string) => {
     const token = localStorage.getItem("token");
@@ -231,8 +261,9 @@ export default function Dashboard() {
                   />
                 </button>
               </div>
-              <p className="text-gray-400 mt-1">
-                Welcome back 👋, {user?.email || "User"}
+              <p className="text-gray-400 mt-1 flex items-center gap-x-1">
+                Welcome back <HandMetal color="#ff9900" />,{" "}
+               <span className="text-green-300" > {user?.name || "User"} </span> 
               </p>
             </div>
 
