@@ -1,5 +1,5 @@
 "use client";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   BadgeIndianRupee,
   BanknoteArrowDown,
@@ -20,10 +20,9 @@ import { usePathname } from "next/navigation";
 import React, { useEffect, useState } from "react";
 
 export default function MenuButton() {
-
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
-  
+
   const toggleMenu = () => setMenuOpen(!menuOpen);
 
   useEffect(() => {
@@ -39,21 +38,33 @@ export default function MenuButton() {
     }`;
 
   const handleLogout = async () => {
-  try {
-    const res = await fetch("/api/logout", { method: "POST" });
-    if (res.ok) {
-      localStorage.removeItem("token");
-      setMenuOpen(false);
-      window.location.href = "/login"; // ✅ Redirect to login
-    } else {
-      console.error("Logout failed:", await res.text());
-      window.location.href = "/login";
+    try {
+      const res = await fetch("/api/logout", { method: "POST" });
+      if (res.ok) {
+        localStorage.removeItem("token");
+        setMenuOpen(false);
+        window.location.href = "/login";
+      } else {
+        console.error("Logout failed:", await res.text());
+        window.location.href = "/login";
+      }
+    } catch (err) {
+      console.error("Error logging out:", err);
     }
-  } catch (err) {
-    console.error("Error logging out:", err);
-  }
-};
+  };
 
+  const navItems = [
+    { href: "/dashboard", icon: <FileDigit color="#818cf8" />, label: "Dashboard" },
+    { href: "/net-worth", icon: <PiggyBank color="#fcba03" />, label: "Net Worth" },
+    { href: "/debt-lent", icon: <WalletMinimal color="#a78bfa" />, label: "Debt Tracker" },
+    { href: "/transactions", icon: <BadgeIndianRupee color="#4ade80" />, label: "Transactions" },
+    { href: "/expenses", icon: <BanknoteArrowDown color="#f87171" />, label: "Expenses" },
+    { href: "/inflow", icon: <Wallet color="#34d399" />, label: "Income" },
+    { href: "/charts", icon: <ChartCandlestick color="#38bdf8" />, label: "Charts" },
+    { href: "/stats", icon: <ChartNoAxesCombined color="#fbbf24" />, label: "Stats" },
+    { href: "/advanced-search", icon: <TextSearch color="#d946ef" />, label: "Advanced Search" },
+    { href: "/profile", icon: <CircleUserRound color="#60a5fa" />, label: "Profile" },
+  ];
 
   return (
     <div className="relative z-50">
@@ -63,9 +74,9 @@ export default function MenuButton() {
         className="group relative inline-flex items-center cursor-pointer justify-center gap-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-2 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 shadow-lg hover:shadow-xl"
       >
         <motion.span
-          initial={{ rotate: 0 }}
-          animate={{ rotate: menuOpen ? 90 : 0 }}
-          transition={{ duration: 0.3 }}
+          initial={{ rotate: 0, scale: 1 }}
+          animate={{ rotate: menuOpen ? 90 : 0, scale: menuOpen ? 1.1 : 1 }}
+          transition={{ type: "spring", stiffness: 260, damping: 20 }}
         >
           {menuOpen ? <X size={18} /> : <Menu size={18} />}
         </motion.span>
@@ -74,72 +85,79 @@ export default function MenuButton() {
       </button>
 
       {/* Dimmed Overlay */}
-      {menuOpen && (
-        <div
-          className="fixed inset-0 backdrop-blur-xs bg-black/30 z-40"
-          onClick={toggleMenu}
-        />
-      )}
+      <AnimatePresence>
+        {menuOpen && (
+          <motion.div
+            className="fixed inset-0 bg-black/40 z-40"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={toggleMenu}
+          />
+        )}
+      </AnimatePresence>
 
-      {/* Glass Side Menu */}
-      <div
-        className={`fixed top-0 right-0 h-full w-64 backdrop-blur-sm bg-white/10 dark:bg-black/20 border-l border-white/20 dark:border-white/10 text-gray-100 dark:text-white shadow-2xl transition-transform duration-300 ease-in-out z-50 rounded-l-3xl ${
-          menuOpen ? "translate-x-0" : "translate-x-full"
-        }`}
-      >
-        <div className="flex flex-col h-full px-6 py-8 space-y-6">
-          <div className="flex justify-start">
-            <button
-              onClick={toggleMenu}
-              className="text-md text-white font-bold"
-            >
-              <Menu />
-            </button>
-          </div>
+      {/* Side Menu */}
+      <AnimatePresence>
+        {menuOpen && (
+          <motion.div
+            key="side-menu"
+            initial={{ x: "100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "100%" }}
+            transition={{ type: "spring", stiffness: 200, damping: 20 }}
+            className="fixed top-0 right-0 h-full w-64 backdrop-blur-sm bg-white/10 dark:bg-black/20 border-l border-white/20 dark:border-white/10 text-gray-100 dark:text-white shadow-2xl z-50 rounded-l-3xl"
+          >
+            <div className="flex flex-col h-full px-6 py-8 space-y-6">
+              <div className="flex justify-start">
+                <button onClick={toggleMenu} className="text-md text-white font-bold">
+                  <Menu />
+                </button>
+              </div>
 
-          {/* Navigation Links */}
-          <nav className="space-y-8 mt-4">
-            <Link href="/dashboard" className={`${linkClasses("/dashboard")} flex items-center gap-2`}>
-              <FileDigit color="#818cf8" /> Dashboard
-            </Link>
-            <Link href="/net-worth" className={`${linkClasses("/net-worth")} flex items-center gap-2`}>
-              <PiggyBank color="#fcba03" /> Net Worth
-            </Link>
+              <motion.nav
+                className="space-y-8 mt-4"
+                initial="hidden"
+                animate="show"
+                variants={{
+                  hidden: { opacity: 0 },
+                  show: {
+                    opacity: 1,
+                    transition: { staggerChildren: 0.08, delayChildren: 0.2 },
+                  },
+                }}
+              >
+                {navItems.map((item) => (
+                  <motion.div
+                    key={item.href}
+                    variants={{
+                      hidden: { opacity: 0, x: 20 },
+                      show: { opacity: 1, x: 0 },
+                    }}
+                    whileHover={{ scale: 1.05, x: 2 }}
+                    transition={{ type: "spring", stiffness: 300 }}
+                  >
+                    <Link href={item.href} className={`${linkClasses(item.href)} flex items-center gap-2`}>
+                      {item.icon} {item.label}
+                    </Link>
+                  </motion.div>
+                ))}
+              </motion.nav>
 
-            <Link href="/debt-lent" className={`${linkClasses("/debt-lent")} flex items-center gap-2`}>
-              <WalletMinimal color="#a78bfa" /> Debt Tracker
-            </Link>
-            <Link href="/transactions" className={`${linkClasses("/transactions")} flex items-center gap-2`}>
-              <BadgeIndianRupee color="#4ade80" /> Transactions
-            </Link>
-            <Link href="/expenses" className={`${linkClasses("/expenses")} flex items-center gap-2`}>
-              <BanknoteArrowDown color="#f87171" /> Expenses
-            </Link>
-            <Link href="/inflow" className={`${linkClasses("/inflow")} flex items-center gap-2`}>
-              <Wallet color="#34d399" /> Income
-            </Link>
-            <Link href="/charts" className={`${linkClasses("/charts")} flex items-center gap-2`}>
-              <ChartCandlestick color="#38bdf8" /> Charts
-            </Link>
-            <Link href="/stats" className={`${linkClasses("/stats")} flex items-center gap-2`}>
-              <ChartNoAxesCombined color="#fbbf24" /> Stats
-            </Link>
-            <Link href="/advanced-search" className={`${linkClasses("/advanced-search")} flex items-center gap-2`}>
-              <TextSearch color="#d946ef" /> Advanced Search
-            </Link>
-            <Link href="/profile" className={`${linkClasses("/profile")} flex items-center gap-2`}>
-              <CircleUserRound color="#60a5fa" /> Profile
-            </Link>
-          </nav>
-
-          {/* Logout Button */}
-          <div className="mt-auto">
-            <button onClick={handleLogout} className="flex items-center gap-2 bg-white/3 p-3 rounded-3xl hover:underline font-semibold cursor-pointer">
-              <LogIn color="#ef4444" /> Logout
-            </button>
-          </div>
-        </div>
-      </div>
+              <div className="mt-auto">
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ scale: 1.02 }}
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 bg-white/5 p-3 rounded-3xl hover:underline font-semibold cursor-pointer"
+                >
+                  <LogIn color="#ef4444" /> Logout
+                </motion.button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
