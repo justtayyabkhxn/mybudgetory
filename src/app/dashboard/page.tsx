@@ -261,7 +261,7 @@ export default function Dashboard() {
                   />
                 </button>
               </div>
-              <p className="text-gray-400 mt-1 flex items-center gap-x-1">
+              <p className="text-gray-400 mt-1 flex items-center font-bold gap-x-1">
                 Welcome back <HandMetal color="#ff9900" />,{" "}
                <span className="text-green-300" > {user?.name || "User"} </span> 
               </p>
