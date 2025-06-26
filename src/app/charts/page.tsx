@@ -1,3 +1,5 @@
+// ChartsPage.tsx
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -45,6 +47,14 @@ const ChartsPage = () => {
     expense: [],
   });
 
+  const [monthlySavingsData, setMonthlySavingsData] = useState<{
+    categories: string[];
+    data: number[];
+  }>({
+    categories: [],
+    data: [],
+  });
+
   const [categoryWiseMonthlyData, setCategoryWiseMonthlyData] = useState<{
     categories: string[];
     data: number[];
@@ -54,6 +64,8 @@ const ChartsPage = () => {
     categories: string[];
     data: number[];
   }>({ categories: [], data: [] });
+
+
 
   useEffect(() => {
     const fetchTransactions = async () => {
@@ -71,6 +83,11 @@ const ChartsPage = () => {
         const now = new Date();
         const currentMonth = now.getMonth();
         const currentYear = now.getFullYear();
+        const daysInMonth = new Date(
+          currentYear,
+          currentMonth + 1,
+          0
+        ).getDate();
 
         const monthlyTxs = allTxs.filter((tx) => {
           const txDate = new Date(tx.date);
@@ -110,12 +127,7 @@ const ChartsPage = () => {
         setExpense(expenseAmt);
 
         // ✅ Daily Bar Data
-        const daysInMonth = new Date(
-          currentYear,
-          currentMonth + 1,
-          0
-        ).getDate();
-        const categories = Array.from({ length: daysInMonth }, (_, i) =>
+        const dailyCategories = Array.from({ length: daysInMonth }, (_, i) =>
           (i + 1).toString()
         );
         const inflowPerDay = Array(daysInMonth).fill(0);
@@ -128,16 +140,18 @@ const ChartsPage = () => {
           else if (tx.type === "expense") expensePerDay[day] += tx.amount;
         });
         setDailyBarData({
-          categories,
+          categories: dailyCategories,
           inflow: inflowPerDay,
           expense: expensePerDay,
         });
-        // ✅ Monthly Bar Data
+
+        // ✅ Monthly Bar Data & Monthly Savings Data
         const months = Array.from({ length: 12 }, (_, i) =>
           new Date(0, i).toLocaleString("default", { month: "short" })
         );
         const inflowPerMonth = Array(12).fill(0);
         const expensePerMonth = Array(12).fill(0);
+        const savingsPerMonth = Array(12).fill(0);
 
         allTxs.forEach((tx) => {
           const txDate = new Date(tx.date);
@@ -146,6 +160,22 @@ const ChartsPage = () => {
           else if (tx.type === "expense") expensePerMonth[month] += tx.amount;
         });
 
+        for (let i = 0; i < 12; i++) {
+          savingsPerMonth[i] = inflowPerMonth[i] - expensePerMonth[i];
+        }
+
+        setMonthlyBarData({
+          categories: months,
+          inflow: inflowPerMonth,
+          expense: expensePerMonth,
+        });
+
+        setMonthlySavingsData({
+          categories: months,
+          data: savingsPerMonth,
+        });
+
+        // ✅ Yearly Category Expense Data
         const yearlyCategoryData: { [category: string]: number } = {};
 
         allTxs.forEach((tx) => {
@@ -169,19 +199,13 @@ const ChartsPage = () => {
           data: Object.values(yearlyCategoryData),
         });
 
-        setMonthlyBarData({
-          categories: months,
-          inflow: inflowPerMonth,
-          expense: expensePerMonth,
-        });
-
         // ✅ Category-wise Monthly Data
         const categoryData: {
           [month: string]: { [category: string]: number };
         } = {};
 
         allTxs.forEach((tx) => {
-          if (tx.category === "Other") return; // ✅ Skip "Other" category
+          if (tx.category === "Other") return;
 
           const txDate = new Date(tx.date);
           const month = txDate.toLocaleString("default", { month: "short" });
@@ -202,6 +226,41 @@ const ChartsPage = () => {
           categories: Object.keys(selectedMonthCategoryData),
           data: Object.values(selectedMonthCategoryData),
         });
+
+        // 🆕 Heatmap Data Processing
+        const dailyCategoryExpenses: {
+          [category: string]: { [day: number]: number };
+        } = {};
+        const allExpenseCategories = new Set<string>();
+
+        monthlyTxs.forEach((tx) => {
+          if (tx.type === "expense" && tx.category !== "Other") {
+            const txDate = new Date(tx.date);
+            const day = txDate.getDate(); // Get day as number (1-31)
+            const category = tx.category;
+
+            allExpenseCategories.add(category);
+
+            if (!dailyCategoryExpenses[category]) {
+              dailyCategoryExpenses[category] = {};
+            }
+            dailyCategoryExpenses[category][day] =
+              (dailyCategoryExpenses[category][day] || 0) + tx.amount;
+          }
+        });
+
+        const sortedExpenseCategories = Array.from(allExpenseCategories).sort();
+        const heatmapSeriesData: [number, number, number][] = [];
+
+        sortedExpenseCategories.forEach((category, categoryIndex) => {
+          for (let day = 1; day <= daysInMonth; day++) {
+            const amount =
+              dailyCategoryExpenses[category]?.[day] || 0; // Use optional chaining
+            heatmapSeriesData.push([categoryIndex, day - 1, amount]); // day-1 for 0-indexed Highcharts Y-axis
+          }
+        });
+
+       
       } catch (err) {
         console.error("❌ Failed to fetch transactions", err);
       }
@@ -259,6 +318,7 @@ const ChartsPage = () => {
               expense={expense}
               dailyBarData={dailyBarData}
               monthlyBarData={monthlyBarData}
+              monthlySavingsData={monthlySavingsData}
               categoryWiseMonthlyData={categoryWiseMonthlyData}
               categoryWiseYearlyData={yearlyCategoryExpenseData}
               cashAmount={cashStats.expense}

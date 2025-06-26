@@ -71,6 +71,100 @@ export const getPaymentModeOptions = (
 });
 
 
+interface SavingsData {
+  categories: string[];
+  data: number[];
+}
+
+export const getMonthlySavingsBarChartOptions = (
+  data: SavingsData
+): Highcharts.Options => ({
+  chart: {
+    type: "column",
+    backgroundColor: "transparent",
+  },
+  title: {
+    text: "",
+    style: {
+      color: "#e2e8f0",
+    },
+  },
+  xAxis: {
+    categories: data.categories,
+    title: {
+      text: "Month",
+      style: {
+        color: "#cbd5e1",
+      },
+    },
+    labels: {
+      style: {
+        color: "#cbd5e1",
+      },
+    },
+    lineColor: "#475569",
+    tickColor: "#475569",
+  },
+  yAxis: {
+
+    title: {
+      text: "Amount (₹) ",
+      style: {
+        color: "#cbd5e1",
+      },
+    },
+    labels: {
+      formatter: function () {
+        return "₹ " + this.value;
+      },
+      style: {
+        color: "#cbd5e1",
+      },
+    },
+    gridLineColor: "#334155",
+  },
+  tooltip: {
+    headerFormat: '<span style="font-size:10px">{point.key}</span><table>',
+    pointFormat:
+      '<tr><td style="color:{series.color};padding:0">{series.name}: </td>' +
+      '<td style="padding:0"><b>₹{point.y:.2f}</b></td></tr>',
+    footerFormat: "</table>",
+    shared: true,
+    useHTML: true,
+    backgroundColor: "#334155",
+    borderColor: "#475569",
+    style: {
+      color: "#e2e8f0",
+    },
+  },
+  plotOptions: {
+    column: {
+      pointPadding: 0.2,
+      borderWidth: 0,
+      colorByPoint: false,
+    },
+    series: {
+      dataLabels: {
+        enabled: false,
+      },
+    },
+  },
+  series: [
+    {
+      name: "Savings",
+      data: data.data.map((value) => ({
+        y: value,
+        color: value >= 0 ? "#34d399" : "#ef4444", // Green for positive, Red for negative
+      })),
+      type: "column",
+    } as Highcharts.SeriesColumnOptions,
+  ],
+  credits: {
+    enabled: false,
+  },
+});
+
+
 export const getBarChartOptions = (dailyBarData: {
   categories: string[];
   inflow: number[];
