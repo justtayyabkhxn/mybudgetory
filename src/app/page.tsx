@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { JSX } from "react";
 import Footer from "@/components/Footer";
+import SlideUp from "@/components/SlideUp";
 
 type Feature = {
   icon: JSX.Element;
@@ -162,6 +163,7 @@ export default function LandingPage() {
             </button>
           </a>
         </div>
+
         <Image
           src={Piggy}
           alt="Money Management"
@@ -170,81 +172,86 @@ export default function LandingPage() {
           quality={90}
         />
       </section>
-
-      {/* Why MyBudgetory */}
-      <section className="mt-5 max-w-4xl mx-auto text-center">
-        <hr className="mb-5 text-green-300"></hr>
-        <h2 className="text-3xl mb-4 text-green-300 font-extrabold tracking-tight">
-          Why Choose Me?
-        </h2>
-        <p className="text-gray-600 dark:text-gray-300">
-          Whether you&apos;re keeping track of daily coffee runs or planning a
-          vacation, MyBudgetory gives you tools to stay in control.
-        </p>
-      </section>
-
+      <SlideUp>
+        {/* Why MyBudgetory */}
+        <section className="mt-5 max-w-4xl mx-auto text-center">
+          <hr className="mb-5 text-green-300"></hr>
+          <h2 className="text-3xl mb-4 text-green-300 font-extrabold tracking-tight">
+            Why Choose Me?
+          </h2>
+          <p className="text-gray-600 dark:text-gray-300">
+            Whether you&apos;re keeping track of daily coffee runs or planning a
+            vacation, MyBudgetory gives you tools to stay in control.
+          </p>
+        </section>
+      </SlideUp>
       {/* Feature Highlights */}
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-10 max-w-6xl mx-auto">
-        {features.map((feature, i) => (
-          <FeatureCard key={i} {...feature} />
-        ))}
-      </section>
-
-      {/* Choose Budget Mode */}
-      <section className="mt-16 max-w-6xl mx-auto">
-        <hr className="mb-5 text-green-300"></hr>
-        <h2 className="text-3xl text-center mb-8 font-extrabold tracking-tight text-green-300">
-          Choose Your Mode
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {budgetModes.map((mode, i) => (
-            <ModeCard key={i} {...mode} />
+      <SlideUp>
+        <section className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-10 max-w-6xl mx-auto">
+          {features.map((feature, i) => (
+            <FeatureCard key={i} {...feature} />
           ))}
-        </div>
-      </section>
+        </section>
+      </SlideUp>
+      <SlideUp>
+        {/* Choose Budget Mode */}
+        <section className="mt-16 max-w-6xl mx-auto">
+          <hr className="mb-5 text-green-300"></hr>
+          <h2 className="text-3xl text-center mb-8 font-extrabold tracking-tight text-green-300">
+            Choose Your Mode
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {budgetModes.map((mode, i) => (
+              <ModeCard key={i} {...mode} />
+            ))}
+          </div>
+        </section>
+      </SlideUp>
+      <SlideUp>
+        {/* Testimonials */}
+        <section className="mt-10 max-w-5xl mx-auto text-center">
+          <hr className="mt-15 mb-10 text-green-300"></hr>
+          <h2 className="text-3xl mb-6  text-green-300 font-extrabold tracking-tight">
+            Loved by Users Like You
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {testimonials.map((t, i) => (
+              <TestimonialCard key={i} {...t} />
+            ))}
+          </div>
+        </section>
+      </SlideUp>
+      <SlideUp>
+        {/* CTA Footer */}
+        <section
+          className="mt-10 text-center max-w-4xl mx-auto text-green-300 font-extrabold tracking-tight"
+          id="bottom"
+        >
+          <hr className="mb-5 mt-15 text-green-300"></hr>
+          <h2 className="text-2xl font-bold mb-2">
+            Start managing your money smarter — today!
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
+            No pay required. It&apos;s free and always will be.
+          </p>
+          <div className="flex flex-row gap-4 justify-center">
+            <Link
+              href="/daily-tracker"
+              className="bg-white dark:bg-gray-900 px-5 py-4 rounded-xl shadow hover:shadow-lg transition text-center font-semibold text-green-700 dark:text-green-300 cursor-pointer"
+            >
+              Start Daily Tracking
+            </Link>
 
-      {/* Testimonials */}
-      <section className="mt-10 max-w-5xl mx-auto text-center">
-        <hr className="mt-15 mb-10 text-green-300"></hr>
-        <h2 className="text-3xl mb-6  text-green-300 font-extrabold tracking-tight">
-          Loved by Users Like You
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {testimonials.map((t, i) => (
-            <TestimonialCard key={i} {...t} />
-          ))}
-        </div>
-      </section>
-
-      {/* CTA Footer */}
-      <section
-        className="mt-10 text-center max-w-4xl mx-auto text-green-300 font-extrabold tracking-tight"
-        id="bottom"
-      >
-        <hr className="mb-5 mt-15 text-green-300"></hr>
-        <h2 className="text-2xl font-bold mb-2">
-          Start managing your money smarter — today!
-        </h2>
-        <p className="text-gray-600 dark:text-gray-400 mb-6">
-          No pay required. It&apos;s free and always will be.
-        </p>
-        <div className="flex flex-row gap-4 justify-center">
-          <Link
-            href="/daily-tracker"
-            className="bg-white dark:bg-gray-900 px-5 py-4 rounded-xl shadow hover:shadow-lg transition text-center font-semibold text-green-700 dark:text-green-300 cursor-pointer"
-          >
-            Start Daily Tracking
-          </Link>
-
-          <Link href="/event-budget">
-            <button className="bg-white dark:bg-green-300 px-3 py-4 rounded-xl shadow hover:shadow-lg transition text-center font-semibold text-green-700 dark:text-green-900 cursor-pointer">
-              Plan Event Budget
-            </button>
-          </Link>
-        </div>
-      </section>
+            <Link href="/event-budget">
+              <button className="bg-white dark:bg-green-300 px-3 py-4 rounded-xl shadow hover:shadow-lg transition text-center font-semibold text-green-700 dark:text-green-900 cursor-pointer">
+                Plan Event Budget
+              </button>
+            </Link>
+          </div>
+        </section>
+      </SlideUp>
       {/* Footer */}
-      <Footer/>
+      <Footer />
     </main>
   );
 }

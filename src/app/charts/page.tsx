@@ -10,6 +10,7 @@ import Header from "@/components/Header";
 import FloatingTransactionButton from "@/components/FloatingTransactionButton";
 
 import { TrendingUp, TrendingDown, BarChartBig } from "lucide-react";
+import SlideUp from "@/components/SlideUp";
 
 type Transaction = {
   _id: string;
@@ -64,8 +65,6 @@ const ChartsPage = () => {
     categories: string[];
     data: number[];
   }>({ categories: [], data: [] });
-
-
 
   useEffect(() => {
     const fetchTransactions = async () => {
@@ -254,13 +253,10 @@ const ChartsPage = () => {
 
         sortedExpenseCategories.forEach((category, categoryIndex) => {
           for (let day = 1; day <= daysInMonth; day++) {
-            const amount =
-              dailyCategoryExpenses[category]?.[day] || 0; // Use optional chaining
+            const amount = dailyCategoryExpenses[category]?.[day] || 0; // Use optional chaining
             heatmapSeriesData.push([categoryIndex, day - 1, amount]); // day-1 for 0-indexed Highcharts Y-axis
           }
         });
-
-       
       } catch (err) {
         console.error("❌ Failed to fetch transactions", err);
       }
@@ -273,18 +269,19 @@ const ChartsPage = () => {
     <main className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 text-white p-4 sm:p-5">
       <div className="max-w-5xl mx-auto">
         <Header />
-
-        <div className="flex justify-between items-center mb-6">
-          <div className="flex items-center gap-3">
-            <BarChartBig className="w-7 h-7 text-indigo-400" />
-            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
-              Charts
-            </h1>
+        <SlideUp>
+          <div className="flex justify-between items-center mb-6">
+            <div className="flex items-center gap-3">
+              <BarChartBig className="w-7 h-7 text-indigo-400" />
+              <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
+                Charts
+              </h1>
+            </div>
+            <Menu />
           </div>
-          <Menu />
-        </div>
-
+        </SlideUp>
         {/* Inflow/Expense Overview */}
+        <SlideUp>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
           <div className="bg-gray-900 p-5 rounded-xl shadow flex items-center gap-4">
             <div className="bg-green-800/80 p-3 rounded-full">
@@ -295,7 +292,8 @@ const ChartsPage = () => {
               <p className="text-lg font-bold text-green-300">₹{inflow}</p>
             </div>
           </div>
-
+          
+          
           <div className="bg-gray-900  p-5 rounded-xl shadow flex items-center gap-4">
             <div className="bg-red-800/80 p-3 rounded-full">
               <TrendingDown className="text-white w-6 h-6" />
@@ -306,6 +304,8 @@ const ChartsPage = () => {
             </div>
           </div>
         </div>
+        </SlideUp>
+        
         {/* Charts Section */}
         <div className="grid grid-cols-1 gap-8">
           <div className="bg-gradient-to-br from-gray-900 via-black to-gray-800 rounded-xl shadow-xl p-6 space-y-6">

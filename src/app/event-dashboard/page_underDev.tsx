@@ -12,10 +12,11 @@ import CreateEvent from "@/components/CreateEvent";
 
 interface Event {
   _id: string;
-  title: string;
+  name: string;
   description: string;
   date: string;
   location: string;
+  type:string;
   status: "Complete" | "Incomplete";
 }
 
@@ -159,10 +160,10 @@ export default function EventDashboard() {
                   className="flex justify-between items-center p-3 bg-white/5 rounded-md"
                 >
                   <div>
-                    <p className="font-medium">{event.title}</p>
+                    <p className="font-medium">{event.name}</p>
                     <p className="text-sm text-gray-400">
                       {new Date(event.date).toLocaleDateString()} •{" "}
-                      {event.location}
+                      {event.type}
                     </p>
                     <p className="text-sm text-gray-400">{event.description}</p>
                   </div>

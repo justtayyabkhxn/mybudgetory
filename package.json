@@ -19,7 +19,7 @@
     "clsx": "^2.1.1",
     "cookie": "^1.0.2",
     "date-fns": "^3.6.0",
-    "framer-motion": "^12.15.0",
+    "framer-motion": "^12.23.0",
     "geist": "^1.4.2",
     "heroicons": "^2.2.0",
     "highcharts": "^12.2.0",

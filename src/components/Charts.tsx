@@ -5,8 +5,6 @@ import React from "react";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
 
-
-
 import {
   getDonutOptions,
   getBarChartOptions,
@@ -17,6 +15,7 @@ import {
   getPaymentModeOptions,
   getMonthlySavingsBarChartOptions,
 } from "@/utils/chartOptions";
+import SlideUp from "./SlideUp";
 
 interface Props {
   inflow: number;
@@ -28,7 +27,6 @@ interface Props {
   categoryWiseYearlyData: { categories: string[]; data: number[] };
   cashAmount: number;
   upiAmount: number;
-
 }
 
 const Charts: React.FC<Props> = ({
@@ -59,140 +57,147 @@ const Charts: React.FC<Props> = ({
   );
   const paymentModeOptions = getPaymentModeOptions(cashAmount, upiAmount);
 
-
-  
-
   return (
     <div className="grid grid-cols-1 gap-8 mt-2">
       {/* Donut Chart Section */}
-      <div>
-        <h2 className="text-2xl text-indigo-400 font-extrabold tracking-tight mb-2">
-          <span className=" border-b-4">Monthly Fund Distribution</span>
-        </h2>
-        <p className="text-gray-400 mb-4">
-          This donut chart gives a quick visual overview of how your monthly
-          budget is distributed between income and expenses.
-        </p>
-        <div className="bg-[#111]/10 backdrop-blur-sm border border-gray-900 rounded-xl shadow-lg p-3">
-          <HighchartsReact highcharts={Highcharts} options={donutOptions} />
+      <SlideUp>
+        <div>
+          <h2 className="text-2xl text-indigo-400 font-extrabold tracking-tight mb-2">
+            <span className=" border-b-4">Monthly Fund Distribution</span>
+          </h2>
+          <p className="text-gray-400 mb-4">
+            This donut chart gives a quick visual overview of how your monthly
+            budget is distributed between income and expenses.
+          </p>
+          <div className="bg-[#111]/10 backdrop-blur-sm border border-gray-900 rounded-xl shadow-lg p-3">
+            <HighchartsReact highcharts={Highcharts} options={donutOptions} />
+          </div>
         </div>
-      </div>
-
-      {/* Daily Bar Chart Section */}
-      <div>
-        <h2 className="text-2xl text-indigo-400 font-extrabold tracking-tight mb-2">
-          <span className=" border-b-4">Daily Inflow & Expenses</span>
-        </h2>
-        <p className="text-gray-400 mb-4">
-          This bar chart shows your daily income and spending throughout the
-          current month to help you track financial trends.
-        </p>
-        <div className="bg-gradient-to-br from-gray-900 via-black to-gray-800 rounded-xl shadow-lg p-3">
-          <HighchartsReact highcharts={Highcharts} options={barChartOptions} />
+      </SlideUp>
+      <SlideUp>
+        {/* Daily Bar Chart Section */}
+        <div>
+          <h2 className="text-2xl text-indigo-400 font-extrabold tracking-tight mb-2">
+            <span className=" border-b-4">Daily Inflow & Expenses</span>
+          </h2>
+          <p className="text-gray-400 mb-4">
+            This bar chart shows your daily income and spending throughout the
+            current month to help you track financial trends.
+          </p>
+          <div className="bg-gradient-to-br from-gray-900 via-black to-gray-800 rounded-xl shadow-lg p-3">
+            <HighchartsReact
+              highcharts={Highcharts}
+              options={barChartOptions}
+            />
+          </div>
         </div>
-      </div>
-
-      <div>
-        <h2 className="text-2xl text-indigo-400 font-extrabold tracking-tight mb-2">
-          <span className=" border-b-4">Cash vs UPI (This Month)</span>
-        </h2>
-        <p className="text-gray-400 mb-4">
-          This donut chart shows how your current month&apos;s transactions are
-          split between Cash and UPI.
-        </p>
-        <div className="bg-[#111]/10 backdrop-blur-sm border border-gray-900 rounded-xl shadow-lg p-3">
-          <HighchartsReact
-            highcharts={Highcharts}
-            options={paymentModeOptions}
-          />
+      </SlideUp>
+      <SlideUp>
+        <div>
+          <h2 className="text-2xl text-indigo-400 font-extrabold tracking-tight mb-2">
+            <span className=" border-b-4">Cash vs UPI (This Month)</span>
+          </h2>
+          <p className="text-gray-400 mb-4">
+            This donut chart shows how your current month&apos;s transactions
+            are split between Cash and UPI.
+          </p>
+          <div className="bg-[#111]/10 backdrop-blur-sm border border-gray-900 rounded-xl shadow-lg p-3">
+            <HighchartsReact
+              highcharts={Highcharts}
+              options={paymentModeOptions}
+            />
+          </div>
         </div>
-      </div>
-
-      {/* Monthly Bar Chart Section */}
-      <div>
-        <h2 className="text-2xl text-indigo-400 font-extrabold tracking-tight mb-2">
-          <span className=" border-b-4">Monthly Inflow & Expenses</span>
-        </h2>
-        <p className="text-gray-400 mb-4">
-          This chart visualizes your inflow and expenses for each month, helping
-          you compare financial performance over time.
-        </p>
-        <div className="bg-gradient-to-br from-gray-900 via-black to-gray-800 rounded-xl shadow-lg p-3">
-          <HighchartsReact
-            highcharts={Highcharts}
-            options={monthlyBarChartOptions}
-          />
+      </SlideUp>
+      <SlideUp>
+        {/* Monthly Bar Chart Section */}
+        <div>
+          <h2 className="text-2xl text-indigo-400 font-extrabold tracking-tight mb-2">
+            <span className=" border-b-4">Monthly Inflow & Expenses</span>
+          </h2>
+          <p className="text-gray-400 mb-4">
+            This chart visualizes your inflow and expenses for each month,
+            helping you compare financial performance over time.
+          </p>
+          <div className="bg-gradient-to-br from-gray-900 via-black to-gray-800 rounded-xl shadow-lg p-3">
+            <HighchartsReact
+              highcharts={Highcharts}
+              options={monthlyBarChartOptions}
+            />
+          </div>
         </div>
-      </div>
-
-      {/* Monthly Savings Bar Chart Section */}
-      <div>
-        <h2 className="text-2xl text-indigo-400 font-extrabold tracking-tight mb-2">
-          <span className=" border-b-4">Monthly Savings</span>
-        </h2>
-        <p className="text-gray-400 mb-4">
-          This bar chart shows your net savings (Inflow - Expense) for each
-          month, highlighting your financial progress.
-        </p>
-        <div className="bg-gradient-to-br from-gray-900 via-black to-gray-800 rounded-xl shadow-lg p-3">
-          <HighchartsReact
-            highcharts={Highcharts}
-            options={monthlySavingsBarOptions}
-          />
+      </SlideUp>
+      <SlideUp>
+        {/* Monthly Savings Bar Chart Section */}
+        <div>
+          <h2 className="text-2xl text-indigo-400 font-extrabold tracking-tight mb-2">
+            <span className=" border-b-4">Monthly Savings</span>
+          </h2>
+          <p className="text-gray-400 mb-4">
+            This bar chart shows your net savings (Inflow - Expense) for each
+            month, highlighting your financial progress.
+          </p>
+          <div className="bg-gradient-to-br from-gray-900 via-black to-gray-800 rounded-xl shadow-lg p-3">
+            <HighchartsReact
+              highcharts={Highcharts}
+              options={monthlySavingsBarOptions}
+            />
+          </div>
         </div>
-      </div>
-
-      
-
-      {/* Category-Wise Monthly Chart Section */}
-      <div>
-        <h2 className="text-2xl text-indigo-400 font-extrabold tracking-tight mb-2">
-          <span className=" border-b-4">Category-Wise Monthly Expenses</span>
-        </h2>
-        <p className="text-gray-400 mb-4">
-          This chart shows how your monthly expenses are divided across
-          different categories.
-        </p>
-        <div className="bg-gradient-to-br from-gray-900 via-black to-gray-800 rounded-xl shadow-lg p-3">
-          <HighchartsReact
-            highcharts={Highcharts}
-            options={categoryWiseOptions}
-          />
+      </SlideUp>
+      <SlideUp>
+        {/* Category-Wise Monthly Chart Section */}
+        <div>
+          <h2 className="text-2xl text-indigo-400 font-extrabold tracking-tight mb-2">
+            <span className=" border-b-4">Category-Wise Monthly Expenses</span>
+          </h2>
+          <p className="text-gray-400 mb-4">
+            This chart shows how your monthly expenses are divided across
+            different categories.
+          </p>
+          <div className="bg-gradient-to-br from-gray-900 via-black to-gray-800 rounded-xl shadow-lg p-3">
+            <HighchartsReact
+              highcharts={Highcharts}
+              options={categoryWiseOptions}
+            />
+          </div>
         </div>
-      </div>
-
-      <div className="mt-10">
-        <span className="text-2xl mb-2 text-indigo-400 border-b-4 font-extrabold tracking-tight">
-          Category-Wise Monthly Expenses (Donut View)
-        </span>
-        <p className="text-gray-400 mb-4 mt-3">
-          This donut chart provides a proportional view of your expenses per
-          category.
-        </p>
-        <div className="bg-gradient-to-br from-gray-900 via-black to-gray-800 rounded-xl shadow-lg p-3">
-          <HighchartsReact
-            highcharts={Highcharts}
-            options={categoryWiseDonutOptions}
-          />
+      </SlideUp>
+      <SlideUp>
+        <div className="mt-10">
+          <span className="text-2xl mb-2 text-indigo-400 border-b-4 font-extrabold tracking-tight">
+            Category-Wise Monthly Expenses (Donut View)
+          </span>
+          <p className="text-gray-400 mb-4 mt-3">
+            This donut chart provides a proportional view of your expenses per
+            category.
+          </p>
+          <div className="bg-gradient-to-br from-gray-900 via-black to-gray-800 rounded-xl shadow-lg p-3">
+            <HighchartsReact
+              highcharts={Highcharts}
+              options={categoryWiseDonutOptions}
+            />
+          </div>
         </div>
-      </div>
-
-      {/* Category-Wise Yearly Expenses Section */}
-      <div className="mt-10">
-        <span className="text-2xl mb-2 text-indigo-400 border-b-4 font-extrabold tracking-tight">
-          Category-Wise Yearly Expenses
-        </span>
-        <p className="text-gray-400 mb-4 mt-3">
-          This bar chart highlights your total expenses in each category for the
-          current year.
-        </p>
-        <div className="bg-gradient-to-br from-gray-900 via-black to-gray-800 rounded-xl shadow-lg p-3">
-          <HighchartsReact
-            highcharts={Highcharts}
-            options={categoryWiseYearlyOptions}
-          />
+      </SlideUp>
+      <SlideUp>
+        {/* Category-Wise Yearly Expenses Section */}
+        <div className="mt-10">
+          <span className="text-2xl mb-2 text-indigo-400 border-b-4 font-extrabold tracking-tight">
+            Category-Wise Yearly Expenses
+          </span>
+          <p className="text-gray-400 mb-4 mt-3">
+            This bar chart highlights your total expenses in each category for
+            the current year.
+          </p>
+          <div className="bg-gradient-to-br from-gray-900 via-black to-gray-800 rounded-xl shadow-lg p-3">
+            <HighchartsReact
+              highcharts={Highcharts}
+              options={categoryWiseYearlyOptions}
+            />
+          </div>
         </div>
-      </div>
+      </SlideUp>
     </div>
   );
 };
