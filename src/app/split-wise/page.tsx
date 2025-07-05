@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import Link from 'next/link';
-import { Users2, Trash2, Contact } from 'lucide-react';
-import MenuButton from '@/components/Menu';
-import Header from '@/components/Header';
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { Users2, Trash2, Contact } from "lucide-react";
+import MenuButton from "@/components/Menu";
+import Header from "@/components/Header";
 
 type Person = {
   name: string;
@@ -12,62 +12,77 @@ type Person = {
   paid: boolean;
 };
 
-const STORAGE_KEY = 'split-data';
+declare global {
+  interface Navigator {
+    contacts?: {
+      select: (
+        properties: ("name" | "tel")[],
+        options?: { multiple: boolean }
+      ) => Promise<
+        {
+          name?: string[];
+          tel?: string[];
+        }[]
+      >;
+    };
+  }
+}
+
+const STORAGE_KEY = "split-data";
 
 export default function SplitPage() {
-  const [totalAmount, setTotalAmount] = useState<number | ''>('');
+  const [totalAmount, setTotalAmount] = useState<number | "">("");
   const [people, setPeople] = useState<Person[]>([]);
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
 
   // Load from localStorage
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       const parsed = JSON.parse(stored);
-      setTotalAmount(parsed.totalAmount || '');
+      setTotalAmount(parsed.totalAmount || "");
       setPeople(parsed.people || []);
     }
   }, []);
 
   // Save to localStorage
   useEffect(() => {
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({ totalAmount, people })
-    );
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ totalAmount, people }));
   }, [totalAmount, people]);
 
   const handleAddPerson = () => {
     if (!name) return;
     setPeople([...people, { name, phone, paid: false }]);
-    setName('');
-    setPhone('');
+    setName("");
+    setPhone("");
   };
 
   const handleImportContact = async () => {
-    if (!('contacts' in navigator && 'ContactsManager' in window)) {
-      alert('Contact Picker API only works in supported browsers like Chrome Mobile.');
+    if (!navigator.contacts || !navigator.contacts.select) {
+      alert(
+        "Contact Picker API only works in supported browsers like Chrome Mobile."
+      );
       return;
     }
 
     try {
-      const contacts = await (navigator as any).contacts.select(['name', 'tel'], {
+      const contacts = await navigator.contacts.select(["name", "tel"], {
         multiple: false,
       });
 
       if (contacts.length > 0) {
         const c = contacts[0];
-        setName(c.name?.[0] || '');
-        setPhone(c.tel?.[0]?.replace(/\D/g, '') || '');
+        setName(c.name?.[0] || "");
+        setPhone(c.tel?.[0]?.replace(/\D/g, "") || "");
       }
     } catch (err) {
-      console.error('Contact import failed:', err);
+      console.error("Contact import failed:", err);
     }
   };
 
   const equalShare =
-    totalAmount !== '' && people.length > 0
+    totalAmount !== "" && people.length > 0
       ? Number(totalAmount) / people.length
       : 0;
 
@@ -82,9 +97,9 @@ export default function SplitPage() {
   };
 
   const handleClearAll = () => {
-    const confirmDelete = window.confirm('Delete total and all people?');
+    const confirmDelete = window.confirm("Delete total and all people?");
     if (confirmDelete) {
-      setTotalAmount('');
+      setTotalAmount("");
       setPeople([]);
       localStorage.removeItem(STORAGE_KEY);
     }
@@ -123,7 +138,9 @@ export default function SplitPage() {
             className="w-full p-3 rounded-xl bg-gray-800 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             value={totalAmount}
             onChange={(e) =>
-              setTotalAmount(e.target.value === '' ? '' : Number(e.target.value))
+              setTotalAmount(
+                e.target.value === "" ? "" : Number(e.target.value)
+              )
             }
           />
         </div>
@@ -165,7 +182,7 @@ export default function SplitPage() {
         </div>
 
         {/* Summary Section */}
-        {people.length > 0 && totalAmount !== '' && (
+        {people.length > 0 && totalAmount !== "" && (
           <div className="bg-[#111]/80 backdrop-blur-sm border border-gray-700 rounded-xl p-6 shadow-lg">
             <h2 className="text-xl font-semibold mb-4">
               Each person owes: ₹{equalShare.toFixed(2)}
@@ -194,7 +211,9 @@ export default function SplitPage() {
                   <div className="text-right space-y-2">
                     {p.phone && !p.paid && (
                       <Link
-                        href={`https://wa.me/${p.phone}?text=${encodeURIComponent(
+                        href={`https://wa.me/${
+                          p.phone
+                        }?text=${encodeURIComponent(
                           `Hi ${p.name}, you owe ₹${equalShare.toFixed(
                             2
                           )} for the shared expense. Please settle when you can 😊.From MyBudegtory.`

@@ -10,7 +10,6 @@ import Header from "@/components/Header";
 import FloatingTransactionButton from "@/components/FloatingTransactionButton";
 
 import { TrendingUp, TrendingDown, BarChartBig } from "lucide-react";
-import SlideUp from "@/components/SlideUp";
 
 type Transaction = {
   _id: string;
