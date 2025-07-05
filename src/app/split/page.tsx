@@ -52,28 +52,35 @@ export default function SplitPage() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ totalAmount, people }));
   }, [totalAmount, people]);
 
+  useEffect(() => {
+    if (totalAmount !== "" && people.length > 0) {
+      const newTotal = Number(totalAmount);
+      const share = Math.round(newTotal / people.length);
+
+      const updatedPeople = people.map((person) => {
+        const payload = {
+          total: newTotal,
+          name: person.name,
+          phone: person.phone,
+          share,
+          description,
+        };
+        const encoded = encodeURIComponent(btoa(JSON.stringify(payload)));
+        const link = `${window.location.origin}/split/summary/${encoded}`;
+        return { ...person, link };
+      });
+
+      setPeople(updatedPeople);
+    }
+  }, [people.length, totalAmount, description]);
+
   const handleAddPerson = () => {
     if (!name.trim() || !phone.trim() || totalAmount === "" || isNaN(Number(totalAmount))) {
       alert("Please fill all fields correctly.");
       return;
     }
 
-    const newTotal = Number(totalAmount);
-    const newPeople = [...people, { name, phone, paid: false }];
-    const share = newTotal / newPeople.length;
-
-    const payload = {
-      total: newTotal,
-      name,
-      phone,
-      share: Math.round(share),
-      description,
-    };
-
-    const encoded = encodeURIComponent(btoa(JSON.stringify(payload)));
-    const link = `${window.location.origin}/split/summary/${encoded}`;
-
-    setPeople([...people, { name, phone, paid: false, link }]);
+    setPeople((prev) => [...prev, { name, phone, paid: false }]);
     setName("");
     setPhone("");
   };

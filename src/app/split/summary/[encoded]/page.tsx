@@ -90,9 +90,7 @@ export default function SummaryPage() {
         </p>
 
         <Link
-          href={`upi://pay?pa=tayyabk2002-1@oksbi&pn=Tayyab%20Khan&am=${share.toFixed(
-            2
-          )}&cu=INR`}
+          href={`upi://pay?pa=tayyabk2002-1@oksbi&pn=Tayyab%20Khan&am=${share}&cu=INR`}
           target="_blank"
           className="block w-full bg-green-300 text-black hover:bg-green-700 text-center px-4 py-3 rounded text-lg font-semibold"
         >
