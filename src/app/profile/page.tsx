@@ -241,13 +241,14 @@ export default function Profile() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#1a1c2c] to-[#0d0f1f] py-5 px-4">
-      <div className="max-w-2xl mx-auto bg-[#14162b] shadow-xl rounded-3xl p-4 md:p-10 mt-12 transform transition-all duration-300 hover:scale-[1.005]">
-        <div className="flex justify-end mb-4">
-          <MenuButton />
-        </div>
+    <main className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 text-white p-4 sm:p-5 relative">
+      {/* Positioned MenuButton absolutely in the top-right corner */}
+      <div className="absolute top-4 right-4 z-50">
+        <MenuButton />
+      </div>
+
+      <div className="max-w-4xl mx-auto bg-[#14162b] shadow-xl rounded-3xl p-4 md:p-10 mt-16 transform transition-all duration-300 hover:scale-[1.005]">
         <div className="flex items-center justify-center mb-4">
-          {/* Enhanced icon with a subtle shadow */}
           <FaUserCircle className="text-indigo-400 text-7xl drop-shadow-lg" />
         </div>
 
@@ -460,9 +461,7 @@ export default function Profile() {
           {message && (
             <p
               className={`text-sm font-medium mt-3 text-center animate-fade-in ${
-                messageType === "success"
-                  ? "text-green-400"
-                  : "text-red-400"
+                messageType === "success" ? "text-green-400" : "text-red-400"
               }`}
             >
               {message}
@@ -477,6 +476,6 @@ export default function Profile() {
           </button>
         </form>
       </div>
-    </div>
+    </main>
   );
 }

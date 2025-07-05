@@ -269,7 +269,7 @@ const ChartsPage = () => {
     <main className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 text-white p-4 sm:p-5">
       <div className="max-w-5xl mx-auto">
         <Header />
-        <SlideUp>
+        
           <div className="flex justify-between items-center mb-6">
             <div className="flex items-center gap-3">
               <BarChartBig className="w-7 h-7 text-indigo-400" />
@@ -279,9 +279,9 @@ const ChartsPage = () => {
             </div>
             <Menu />
           </div>
-        </SlideUp>
+        
         {/* Inflow/Expense Overview */}
-        <SlideUp>
+        
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
           <div className="bg-gray-900 p-5 rounded-xl shadow flex items-center gap-4">
             <div className="bg-green-800/80 p-3 rounded-full">
@@ -304,7 +304,7 @@ const ChartsPage = () => {
             </div>
           </div>
         </div>
-        </SlideUp>
+        
         
         {/* Charts Section */}
         <div className="grid grid-cols-1 gap-8">
