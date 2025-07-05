@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Users2, Trash2, Contact, Share2 } from "lucide-react";
+import { Users2, Trash2, Contact } from "lucide-react";
 import MenuButton from "@/components/Menu";
 import Header from "@/components/Header";
 
@@ -11,6 +11,7 @@ type Person = {
   name: string;
   phone: string;
   paid: boolean;
+  link?: string;
 };
 
 declare global {
@@ -36,7 +37,7 @@ export default function SplitPage() {
   const [people, setPeople] = useState<Person[]>([]);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [shareLink, setShareLink] = useState<string>("");
+  const [description, setDescription] = useState("");
 
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -52,17 +53,34 @@ export default function SplitPage() {
   }, [totalAmount, people]);
 
   const handleAddPerson = () => {
-    if (!name) return;
-    setPeople([...people, { name, phone, paid: false }]);
+    if (!name.trim() || !phone.trim() || totalAmount === "" || isNaN(Number(totalAmount))) {
+      alert("Please fill all fields correctly.");
+      return;
+    }
+
+    const newTotal = Number(totalAmount);
+    const newPeople = [...people, { name, phone, paid: false }];
+    const share = newTotal / newPeople.length;
+
+    const payload = {
+      total: newTotal,
+      name,
+      phone,
+      share: Math.round(share),
+      description,
+    };
+
+    const encoded = encodeURIComponent(btoa(JSON.stringify(payload)));
+    const link = `${window.location.origin}/split/summary/${encoded}`;
+
+    setPeople([...people, { name, phone, paid: false, link }]);
     setName("");
     setPhone("");
   };
 
   const handleImportContact = async () => {
     if (!navigator.contacts || !navigator.contacts.select) {
-      alert(
-        "Contact Picker API only works in supported browsers like Chrome Mobile."
-      );
+      alert("Contact Picker API only works in supported browsers like Chrome Mobile.");
       return;
     }
 
@@ -82,9 +100,7 @@ export default function SplitPage() {
   };
 
   const equalShare =
-    totalAmount !== "" && people.length > 0
-      ? Number(totalAmount) / people.length
-      : 0;
+    totalAmount !== "" && people.length > 0 ? Number(totalAmount) / people.length : 0;
 
   const handleTogglePaid = (index: number) => {
     setPeople((prev) =>
@@ -105,22 +121,6 @@ export default function SplitPage() {
     }
   };
 
-  const handleGenerateLink = () => {
-    const payload = {
-      total: totalAmount,
-      people: people.map(({ name, phone }) => ({ name, phone })),
-    };
-
-    const encoded = encodeURIComponent(btoa(JSON.stringify(payload)));
-    const url = `${window.location.origin}/split/summary/${encoded}`;
-
-    setShareLink(url);
-
-    navigator.clipboard.writeText(url).then(() => {
-      alert("Shareable link copied to clipboard");
-    });
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 text-white p-4 sm:p-8">
       <div className="max-w-5xl mx-auto">
@@ -129,9 +129,7 @@ export default function SplitPage() {
         <div className="flex justify-between items-center mb-5">
           <div className="flex items-center gap-2">
             <Users2 className="text-white" />
-            <h1 className="text-4xl font-extrabold tracking-tight text-white">
-              Split Expenses
-            </h1>
+            <h1 className="text-4xl font-extrabold tracking-tight text-white">Split Expenses</h1>
           </div>
           <MenuButton />
         </div>
@@ -152,10 +150,14 @@ export default function SplitPage() {
             className="w-full p-3 rounded-xl bg-gray-800 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             value={totalAmount}
             onChange={(e) =>
-              setTotalAmount(
-                e.target.value === "" ? "" : Number(e.target.value)
-              )
+              setTotalAmount(e.target.value === "" ? "" : Number(e.target.value))
             }
+          />
+          <textarea
+            placeholder="Description (optional, e.g., Dinner at XYZ)"
+            className="w-full mt-4 p-3 rounded-xl bg-gray-800 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
           />
         </div>
 
@@ -196,17 +198,9 @@ export default function SplitPage() {
 
         {people.length > 0 && totalAmount !== "" && (
           <div className="bg-[#111]/80 backdrop-blur-sm border border-gray-700 rounded-xl p-6 shadow-lg">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">
-                Each person owes: ₹{equalShare.toFixed(2)}
-              </h2>
-              <button
-                onClick={handleGenerateLink}
-                className="flex items-center gap-2 text-sm bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded font-semibold"
-              >
-                <Share2 size={16} /> Generate Share Link
-              </button>
-            </div>
+            <h2 className="text-xl font-semibold mb-4">
+              Each person owes: ₹{equalShare.toFixed(2)}
+            </h2>
             <ul className="space-y-3">
               {people.map((p, i) => (
                 <li
@@ -229,11 +223,13 @@ export default function SplitPage() {
                     </label>
                   </div>
                   <div className="text-right space-y-2">
-                    {!p.paid && p.phone && shareLink && (
+                    {!p.paid && p.phone && p.link && (
                       <Link
-                        href={`https://wa.me/${
-                          p.phone
-                        }?text=${encodeURIComponent(`\n${shareLink}`)}`}
+                        href={`https://wa.me/${p.phone}?text=${encodeURIComponent(
+                          `Hi ${p.name}, you owe ₹${equalShare.toFixed(2)} for the shared expense.${
+                            description ? `\n${description}` : ""
+                          }\nPay here: ${p.link}`
+                        )}`}
                         target="_blank"
                         className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded text-sm font-semibold"
                       >
