@@ -58,7 +58,7 @@ export default function MenuButton() {
     { href: "/dashboard", icon: <FileDigit color="#818cf8" />, label: "Dashboard" },
     { href: "/net-worth", icon: <PiggyBank color="#fcba03" />, label: "Net Worth" },
     { href: "/debt-lent", icon: <WalletMinimal color="#a78bfa" />, label: "Debt Tracker" },
-    { href: "/split-wise", icon: <Divide color="#cbe200" />, label: "Split Bills" },
+    { href: "/split", icon: <Divide color="#cbe200" />, label: "Split Bills" },
     { href: "/transactions", icon: <BadgeIndianRupee color="#4ade80" />, label: "Transactions" },
     { href: "/expenses", icon: <BanknoteArrowDown color="#f87171" />, label: "Expenses" },
     { href: "/inflow", icon: <Wallet color="#34d399" />, label: "Income" },

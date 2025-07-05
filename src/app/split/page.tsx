@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Users2, Trash2, Contact } from "lucide-react";
+import { Users2, Trash2, Contact, Share2 } from "lucide-react";
 import MenuButton from "@/components/Menu";
 import Header from "@/components/Header";
 
+// Person type
 type Person = {
   name: string;
   phone: string;
@@ -35,8 +36,8 @@ export default function SplitPage() {
   const [people, setPeople] = useState<Person[]>([]);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [shareLink, setShareLink] = useState<string>("");
 
-  // Load from localStorage
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
@@ -46,7 +47,6 @@ export default function SplitPage() {
     }
   }, []);
 
-  // Save to localStorage
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ totalAmount, people }));
   }, [totalAmount, people]);
@@ -105,12 +105,27 @@ export default function SplitPage() {
     }
   };
 
+  const handleGenerateLink = () => {
+    const payload = {
+      total: totalAmount,
+      people: people.map(({ name, phone }) => ({ name, phone })),
+    };
+
+    const encoded = encodeURIComponent(btoa(JSON.stringify(payload)));
+    const url = `${window.location.origin}/split/summary/${encoded}`;
+
+    setShareLink(url);
+
+    navigator.clipboard.writeText(url).then(() => {
+      alert("Shareable link copied to clipboard");
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 text-white p-4 sm:p-8">
       <div className="max-w-5xl mx-auto">
         <Header />
 
-        {/* Header */}
         <div className="flex justify-between items-center mb-5">
           <div className="flex items-center gap-2">
             <Users2 className="text-white" />
@@ -121,7 +136,6 @@ export default function SplitPage() {
           <MenuButton />
         </div>
 
-        {/* Amount Section */}
         <div className="bg-[#111]/80 backdrop-blur-sm border border-gray-700 rounded-xl p-6 shadow-lg mb-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold">Total Amount Spent</h2>
@@ -145,7 +159,6 @@ export default function SplitPage() {
           />
         </div>
 
-        {/* Add People Section */}
         <div className="bg-[#111]/80 backdrop-blur-sm border border-gray-700 rounded-xl p-6 shadow-lg mb-6">
           <h2 className="text-xl font-semibold mb-4">Add People</h2>
           <div className="space-y-4">
@@ -181,12 +194,19 @@ export default function SplitPage() {
           </div>
         </div>
 
-        {/* Summary Section */}
         {people.length > 0 && totalAmount !== "" && (
           <div className="bg-[#111]/80 backdrop-blur-sm border border-gray-700 rounded-xl p-6 shadow-lg">
-            <h2 className="text-xl font-semibold mb-4">
-              Each person owes: ₹{equalShare.toFixed(2)}
-            </h2>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">
+                Each person owes: ₹{equalShare.toFixed(2)}
+              </h2>
+              <button
+                onClick={handleGenerateLink}
+                className="flex items-center gap-2 text-sm bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded font-semibold"
+              >
+                <Share2 size={16} /> Generate Share Link
+              </button>
+            </div>
             <ul className="space-y-3">
               {people.map((p, i) => (
                 <li
@@ -209,15 +229,11 @@ export default function SplitPage() {
                     </label>
                   </div>
                   <div className="text-right space-y-2">
-                    {p.phone && !p.paid && (
+                    {!p.paid && p.phone && shareLink && (
                       <Link
                         href={`https://wa.me/${
                           p.phone
-                        }?text=${encodeURIComponent(
-                          `Hi ${p.name}, you owe ₹${equalShare.toFixed(
-                            2
-                          )} for the shared expense. Please settle when you can 😊.From MyBudegtory.`
-                        )}`}
+                        }?text=${encodeURIComponent(`\n${shareLink}`)}`}
                         target="_blank"
                         className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded text-sm font-semibold"
                       >
@@ -226,7 +242,7 @@ export default function SplitPage() {
                     )}
                     <button
                       onClick={() => handleDeletePerson(i)}
-                      className="text-red-400 hover:text-red-600 text-sm"
+                      className="text-red-400 ml-4 hover:text-red-600 text-sm"
                     >
                       Delete
                     </button>
