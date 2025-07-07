@@ -53,26 +53,32 @@ export default function SplitPage() {
   }, [totalAmount, people]);
 
   useEffect(() => {
-    if (totalAmount !== "" && people.length > 0) {
-      const newTotal = Number(totalAmount);
-      const share = Math.round(newTotal / people.length);
+  if (totalAmount !== "" && people.length > 0) {
+    const newTotal = Number(totalAmount);
+    const share = Math.round(newTotal / people.length);
 
-      const updatedPeople = people.map((person) => {
-        const payload = {
-          total: newTotal,
-          name: person.name,
-          phone: person.phone,
-          share,
-          description,
-        };
-        const encoded = encodeURIComponent(btoa(JSON.stringify(payload)));
-        const link = `${window.location.origin}/split/summary/${encoded}`;
-        return { ...person, link };
-      });
+    const updatedPeople = people.map((person) => {
+      const payload = {
+        total: newTotal,
+        name: person.name,
+        phone: person.phone,
+        share,
+        description,
+      };
 
-      setPeople(updatedPeople);
-    }
-  }, [people.length, totalAmount, description]);
+      // Safe btoa for Unicode support
+      const safeBtoa = (str: string) =>
+        btoa(unescape(encodeURIComponent(str)));
+
+      const encoded = encodeURIComponent(safeBtoa(JSON.stringify(payload)));
+      const link = `${window.location.origin}/split/summary/${encoded}`;
+      return { ...person, link };
+    });
+
+    setPeople(updatedPeople);
+  }
+}, [people.length, totalAmount, description]);
+
 
   const handleAddPerson = () => {
     if (!name.trim() || !phone.trim() || totalAmount === "" || isNaN(Number(totalAmount))) {
