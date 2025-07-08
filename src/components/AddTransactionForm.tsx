@@ -10,6 +10,7 @@ import {
   BanknoteArrowUp,
   Plus,
   Calendar,
+  Route
 } from "lucide-react";
 
 const categoryIcons = {
@@ -20,6 +21,7 @@ const categoryIcons = {
   Bills: ReceiptText,
   Entertainment: Clapperboard,
   Travel: Plane,
+  SMM:Route,
   Others: BanknoteArrowUp,
 };
 
@@ -58,6 +60,7 @@ export function AddTransactionForm({ onAdd }: { onAdd: () => void }) {
     "Medical",
     "Entertainment",
     "Bills",
+    "SMM",
     "Other",
   ];
 

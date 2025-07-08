@@ -22,6 +22,7 @@ import {
   Wallet,
   RefreshCw,
   HandMetal,
+  Route
 } from "lucide-react";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
@@ -36,6 +37,7 @@ const categoryIcons = {
   Bills: ReceiptText,
   Entertainment: Clapperboard,
   Travel: Plane,
+  SMM:Route,
   Others: BanknoteArrowUp,
 };
 
