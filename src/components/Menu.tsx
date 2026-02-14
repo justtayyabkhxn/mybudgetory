@@ -54,7 +54,7 @@ export default function MenuButton() {
     }
   };
 
-  const navItems = [
+   const navItems = [
     { href: "/dashboard", icon: <FileDigit color="#818cf8" />, label: "Dashboard" },
     { href: "/net-worth", icon: <PiggyBank color="#fcba03" />, label: "Net Worth" },
     { href: "/debt-lent", icon: <WalletMinimal color="#a78bfa" />, label: "Debt Tracker" },
@@ -63,6 +63,7 @@ export default function MenuButton() {
     { href: "/expenses", icon: <BanknoteArrowDown color="#f87171" />, label: "Expenses" },
     { href: "/inflow", icon: <Wallet color="#34d399" />, label: "Income" },
     { href: "/charts", icon: <ChartCandlestick color="#38bdf8" />, label: "Charts" },
+    { href: "/advanced-charts", icon: <ChartNoAxesCombined color="#10b981" />, label: "Advanced Charts" }, // 🆕 Added here
     { href: "/stats", icon: <ChartNoAxesCombined color="#fbbf24" />, label: "Stats" },
     { href: "/advanced-search", icon: <TextSearch color="#d946ef" />, label: "Advanced Search" },
     { href: "/profile", icon: <CircleUserRound color="#60a5fa" />, label: "Profile" },
@@ -118,7 +119,7 @@ export default function MenuButton() {
               </div>
 
               <motion.nav
-                className="space-y-8 mt-4"
+                className="space-y-6 mt-4"
                 initial="hidden"
                 animate="show"
                 variants={{

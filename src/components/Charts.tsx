@@ -1,7 +1,7 @@
 // components/Charts.tsx
 "use client"; // Keep this at the very top if it's a client component
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
 
@@ -16,6 +16,17 @@ import {
   getMonthlySavingsBarChartOptions,
 } from "@/utils/chartOptions";
 import SlideUp from "./SlideUp";
+
+type Transaction = {
+  _id: string;
+  userId: string;
+  amount: number;
+  date: string;
+  category: string;
+  type: "income" | "expense";
+  paymentMode: "Cash" | "UPI";
+};
+
 
 interface Props {
   inflow: number;
