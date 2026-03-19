@@ -499,11 +499,17 @@ export default function LandingPage() {
                 className="group bg-white dark:bg-gray-800/50 backdrop-blur-sm p-6 rounded-2xl shadow-lg hover:shadow-xl border border-gray-100 dark:border-gray-700 cursor-pointer transition-all duration-300"
               >
                 <summary className="font-bold text-lg text-indigo-600 dark:text-indigo-400 flex items-center justify-between">
+                <span>
+
                   {item.q}
+                </span>
                   <ChevronDown className="h-5 w-5 group-open:rotate-180 transition-transform" />
                 </summary>
                 <p className="mt-4 text-gray-600 dark:text-gray-300 leading-relaxed pl-2 border-l-4 border-indigo-200 dark:border-indigo-800">
+                <span>
+
                   {item.a}
+                </span>
                 </p>
               </motion.details>
             ))}

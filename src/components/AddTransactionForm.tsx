@@ -2,10 +2,23 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Utensils, Shirt, Briefcase, HeartPulse, ReceiptText,
-  Clapperboard, Plane, BanknoteArrowUp, Route,
-  ArrowDownCircle, ArrowUpCircle, Calendar, MessageSquare,
-  CreditCard, Banknote, Check, Loader2,
+  Utensils,
+  Shirt,
+  Briefcase,
+  HeartPulse,
+  ReceiptText,
+  Clapperboard,
+  Plane,
+  BanknoteArrowUp,
+  Route,
+  ArrowDownCircle,
+  ArrowUpCircle,
+  Calendar,
+  MessageSquare,
+  CreditCard,
+  Banknote,
+  Check,
+  Loader2,
 } from "lucide-react";
 import { CATEGORY_COLORS } from "@/lib/categoryConfig";
 
@@ -62,12 +75,19 @@ export function AddTransactionForm({ onAdd }: { onAdd: () => void }) {
       return;
     }
     const token = localStorage.getItem("token");
-    if (!token) { setError("You must be logged in"); setLoading(false); return; }
+    if (!token) {
+      setError("You must be logged in");
+      setLoading(false);
+      return;
+    }
 
     try {
       const res = await fetch("/api/transactions", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify(form),
       });
       if (!res.ok) {
@@ -75,7 +95,9 @@ export function AddTransactionForm({ onAdd }: { onAdd: () => void }) {
         throw new Error(data.error || "Failed to add transaction");
       }
 
-      const balanceFetch = await fetch("/api/networth", { headers: { Authorization: `Bearer ${token}` } });
+      const balanceFetch = await fetch("/api/networth", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       const balanceData = await balanceFetch.json();
       const currentBalance = balanceData.bankBalance || 0;
       const amount = parseFloat(form.amount);
@@ -84,16 +106,23 @@ export function AddTransactionForm({ onAdd }: { onAdd: () => void }) {
 
       await fetch("/api/networth/update", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({ newBalance, paymentMode: form.paymentMode }),
       });
 
       setSuccess("Added!");
       setTimeout(() => setSuccess(""), 2500);
       setForm({
-        title: "", amount: "", category: form.type === "income" ? "Others" : "Food",
-        type: form.type, date: new Date().toISOString().split("T")[0],
-        comment: "", paymentMode: form.paymentMode,
+        title: "",
+        amount: "",
+        category: form.type === "income" ? "Others" : "Food",
+        type: form.type,
+        date: new Date().toISOString().split("T")[0],
+        comment: "",
+        paymentMode: form.paymentMode,
       });
       setShowComment(false);
       onAdd();
@@ -105,7 +134,8 @@ export function AddTransactionForm({ onAdd }: { onAdd: () => void }) {
   };
 
   const isExpense = form.type === "expense";
-  const selectedCategory = CATEGORY_COLORS[form.category] || CATEGORY_COLORS["Others"];
+  const selectedCategory =
+    CATEGORY_COLORS[form.category] || CATEGORY_COLORS["Others"];
 
   return (
     <motion.div
@@ -138,7 +168,7 @@ export function AddTransactionForm({ onAdd }: { onAdd: () => void }) {
               }`}
             >
               <ArrowUpCircle size={14} />
-              Expense
+              <span>Expense</span>
             </button>
             <button
               type="button"
@@ -150,7 +180,7 @@ export function AddTransactionForm({ onAdd }: { onAdd: () => void }) {
               }`}
             >
               <ArrowDownCircle size={14} />
-              Income
+              <span>Income</span>
             </button>
           </div>
 
@@ -165,7 +195,8 @@ export function AddTransactionForm({ onAdd }: { onAdd: () => void }) {
                   : "text-gray-500 hover:text-gray-300"
               }`}
             >
-              <CreditCard size={13} /> UPI
+              <CreditCard size={13} />
+              <span>UPI</span>
             </button>
             <button
               type="button"
@@ -176,7 +207,8 @@ export function AddTransactionForm({ onAdd }: { onAdd: () => void }) {
                   : "text-gray-500 hover:text-gray-300"
               }`}
             >
-              <Banknote size={13} /> Cash
+              <Banknote size={13} />
+              <span>Cash</span>
             </button>
           </div>
         </div>
@@ -197,14 +229,20 @@ export function AddTransactionForm({ onAdd }: { onAdd: () => void }) {
                 name="amount"
                 placeholder="0"
                 value={form.amount}
-                onChange={(e) => setForm((p) => ({ ...p, amount: e.target.value }))}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, amount: e.target.value }))
+                }
                 required
                 className="flex-1 bg-transparent text-3xl font-black text-white placeholder-gray-700 outline-none w-full"
               />
               {form.paymentMode === "UPI" ? (
-                <span className="text-xs font-bold text-indigo-400 bg-indigo-500/10 border border-indigo-500/30 px-2 py-1 rounded-lg">UPI</span>
+                <span className="text-xs font-bold text-indigo-400 bg-indigo-500/10 border border-indigo-500/30 px-2 py-1 rounded-lg">
+                  UPI
+                </span>
               ) : (
-                <span className="text-xs font-bold text-yellow-400 bg-yellow-500/10 border border-yellow-500/30 px-2 py-1 rounded-lg">Cash</span>
+                <span className="text-xs font-bold text-yellow-400 bg-yellow-500/10 border border-yellow-500/30 px-2 py-1 rounded-lg">
+                  Cash
+                </span>
               )}
             </div>
           </div>
@@ -229,16 +267,21 @@ export function AddTransactionForm({ onAdd }: { onAdd: () => void }) {
                 exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.25 }}
               >
-                <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Category</p>
+                <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">
+                  Category
+                </p>
                 <div className="flex flex-wrap gap-2">
                   {CATEGORIES.map(({ name, icon: Icon }) => {
-                    const colors = CATEGORY_COLORS[name] || CATEGORY_COLORS["Others"];
+                    const colors =
+                      CATEGORY_COLORS[name] || CATEGORY_COLORS["Others"];
                     const isActive = form.category === name;
                     return (
                       <button
                         key={name}
                         type="button"
-                        onClick={() => setForm((p) => ({ ...p, category: name }))}
+                        onClick={() =>
+                          setForm((p) => ({ ...p, category: name }))
+                        }
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all duration-200 cursor-pointer ${
                           isActive
                             ? `${colors.bg} ${colors.text} ${colors.border} shadow-lg`
@@ -246,7 +289,10 @@ export function AddTransactionForm({ onAdd }: { onAdd: () => void }) {
                         }`}
                       >
                         <Icon size={12} />
+                        <span>
+
                         {name}
+                        </span>
                       </button>
                     );
                   })}
@@ -263,7 +309,9 @@ export function AddTransactionForm({ onAdd }: { onAdd: () => void }) {
                 type="date"
                 name="date"
                 value={form.date}
-                onChange={(e) => setForm((p) => ({ ...p, date: e.target.value }))}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, date: e.target.value }))
+                }
                 required
                 className="w-full bg-black/40 border border-white/10 rounded-xl pl-9 pr-4 py-3 text-white focus:outline-none focus:border-indigo-500/60 focus:ring-2 focus:ring-indigo-500/10 transition-all duration-200 text-sm"
               />
@@ -280,7 +328,10 @@ export function AddTransactionForm({ onAdd }: { onAdd: () => void }) {
               }`}
             >
               <MessageSquare size={14} />
+              <span>
+
               Note
+              </span>
             </button>
           </div>
 
@@ -297,7 +348,9 @@ export function AddTransactionForm({ onAdd }: { onAdd: () => void }) {
                   name="comment"
                   placeholder="Add a note (optional)..."
                   value={form.comment}
-                  onChange={(e) => setForm((p) => ({ ...p, comment: e.target.value }))}
+                  onChange={(e) =>
+                    setForm((p) => ({ ...p, comment: e.target.value }))
+                  }
                   className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-purple-500/60 focus:ring-2 focus:ring-purple-500/10 transition-all duration-200 text-sm"
                 />
               </motion.div>
@@ -313,8 +366,8 @@ export function AddTransactionForm({ onAdd }: { onAdd: () => void }) {
               loading
                 ? "bg-gray-700 text-gray-400 cursor-not-allowed"
                 : isExpense
-                ? "bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white shadow-red-900/40"
-                : "bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white shadow-green-900/40"
+                  ? "bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white shadow-red-900/40"
+                  : "bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white shadow-green-900/40"
             }`}
           >
             {loading ? (
@@ -329,7 +382,11 @@ export function AddTransactionForm({ onAdd }: { onAdd: () => void }) {
               </>
             ) : (
               <>
-                {isExpense ? <ArrowUpCircle size={18} /> : <ArrowDownCircle size={18} />}
+                {isExpense ? (
+                  <ArrowUpCircle size={18} />
+                ) : (
+                  <ArrowDownCircle size={18} />
+                )}
                 Add {isExpense ? "Expense" : "Income"}
               </>
             )}

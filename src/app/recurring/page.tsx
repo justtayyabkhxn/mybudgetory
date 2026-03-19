@@ -425,7 +425,10 @@ export default function RecurringPage() {
                   disabled={submitting}
                   className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl font-bold text-sm transition-colors cursor-pointer disabled:opacity-60"
                 >
+                  <span>
+
                   {submitting ? "Adding..." : "Add Recurring Transaction"}
+                  </span>
                 </button>
               </form>
             </motion.div>
@@ -522,8 +525,11 @@ export default function RecurringPage() {
                       onClick={() => handleLogNow(item)}
                       className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg bg-indigo-600/20 border border-indigo-500/30 text-indigo-400 hover:bg-indigo-600/30 transition-colors cursor-pointer"
                     >
+                      <span>
+
                       <CheckCircle size={13} />
                       Log Now
+                      </span>
                     </button>
 
                     <button
@@ -534,6 +540,8 @@ export default function RecurringPage() {
                           : "bg-green-500/10 border-green-500/30 text-green-400 hover:bg-green-500/20"
                       }`}
                     >
+                      <span>
+
                       {item.isActive ? (
                         <>
                           <PauseCircle size={13} /> Pause
@@ -543,6 +551,7 @@ export default function RecurringPage() {
                           <PlayCircle size={13} /> Resume
                         </>
                       )}
+                      </span>
                     </button>
 
                     <button
@@ -550,7 +559,10 @@ export default function RecurringPage() {
                       className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 transition-colors cursor-pointer"
                     >
                       <Trash2 size={13} />
+                      <span>
+
                       Delete
+                      </span>
                     </button>
                   </div>
                 </motion.div>

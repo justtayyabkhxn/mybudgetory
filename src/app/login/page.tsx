@@ -163,11 +163,17 @@ export default function LoginPage() {
                 {loading ? (
                   <>
                     <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                    <span>
+
                     Signing in…
+                    </span>
                   </>
                 ) : (
                   <>
+                  <span>
+
                     Sign in
+                  </span>
                     <ArrowRight size={15} className="transition-transform duration-200 group-hover:translate-x-1" />
                   </>
                 )}

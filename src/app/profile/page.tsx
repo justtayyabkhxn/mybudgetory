@@ -193,7 +193,10 @@ function DeleteModal({
                   onClick={onClose}
                   className="flex-1 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 text-sm font-semibold transition"
                 >
+                  <span>
+
                   Cancel
+                  </span>
                 </button>
                 <button
                   onClick={onConfirm}
@@ -508,12 +511,18 @@ export default function Profile() {
               {exportDone ? (
                 <>
                   <Check size={15} />
+                  <span>
+
                   Downloaded!
+                  </span>
                 </>
               ) : (
                 <>
                   <Download size={15} />
+                  <span>
+
                   Export JSON ({txs.length} transactions)
+                  </span>
                 </>
               )}
             </button>
@@ -581,7 +590,10 @@ export default function Profile() {
               ) : (
                 <Upload size={15} />
               )}
+              <span>
+
               {isImporting ? "Importing…" : "Import Transactions"}
+              </span>
             </button>
 
             <AnimatePresence>
@@ -622,7 +634,10 @@ export default function Profile() {
               className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-red-600/10 hover:bg-red-600/20 border border-red-500/20 text-red-400 text-sm font-bold transition"
             >
               <Trash2 size={15} />
+              <span>
+
               Delete All Transactions
+              </span>
             </button>
           </div>
         </Section>
@@ -690,7 +705,10 @@ export default function Profile() {
               ) : (
                 <KeyRound size={15} />
               )}
+              <span>
+
               {pwLoading ? "Updating…" : "Update Password"}
+              </span>
             </button>
           </form>
         </Section>

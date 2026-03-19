@@ -157,7 +157,10 @@ export default function Expenses() {
                         onClick={() => handleDelete(tx._id)}
                         className="text-sm text-red-500 hover:text-red-700 ml-4 cursor-pointer"
                       >
+                        <span>
+
                         Delete
+                        </span>
                       </button>
                     </p>
                   </li>

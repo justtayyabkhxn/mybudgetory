@@ -8,7 +8,10 @@ export default function GetStartedButton() {
             className="bg-white dark:bg-gray-900 px-4 py-3 rounded-xl shadow hover:shadow-lg transition text-center font-semibold text-green-700 dark:text-green-300 cursor-pointer flex items-center gap-2"
           >
             <Play size={18} />
+            <span>
+
             Get Started
+            </span>
           </a>
 
           <a
@@ -17,7 +20,11 @@ export default function GetStartedButton() {
             rel="noopener noreferrer"
           >
             <button className="bg-white dark:bg-green-300 px-4 py-3 rounded-xl shadow hover:shadow-lg transition text-center font-semibold text-green-700 dark:text-green-900 cursor-pointer flex items-center gap-2">
-              <Github size={18} /> Read Docs
+              <Github size={18} />
+              <span>
+
+               Read Docs
+              </span>
             </button>
           </a>
         </div>

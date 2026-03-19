@@ -224,7 +224,10 @@ export default function MenuButton() {
                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-all duration-150 cursor-pointer border border-transparent hover:border-red-500/20"
               >
                 <LogOut size={15} />
+                <span>
+
                 Sign Out
+                </span>
               </motion.button>
             </div>
           </motion.aside>

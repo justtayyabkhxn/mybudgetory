@@ -278,7 +278,10 @@ export default function AdvancedSearchPage() {
                             : "bg-white/5 text-gray-500 border-white/10 hover:bg-white/10"
                         }`}
                       >
+                        <span>
+
                         All
+                        </span>
                       </button>
                       {ALL_CATEGORIES.map(cat => {
                         const colors = CATEGORY_COLORS[cat] || CATEGORY_COLORS["Others"];
@@ -295,7 +298,10 @@ export default function AdvancedSearchPage() {
                             }`}
                           >
                             <Icon size={11} />
+                            <span>
+
                             {cat}
+                            </span>
                           </button>
                         );
                       })}
@@ -310,14 +316,18 @@ export default function AdvancedSearchPage() {
                       onClick={clearFilters}
                       className="flex items-center gap-1.5 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded-xl text-xs font-bold transition-colors cursor-pointer"
                     >
-                      <Trash2 size={12} /> Clear All
+                      <Trash2 size={12} /> <span>
+                         Clear All </span>
                     </button>
                   )}
                   <button
                     onClick={() => setFiltersOpen(false)}
                     className="px-4 py-2 bg-white/5 hover:bg-white/10 text-gray-400 border border-white/10 rounded-xl text-xs font-bold transition-colors cursor-pointer"
                   >
+                    <span>
+
                     Done
+                    </span>
                   </button>
                 </div>
               </div>
@@ -380,7 +390,11 @@ export default function AdvancedSearchPage() {
               onClick={exportToCSV}
               className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold rounded-xl transition-colors cursor-pointer"
             >
-              <Download size={14} /> Export CSV
+              <Download size={14} />
+              <span>
+
+               Export CSV
+              </span>
             </button>
           </div>
         )}
@@ -407,7 +421,10 @@ export default function AdvancedSearchPage() {
               <p className="text-sm text-gray-600 mt-1">Try adjusting your filters or search terms</p>
               {activeFilterCount > 0 && (
                 <button onClick={clearFilters} className="mt-4 px-4 py-2 bg-white/5 hover:bg-white/10 text-gray-400 rounded-xl text-sm font-bold border border-white/10 cursor-pointer transition-colors">
+                  <span>
+
                   Clear Filters
+                  </span>
                 </button>
               )}
             </div>

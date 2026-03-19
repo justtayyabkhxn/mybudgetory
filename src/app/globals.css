@@ -1,6 +1,9 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
-
+/* ─────────────────────────────────────────
+   Scrollbar
+───────────────────────────────────────── */
 body {
   --sb-track-color: #0a0a1b;
   --sb-thumb-color: #797979;
@@ -8,7 +11,7 @@ body {
 }
 
 body::-webkit-scrollbar {
-  width: var(--sb-size)
+  width: var(--sb-size);
 }
 
 body::-webkit-scrollbar-track {
@@ -19,12 +22,50 @@ body::-webkit-scrollbar-track {
 body::-webkit-scrollbar-thumb {
   background: var(--sb-thumb-color);
   border-radius: 2px;
-  
 }
 
 @supports not selector(::-webkit-scrollbar) {
   body {
-    scrollbar-color: var(--sb-thumb-color)
-                     var(--sb-track-color);
+    scrollbar-color: var(--sb-thumb-color) var(--sb-track-color);
   }
 }
+
+/* ─────────────────────────────────────────
+   Font Variables
+───────────────────────────────────────── */
+:root {
+  --font-heading: 'Outfit', sans-serif;
+  --font-data:    'Outfit', sans-serif;
+  --font-body:    'Outfit', sans-serif;
+}
+
+/* ─────────────────────────────────────────
+   Font Assignments
+───────────────────────────────────────── */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+}
+
+p, span {
+  font-family: var(--font-body);
+}
+
+button, a {
+  font-family: var(--font-body);
+}
+
+.num,
+.amount,
+.balance,
+.stat,
+.data,
+[data-type="currency"],
+[data-type="number"] {
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Utility overrides */
+.font-heading { font-family: var(--font-heading) !important; }
+.font-data    { font-family: var(--font-data)    !important; }
+.font-body    { font-family: var(--font-body)    !important; }

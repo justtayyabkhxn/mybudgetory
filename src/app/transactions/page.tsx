@@ -254,7 +254,11 @@ export default function Transactions() {
             <p className="text-lg font-bold text-gray-400 mb-1">No matches found</p>
             <p className="text-sm text-gray-600">Try different search terms or clear filters</p>
             <button onClick={() => { setSearchQuery(""); setTypeFilter(""); }} className="mt-4 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-gray-400 rounded-xl text-sm font-bold transition-colors cursor-pointer">
+            
+            <span>
+
               Clear Filters
+            </span>
             </button>
           </motion.div>
         ) : (
@@ -347,7 +351,10 @@ export default function Transactions() {
                   disabled={page === 1}
                   className="flex items-center gap-1.5 px-4 py-2 bg-white/5 hover:bg-white/10 border border-gray-700 rounded-xl text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
                 >
+                  <span>
+
                   <ChevronLeft size={15} /> Prev
+                  </span>
                 </button>
 
                 <div className="flex items-center gap-1">
@@ -366,7 +373,10 @@ export default function Transactions() {
                           page === p ? "bg-indigo-600 text-white" : "bg-white/5 hover:bg-white/10 text-gray-400"
                         }`}
                       >
+                        <span>
+
                         {p}
+                        </span>
                       </button>
                     );
                   })}
@@ -377,7 +387,10 @@ export default function Transactions() {
                   disabled={page === totalPages}
                   className="flex items-center gap-1.5 px-4 py-2 bg-white/5 hover:bg-white/10 border border-gray-700 rounded-xl text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
                 >
+                  <span>
+
                   Next <ChevronRight size={15} />
+                  </span>
                 </button>
               </div>
             )}

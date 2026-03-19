@@ -441,7 +441,10 @@ export default function Dashboard() {
                             }}
                             className="text-sm text-red-500 hover:text-red-700 ml-4 cursor-pointer font-bold"
                           >
+                          <span>
+
                             Delete
+                          </span>
                           </button>
                         </div>
                       </li>

@@ -396,7 +396,10 @@ export default function BudgetGoalsPage() {
                         className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-lg text-sm font-bold transition-colors flex items-center gap-1 cursor-pointer"
                       >
                         <Save size={14} />
+                        <span>
+
                         {savingCategory === category ? "..." : "Save"}
+                        </span>
                       </button>
                       <button
                         onClick={() => {
@@ -418,7 +421,10 @@ export default function BudgetGoalsPage() {
                         className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg border ${colors.border} ${colors.text} ${colors.bg} hover:opacity-80 transition-opacity cursor-pointer`}
                       >
                         <Edit3 size={12} />
+                        <span>
+
                         {limit > 0 ? "Edit Limit" : "Set Limit"}
+                        </span>
                       </button>
                       {limit > 0 && (
                         <button
@@ -426,7 +432,10 @@ export default function BudgetGoalsPage() {
                           className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg border border-red-500/30 text-red-400 bg-red-500/10 hover:bg-red-500/20 transition-colors cursor-pointer"
                         >
                           <Trash2 size={12} />
+                          <span>
+
                           Remove
+                          </span>
                         </button>
                       )}
                     </div>

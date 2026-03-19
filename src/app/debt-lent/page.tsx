@@ -192,14 +192,20 @@ export default function DebtLentPage() {
                         onClick={() => handleClear(entry._id)}
                         className="text-sm text-yellow-400 hover:text-yellow-600 mt-1 block"
                       >
+                        <span>
+
                         Mark as Cleared
+                        </span>
                       </button>
                     )}
                     <button
                       onClick={() => handleDelete(entry._id)}
                       className="text-sm text-red-500 hover:text-red-700 mt-1 block"
                     >
+                      <span>
+
                       Delete
+                      </span>
                     </button>
                   </div>
                 </li>

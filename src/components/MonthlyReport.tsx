@@ -99,7 +99,10 @@ export default function MonthlyReport({
           className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl font-bold text-sm transition-colors cursor-pointer"
         >
           <Download size={15} />
+          <span>
+
           Export as Image
+          </span>
         </button>
       </div>
 

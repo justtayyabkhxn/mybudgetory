@@ -139,7 +139,10 @@ export function AddDebtLentForm({ onAdd }: { onAdd: () => void }) {
           type="submit"
           className="sm:col-span-2 mt-2 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded font-bold"
         >
+          <span>
+
           Add Entry
+          </span>
         </button>
       </form>
 
