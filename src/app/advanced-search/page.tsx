@@ -168,16 +168,16 @@ export default function AdvancedSearchPage() {
         </div>
 
         {/* Filter toggle row */}
-        <div className="flex items-center gap-3 mb-4">
+        <div className="flex items-center gap-1 mb-4">
           <button
             onClick={() => setFiltersOpen(v => !v)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold border transition-all duration-200 cursor-pointer ${
+            className={`flex items-center gap-1 px-2 py-2 rounded-xl text-xs font-bold border transition-all duration-200 cursor-pointer ${
               filtersOpen || activeFilterCount > 0
                 ? "bg-fuchsia-500/15 text-fuchsia-400 border-fuchsia-500/30"
                 : "bg-white/5 text-gray-400 border-white/10 hover:bg-white/10"
             }`}
           >
-            <SlidersHorizontal size={15} />
+            <SlidersHorizontal size={10} />
             Filters
             {activeFilterCount > 0 && (
               <span className="bg-fuchsia-500 text-white text-[10px] font-black w-4 h-4 rounded-full flex items-center justify-center">
@@ -187,12 +187,12 @@ export default function AdvancedSearchPage() {
           </button>
 
           {/* Type quick-filter pills */}
-          <div className="flex gap-2">
+          <div className="flex gap-1">
             {(["","income","expense"] as const).map(t => (
               <button
                 key={t}
                 onClick={() => setSelectedType(t)}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition-all duration-200 cursor-pointer ${
+                className={`flex items-center gap-1 px-2 py-2 rounded-xl text-xs font-bold border transition-all duration-200 cursor-pointer ${
                   selectedType === t
                     ? t === "income"
                       ? "bg-green-500/20 text-green-400 border-green-500/40"
