@@ -1,15 +1,31 @@
 "use client";
-import MenuButton from "@/components/Menu";
-import { useEffect, useState } from "react";
-import { FaUserCircle } from "react-icons/fa";
-import axios, { AxiosError } from "axios";
-import { Upload } from "lucide-react";
-import { jwtDecode } from "jwt-decode";
 
-type User = {
+import MenuButton from "@/components/Menu";
+import BottomNav from "@/components/BottomNav";
+import { motion, AnimatePresence } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+import axios, { AxiosError } from "axios";
+import {
+  AlertTriangle,
+  Check,
+  ChevronDown,
+  Download,
+  Eye,
+  EyeOff,
+  KeyRound,
+  Loader2,
+  Lock,
+  Shield,
+  Trash2,
+  Upload,
+  User,
+  X,
+} from "lucide-react";
+
+type UserProfile = {
   name: string;
   email: string;
-  phone: string;
+  phone?: string;
 };
 
 interface Transaction {
@@ -22,460 +38,674 @@ interface Transaction {
   comment?: string;
 }
 
-type DecodedToken = {
-  email: string;
-};
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function getInitials(name: string) {
+  return name
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+}
 
+function formatCurrency(n: number) {
+  if (n >= 1_00_000) return `₹${(n / 1_00_000).toFixed(1)}L`;
+  if (n >= 1_000) return `₹${(n / 1_000).toFixed(1)}k`;
+  return `₹${n}`;
+}
+
+// ─── Section card wrapper ──────────────────────────────────────────────────────
+function Section({
+  icon,
+  title,
+  accent,
+  children,
+  delay = 0,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  accent: string;
+  children: React.ReactNode;
+  delay?: number;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 18 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.45, delay }}
+      className="bg-white/[0.03] border border-white/8 rounded-2xl overflow-hidden"
+    >
+      <div className={`flex items-center gap-2.5 px-5 py-4 border-b border-white/6 ${accent}`}>
+        {icon}
+        <h2 className="text-sm font-black uppercase tracking-widest">{title}</h2>
+      </div>
+      <div className="px-5 py-5 space-y-4">{children}</div>
+    </motion.div>
+  );
+}
+
+// ─── Password input with show/hide ────────────────────────────────────────────
+function PasswordField({
+  placeholder,
+  value,
+  onChange,
+}: {
+  placeholder: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const [show, setShow] = useState(false);
+  return (
+    <div className="relative">
+      <input
+        type={show ? "text" : "password"}
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        required
+        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 pr-11 text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/60 focus:border-indigo-500/40 transition"
+      />
+      <button
+        type="button"
+        onClick={() => setShow((v) => !v)}
+        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition"
+      >
+        {show ? <EyeOff size={16} /> : <Eye size={16} />}
+      </button>
+    </div>
+  );
+}
+
+// ─── Delete modal overlay ─────────────────────────────────────────────────────
+function DeleteModal({
+  open,
+  onClose,
+  onConfirm,
+  isDeleting,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  isDeleting: boolean;
+}) {
+  const [input, setInput] = useState("");
+
+  useEffect(() => {
+    if (!open) setInput("");
+  }, [open]);
+
+  return (
+    <AnimatePresence>
+      {open && (
+        <>
+          <motion.div
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+          />
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            initial={{ opacity: 0, scale: 0.94 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.94 }}
+            transition={{ type: "spring", stiffness: 260, damping: 22 }}
+          >
+            <div
+              className="w-full max-w-sm bg-[#12121f] border border-red-500/20 rounded-2xl p-6 shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2 text-red-400">
+                  <AlertTriangle size={18} />
+                  <span className="text-sm font-black uppercase tracking-widest">
+                    Danger Zone
+                  </span>
+                </div>
+                <button
+                  onClick={onClose}
+                  className="text-gray-600 hover:text-gray-300 transition"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              <p className="text-gray-300 text-sm leading-relaxed mb-1">
+                This will permanently delete{" "}
+                <span className="text-white font-bold">all your transactions</span>.
+                This action cannot be undone.
+              </p>
+              <p className="text-gray-500 text-xs mb-4">
+                Type <span className="text-red-400 font-bold">delete</span> to confirm.
+              </p>
+
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder='Type "delete"'
+                className="w-full bg-white/5 border border-red-500/30 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-red-500/50 transition mb-4"
+              />
+
+              <div className="flex gap-3">
+                <button
+                  onClick={onClose}
+                  className="flex-1 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 text-sm font-semibold transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={onConfirm}
+                  disabled={input !== "delete" || isDeleting}
+                  className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-bold transition flex items-center justify-center gap-2"
+                >
+                  {isDeleting ? (
+                    <Loader2 size={15} className="animate-spin" />
+                  ) : (
+                    <Trash2 size={15} />
+                  )}
+                  {isDeleting ? "Deleting…" : "Delete All"}
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+}
+
+// ─── Main page ────────────────────────────────────────────────────────────────
 export default function Profile() {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [txs, setTxs] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const [message, setMessage] = useState("");
-  const [messageType, setMessageType] = useState<"success" | "error" | "">("");
-  const [isImporting, setIsImporting] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-
+  // password
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [txs, setTxs] = useState<Transaction[]>([]);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deleteInput, setDeleteInput] = useState("");
-  const [deleteMessage, setDeleteMessage] = useState("");
+  const [pwStatus, setPwStatus] = useState<{ msg: string; ok: boolean } | null>(null);
+  const [pwLoading, setPwLoading] = useState(false);
 
+  // import
   const [importFile, setImportFile] = useState<File | null>(null);
-  const [importMessage, setImportMessage] = useState("");
-  const [importMessageType, setImportMessageType] = useState<
-    "success" | "error" | ""
-  >("");
+  const [importStatus, setImportStatus] = useState<{ msg: string; ok: boolean } | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      setImportFile(e.target.files[0]);
-    }
+  // delete modal
+  const [showDelete, setShowDelete] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteStatus, setDeleteStatus] = useState<{ msg: string; ok: boolean } | null>(null);
+
+  // export success flash
+  const [exportDone, setExportDone] = useState(false);
+
+  // ── Fetch data ──────────────────────────────────────────────────────────────
+  const fetchTransactions = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+    const res = await fetch("/api/transactions", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await res.json();
+    if (data.transactions) setTxs(data.transactions);
   };
 
-  const handleDeleteAllTransactions = async () => {
-    if (deleteInput !== "delete") {
-      setDeleteMessage("You must type 'delete' to confirm.");
-      return;
-    }
-
-    setIsDeleting(true);
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        alert("You must be logged in to delete transactions.");
-        return;
+  useEffect(() => {
+    const init = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+        const { data } = await axios.get("/api/user/profile", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setUser(data);
+        await fetchTransactions();
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
       }
+    };
+    init();
+  }, []);
 
-      const res = await axios.delete("/api/transactions", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+  // ── Computed stats ──────────────────────────────────────────────────────────
+  const totalIncome = txs.filter((t) => t.type === "income").reduce((s, t) => s + t.amount, 0);
+  const totalExpenses = txs.filter((t) => t.type === "expense").reduce((s, t) => s + t.amount, 0);
 
-      if (res.status === 200) {
-        setDeleteMessage("✅ All transactions have been deleted.");
-        setDeleteInput("");
-        setShowDeleteConfirm(false);
-        fetchTransactions();
-      } else {
-        setDeleteMessage("❌ Failed to delete transactions.");
-      }
-    } catch (err) {
-      console.error(err);
-      setDeleteMessage("❌ Error deleting transactions.");
-    } finally {
-      setIsDeleting(false);
-    }
+  // ── Handlers ────────────────────────────────────────────────────────────────
+  const handleExport = () => {
+    const blob = new Blob([JSON.stringify(txs, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "mybudgetory-transactions.json";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setExportDone(true);
+    setTimeout(() => setExportDone(false), 2500);
   };
 
   const handleImport = async () => {
     if (!importFile) {
-      setImportMessage("Please select a JSON file to import.");
-      setImportMessageType("error");
+      setImportStatus({ msg: "Please select a JSON file.", ok: false });
       return;
     }
-
     setIsImporting(true);
     try {
       const text = await importFile.text();
-      const importedTxs: Omit<Transaction, "_id">[] = JSON.parse(text);
-
-      const validTxs = importedTxs.filter(
-        (tx) =>
-          tx.title &&
-          typeof tx.amount === "number" &&
-          tx.category &&
-          tx.type &&
-          tx.date
+      const parsed: Omit<Transaction, "_id">[] = JSON.parse(text);
+      const valid = parsed.filter(
+        (t) => t.title && typeof t.amount === "number" && t.category && t.type && t.date
       );
-
-      if (validTxs.length === 0) {
-        setImportMessage("No valid transactions found in the file.");
-        setImportMessageType("error");
+      if (valid.length === 0) {
+        setImportStatus({ msg: "No valid transactions found.", ok: false });
         return;
       }
-
       const token = localStorage.getItem("token");
-      if (!token) {
-        alert("You must be logged in to import transactions.");
-        return;
-      }
-
-      const response = await axios.post("/api/transactions/import", validTxs, {
+      const res = await axios.post("/api/transactions/import", valid, {
         headers: { Authorization: `Bearer ${token}` },
       });
-
-      if (response.status === 201) {
-        setImportMessage(
-          `Successfully imported ${validTxs.length} transactions.`
-        );
-        setImportMessageType("success");
+      if (res.status === 201) {
+        setImportStatus({ msg: `Imported ${valid.length} transactions.`, ok: true });
         setImportFile(null);
-        fetchTransactions();
+        if (fileInputRef.current) fileInputRef.current.value = "";
+        await fetchTransactions();
       } else {
-        setImportMessage("Failed to import transactions.");
-        setImportMessageType("error");
+        setImportStatus({ msg: "Import failed.", ok: false });
       }
-    } catch (error) {
-      console.error(error);
-      setImportMessage(
-        "Failed to import transactions. Please check the file format."
-      );
-      setImportMessageType("error");
+    } catch {
+      setImportStatus({ msg: "Invalid file format.", ok: false });
     } finally {
       setIsImporting(false);
     }
   };
 
-  useEffect(() => {
-    if (message) {
-      const timer = setTimeout(() => {
-        setMessage("");
-        setMessageType("");
-      }, 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [message]);
-
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          alert("No token found. Please login.");
-          return;
-        }
-
-        const decoded: DecodedToken = jwtDecode(token);
-
-        const { data } = await axios.get("/api/user/profile", {
-          params: { email: decoded.email },
-        });
-
-        setUser(data);
-      } catch (err) {
-        console.error(err);
-        alert("Failed to fetch profile" + err);
+  const handleDeleteAll = async () => {
+    setIsDeleting(true);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.delete("/api/transactions", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.status === 200) {
+        setShowDelete(false);
+        setDeleteStatus({ msg: "All transactions deleted.", ok: true });
+        await fetchTransactions();
+      } else {
+        setDeleteStatus({ msg: "Delete failed.", ok: false });
       }
-    };
-
-    fetchTransactions();
-    fetchProfile();
-  }, []);
-
-  const fetchTransactions = () => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
-
-    fetch("/api/transactions", {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.transactions) setTxs(data.transactions);
-      })
-      .catch(console.error);
-  };
-
-  const handleDownloadData = () => {
-    const data = txs;
-    const jsonStr = JSON.stringify(data, null, 2);
-    const blob = new Blob([jsonStr], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "transactions.json";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    } catch {
+      setDeleteStatus({ msg: "Error deleting transactions.", ok: false });
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (newPassword !== confirmPassword) {
-      setMessage("New passwords do not match!");
-      setMessageType("error");
+      setPwStatus({ msg: "New passwords do not match.", ok: false });
       return;
     }
-
+    setPwLoading(true);
     try {
       const { data } = await axios.post("/api/user/update-password", {
         email: user?.email,
         oldPassword,
         newPassword,
       });
-
-      setMessage(data.message || "Password changed successfully!");
-      setMessageType("success");
-
+      setPwStatus({ msg: data.message || "Password updated!", ok: true });
       setOldPassword("");
       setNewPassword("");
       setConfirmPassword("");
     } catch (err) {
       const error = err as AxiosError<{ message: string }>;
-      setMessage(error.response?.data?.message || "Failed to change password.");
-      setMessageType("error");
+      setPwStatus({ msg: error.response?.data?.message || "Failed to update.", ok: false });
+    } finally {
+      setPwLoading(false);
     }
   };
 
+  // ── Avatar ──────────────────────────────────────────────────────────────────
+  const initials = user ? getInitials(user.name) : "?";
+
   return (
-    <main className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 text-white p-4 sm:p-5 relative">
-      {/* Positioned MenuButton absolutely in the top-right corner */}
-      <div className="absolute top-4 right-4 z-50">
+    <main className="min-h-screen bg-[#080810] text-white pb-28">
+      {/* Background blobs */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-indigo-600/8 rounded-full blur-3xl" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40vw] h-[40vw] bg-purple-600/8 rounded-full blur-3xl" />
+      </div>
+
+      {/* Header */}
+      <div className="sticky top-0 z-40 bg-[#080810]/80 backdrop-blur-xl border-b border-white/6">
+        <div className="max-w-2xl mx-auto px-4 py-3">
+          <p className="text-xs text-gray-500 font-semibold uppercase tracking-widest">
+            MyBudgetory
+          </p>
+          <h1 className="text-lg font-black text-white">Profile</h1>
+        </div>
+      </div>
+
+      {/* Menu button — fixed outside stacking context so backdrop/drawer render correctly */}
+      <div className="fixed top-3 right-4 z-50">
         <MenuButton />
       </div>
 
-      <div className="max-w-4xl mx-auto bg-[#14162b] shadow-xl rounded-3xl p-4 md:p-10 mt-16 transform transition-all duration-300 hover:scale-[1.005]">
-        <div className="flex items-center justify-center mb-4">
-          <FaUserCircle className="text-indigo-400 text-7xl drop-shadow-lg" />
-        </div>
+      <div className="max-w-2xl mx-auto px-4 py-6 space-y-5 relative">
 
-        <h1 className="text-4xl font-extrabold tracking-tight text-center text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-500 mb-10 pb-2 border-b-2 border-indigo-800">
-          Your Profile
-        </h1>
-
-        {/* User Info */}
-        <div className="space-y-6 mb-10">
-          <div>
-            <label
-              htmlFor="name-input"
-              className="block text-gray-300 text-sm font-semibold mb-1"
-            >
-              Name
-            </label>
-            <input
-              id="name-input"
-              value={user?.name || "User"}
-              disabled
-              className="w-full px-4 py-3 mt-1 rounded-xl bg-gray-800 text-white border border-gray-700 cursor-not-allowed"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="email-input"
-              className="block text-gray-300 text-sm font-semibold mb-1"
-            >
-              Email
-            </label>
-            <input
-              id="email-input"
-              value={user?.email || "user@gmail.com"}
-              disabled
-              className="w-full px-4 py-3 mt-1 rounded-xl bg-gray-800 text-white border border-gray-700 cursor-not-allowed"
-            />
-          </div>
-        </div>
-
-        {/* Download Button with Custom Tooltip */}
-        <div className="relative group mb-6">
-          <button
-            onClick={handleDownloadData}
-            className="w-full mt-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer font-bold text-lg transform hover:-translate-y-0.5"
-            aria-describedby="download-tooltip"
-          >
-            Download Your Data (JSON)
-          </button>
-          <div
-            id="download-tooltip"
-            role="tooltip"
-            className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-gray-800 text-white text-sm rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity duration-300 pointer-events-none z-10 whitespace-nowrap
-            before:content-[''] before:absolute before:top-full before:left-1/2 before:-translate-x-1/2 before:border-8 before:border-t-gray-800 before:border-x-transparent before:border-b-transparent"
-          >
-            Download all your transaction data as a JSON file.
-          </div>
-        </div>
-
-        {/* Import Section */}
-        <div className="mb-8 p-6 bg-[#1f233a] rounded-2xl shadow-inner border border-blue-900">
-          <h2 className="text-xl font-bold text-blue-300 mb-4 flex items-center gap-2">
-            <Upload className="w-6 h-6" /> Import Transactions
-          </h2>
-          <p className="text-gray-400 text-sm mb-4">
-            Upload a JSON file containing your transaction data. Ensure the
-            format matches the downloaded data.
-          </p>
-          <input
-            type="file"
-            accept=".json,application/json"
-            onChange={handleFileChange}
-            className="block w-full text-sm text-gray-300
-                     file:mr-4 file:py-2 file:px-4
-                     file:rounded-full file:border-0
-                     file:text-sm file:font-semibold
-                     file:bg-blue-800 file:text-blue-200
-                     hover:file:bg-blue-700
-                     cursor-pointer
-                     mb-4"
-          />
-          <button
-            onClick={handleImport}
-            disabled={isImporting}
-            className={`w-full py-3 px-4 rounded-xl shadow-md text-white transition-all duration-300 font-semibold cursor-pointer text-lg flex items-center justify-center gap-2 transform hover:-translate-y-0.5 ${
-              isImporting
-                ? "bg-gradient-to-r from-gray-400 to-gray-500 cursor-not-allowed"
-                : "bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
-            }`}
-          >
-            {isImporting ? (
-              "Importing..."
-            ) : (
-              <>
-                <Upload className="w-5 h-5" />
-                Import Transactions
-              </>
-            )}{" "}
-          </button>
-
-          {importMessage && (
-            <p
-              className={`mt-4 text-center text-sm font-medium animate-fade-in ${
-                importMessageType === "success"
-                  ? "text-green-400"
-                  : "text-red-400"
-              }`}
-            >
-              {importMessage}
-            </p>
-          )}
-        </div>
-
-        {/* Delete All Transactions Section */}
-        <div className="mb-10">
-          {!showDeleteConfirm ? (
-            <button
-              onClick={() => setShowDeleteConfirm(true)}
-              className="w-full mt-4 bg-gradient-to-r from-red-500 to-pink-500 cursor-pointer text-white py-3 px-4 rounded-xl shadow-lg hover:shadow-xl transition font-bold text-lg transform hover:-translate-y-0.5"
-            >
-              Delete All Transactions
-            </button>
-          ) : (
-            <div className="bg-red-950 p-6 mt-4 rounded-2xl shadow-inner border border-red-800 animate-fade-in">
-              <p className="text-base font-semibold text-red-300 mb-3 leading-relaxed">
-                <span className="font-extrabold text-lg mr-1">⚠️</span>This
-                action is irreversible. All your transaction data will be
-                permanently deleted. To confirm, type{" "}
-                <strong className="text-red-200">delete</strong> below:
-              </p>
-              <input
-                type="text"
-                value={deleteInput}
-                onChange={(e) => setDeleteInput(e.target.value)}
-                placeholder='Type "delete" to confirm'
-                className="w-full px-4 py-2.5 rounded-lg border border-red-300 bg-gray-800 text-white mb-4 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition duration-200 ease-in-out"
-              />
-
-              <div className="flex gap-3">
-                <button
-                  onClick={handleDeleteAllTransactions}
-                  disabled={isDeleting}
-                  className="flex-1 bg-gradient-to-r from-red-600 to-pink-600 text-white py-2.5 rounded-lg font-semibold shadow hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:-translate-y-0.5"
-                >
-                  {isDeleting ? "Deleting..." : "Confirm Delete"}
-                </button>
-                <button
-                  onClick={() => {
-                    setShowDeleteConfirm(false);
-                    setDeleteInput("");
-                    setDeleteMessage("");
-                  }}
-                  className="flex-1 bg-gray-700 text-white py-2.5 rounded-lg font-semibold shadow hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5"
-                >
-                  Cancel
-                </button>
-              </div>
-
-              {deleteMessage && (
-                <p
-                  className={`text-sm mt-4 text-center font-medium animate-fade-in ${
-                    deleteMessage.includes("✅")
-                      ? "text-green-400"
-                      : "text-red-400"
-                  }`}
-                >
-                  {deleteMessage}
-                </p>
+        {/* ── Avatar + hero ─────────────────────────────────────────────────── */}
+        <motion.div
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45 }}
+          className="flex flex-col items-center pt-4 pb-6"
+        >
+          {/* Avatar ring */}
+          <div className="relative mb-4">
+            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-2xl font-black text-white shadow-lg shadow-indigo-900/40 ring-4 ring-indigo-500/20">
+              {loading ? (
+                <Loader2 size={24} className="animate-spin opacity-60" />
+              ) : (
+                initials
               )}
             </div>
-          )}
-        </div>
+            <div className="absolute bottom-0 right-0 w-5 h-5 rounded-full bg-green-500 border-2 border-[#080810]" />
+          </div>
 
-        {/* Password Change Form */}
-        <form
-          onSubmit={handlePasswordChange}
-          className="space-y-6 p-6 bg-[#1f233a] rounded-2xl shadow-inner border border-gray-900"
+          {loading ? (
+            <div className="space-y-2 w-40 text-center">
+              <div className="h-5 bg-white/8 rounded-full animate-pulse mx-auto w-32" />
+              <div className="h-3.5 bg-white/5 rounded-full animate-pulse mx-auto w-44" />
+            </div>
+          ) : (
+            <>
+              <h2 className="text-xl font-black text-white">{user?.name}</h2>
+              <p className="text-sm text-gray-500 mt-0.5">{user?.email}</p>
+            </>
+          )}
+        </motion.div>
+
+        {/* ── Stats row ─────────────────────────────────────────────────────── */}
+        <motion.div
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, delay: 0.08 }}
+          className="grid grid-cols-3 gap-3"
         >
-          <h2 className="text-2xl font-bold text-gray-200 border-b-2 border-indigo-800 pb-3 mb-4">
-            Change Password
-          </h2>
-
-          <input
-            type="password"
-            placeholder="Current Password"
-            className="w-full px-4 py-2.5 rounded-xl bg-gray-800 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200 ease-in-out"
-            value={oldPassword}
-            onChange={(e) => setOldPassword(e.target.value)}
-            required
-          />
-
-          <input
-            type="password"
-            placeholder="New Password"
-            className="w-full px-4 py-2.5 rounded-xl bg-gray-800 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200 ease-in-out"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            required
-          />
-
-          <input
-            type="password"
-            placeholder="Confirm New Password"
-            className="w-full px-4 py-2.5 rounded-xl bg-gray-800 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200 ease-in-out"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            required
-          />
-
-          {message && (
-            <p
-              className={`text-sm font-medium mt-3 text-center animate-fade-in ${
-                messageType === "success" ? "text-green-400" : "text-red-400"
-              }`}
+          {[
+            { label: "Transactions", value: loading ? "—" : txs.length.toString(), color: "text-indigo-400" },
+            { label: "Total Income", value: loading ? "—" : formatCurrency(totalIncome), color: "text-emerald-400" },
+            { label: "Total Spent", value: loading ? "—" : formatCurrency(totalExpenses), color: "text-rose-400" },
+          ].map((s) => (
+            <div
+              key={s.label}
+              className="bg-white/[0.03] border border-white/8 rounded-2xl px-3 py-4 text-center"
             >
-              {message}
-            </p>
-          )}
+              <p className={`text-base font-black ${s.color}`}>{s.value}</p>
+              <p className="text-[10px] text-gray-600 font-semibold mt-1 uppercase tracking-wider">
+                {s.label}
+              </p>
+            </div>
+          ))}
+        </motion.div>
 
-          <button
-            type="submit"
-            className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer font-bold text-lg transform hover:-translate-y-0.5"
-          >
-            Update Password
-          </button>
-        </form>
+        {/* ── Account Info ──────────────────────────────────────────────────── */}
+        <Section
+          icon={<User size={14} />}
+          title="Account Info"
+          accent="text-indigo-400"
+          delay={0.12}
+        >
+          <div>
+            <label className="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-1.5 block">
+              Full Name
+            </label>
+            <div className="w-full bg-white/4 border border-white/8 rounded-xl px-4 py-3 text-sm text-gray-300 font-semibold">
+              {loading ? (
+                <span className="block h-4 bg-white/8 rounded animate-pulse w-36" />
+              ) : (
+                user?.name || "—"
+              )}
+            </div>
+          </div>
+          <div>
+            <label className="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-1.5 block">
+              Email Address
+            </label>
+            <div className="w-full bg-white/4 border border-white/8 rounded-xl px-4 py-3 text-sm text-gray-300 font-semibold">
+              {loading ? (
+                <span className="block h-4 bg-white/8 rounded animate-pulse w-48" />
+              ) : (
+                user?.email || "—"
+              )}
+            </div>
+          </div>
+        </Section>
+
+        {/* ── Data Management ───────────────────────────────────────────────── */}
+        <Section
+          icon={<Download size={14} />}
+          title="Data Management"
+          accent="text-sky-400"
+          delay={0.18}
+        >
+          {/* Export */}
+          <div>
+            <p className="text-xs text-gray-500 mb-3">
+              Download all your transaction data as a JSON file.
+            </p>
+            <button
+              onClick={handleExport}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-emerald-600/15 hover:bg-emerald-600/25 border border-emerald-500/20 text-emerald-400 text-sm font-bold transition"
+            >
+              {exportDone ? (
+                <>
+                  <Check size={15} />
+                  Downloaded!
+                </>
+              ) : (
+                <>
+                  <Download size={15} />
+                  Export JSON ({txs.length} transactions)
+                </>
+              )}
+            </button>
+          </div>
+
+          {/* Divider */}
+          <div className="border-t border-white/6" />
+
+          {/* Import */}
+          <div>
+            <p className="text-xs text-gray-500 mb-3">
+              Import transactions from a JSON file. Must match the export format.
+            </p>
+
+            {/* Drop zone / file picker */}
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              className="w-full border-2 border-dashed border-white/10 hover:border-sky-500/40 rounded-xl p-5 flex flex-col items-center gap-2 cursor-pointer transition group mb-3"
+            >
+              <Upload
+                size={20}
+                className="text-gray-600 group-hover:text-sky-400 transition"
+              />
+              {importFile ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-sky-400 font-semibold">
+                    {importFile.name}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setImportFile(null);
+                      if (fileInputRef.current) fileInputRef.current.value = "";
+                    }}
+                    className="text-gray-600 hover:text-red-400 transition"
+                  >
+                    <X size={13} />
+                  </button>
+                </div>
+              ) : (
+                <span className="text-xs text-gray-600 group-hover:text-gray-400 transition">
+                  Click to select a JSON file
+                </span>
+              )}
+            </div>
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".json,application/json"
+              onChange={(e) => {
+                if (e.target.files?.[0]) setImportFile(e.target.files[0]);
+              }}
+              className="hidden"
+            />
+
+            <button
+              onClick={handleImport}
+              disabled={isImporting || !importFile}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-sky-600/15 hover:bg-sky-600/25 border border-sky-500/20 text-sky-400 text-sm font-bold transition disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {isImporting ? (
+                <Loader2 size={15} className="animate-spin" />
+              ) : (
+                <Upload size={15} />
+              )}
+              {isImporting ? "Importing…" : "Import Transactions"}
+            </button>
+
+            <AnimatePresence>
+              {importStatus && (
+                <motion.p
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className={`text-xs text-center mt-3 font-semibold ${importStatus.ok ? "text-emerald-400" : "text-red-400"}`}
+                >
+                  {importStatus.ok ? "✓ " : "✗ "}
+                  {importStatus.msg}
+                </motion.p>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Divider */}
+          <div className="border-t border-white/6" />
+
+          {/* Delete all */}
+          <div>
+            <p className="text-xs text-gray-500 mb-3">
+              Permanently remove all your transaction records. This cannot be undone.
+            </p>
+
+            {deleteStatus && (
+              <p
+                className={`text-xs text-center mb-3 font-semibold ${deleteStatus.ok ? "text-emerald-400" : "text-red-400"}`}
+              >
+                {deleteStatus.ok ? "✓ " : "✗ "}
+                {deleteStatus.msg}
+              </p>
+            )}
+
+            <button
+              onClick={() => setShowDelete(true)}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-red-600/10 hover:bg-red-600/20 border border-red-500/20 text-red-400 text-sm font-bold transition"
+            >
+              <Trash2 size={15} />
+              Delete All Transactions
+            </button>
+          </div>
+        </Section>
+
+        {/* ── Security / Change Password ────────────────────────────────────── */}
+        <Section
+          icon={<Shield size={14} />}
+          title="Security"
+          accent="text-purple-400"
+          delay={0.24}
+        >
+          <form onSubmit={handlePasswordChange} className="space-y-3">
+            <div>
+              <label className="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-1.5 block">
+                Current Password
+              </label>
+              <PasswordField
+                placeholder="Enter current password"
+                value={oldPassword}
+                onChange={setOldPassword}
+              />
+            </div>
+            <div>
+              <label className="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-1.5 block">
+                New Password
+              </label>
+              <PasswordField
+                placeholder="Enter new password"
+                value={newPassword}
+                onChange={setNewPassword}
+              />
+            </div>
+            <div>
+              <label className="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-1.5 block">
+                Confirm New Password
+              </label>
+              <PasswordField
+                placeholder="Confirm new password"
+                value={confirmPassword}
+                onChange={setConfirmPassword}
+              />
+            </div>
+
+            <AnimatePresence>
+              {pwStatus && (
+                <motion.p
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className={`text-xs text-center font-semibold ${pwStatus.ok ? "text-emerald-400" : "text-red-400"}`}
+                >
+                  {pwStatus.ok ? "✓ " : "✗ "}
+                  {pwStatus.msg}
+                </motion.p>
+              )}
+            </AnimatePresence>
+
+            <button
+              type="submit"
+              disabled={pwLoading}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-sm font-black transition disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-indigo-900/30"
+            >
+              {pwLoading ? (
+                <Loader2 size={15} className="animate-spin" />
+              ) : (
+                <KeyRound size={15} />
+              )}
+              {pwLoading ? "Updating…" : "Update Password"}
+            </button>
+          </form>
+        </Section>
+
       </div>
+
+      {/* Delete modal */}
+      <DeleteModal
+        open={showDelete}
+        onClose={() => setShowDelete(false)}
+        onConfirm={handleDeleteAll}
+        isDeleting={isDeleting}
+      />
+
+      <BottomNav />
     </main>
   );
 }

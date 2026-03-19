@@ -1,6 +1,8 @@
 "use client";
-import { useEffect, useState } from "react";
+
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import { AddTransactionForm } from "../../components/AddTransactionForm";
 import { TxnCard } from "../../components/TxnCard";
 import Link from "next/link";
@@ -16,20 +18,23 @@ import {
   BanknoteArrowUp,
   FileDigit,
   RefreshCcwDot,
-  CalendarClock,
   ArrowDownCircle,
   ArrowUpCircle,
   Wallet,
   RefreshCw,
   HandMetal,
-  Route
+  Route,
 } from "lucide-react";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
-import { jwtDecode } from "jwt-decode";
 import axios from "axios";
+import CountUp from "@/components/CountUp";
+import { SkeletonCard, SkeletonTransactionRow } from "@/components/SkeletonLoader";
+import MonthlyReport from "@/components/MonthlyReport";
+import BottomNav from "@/components/BottomNav";
+import { CATEGORY_COLORS } from "@/lib/categoryConfig";
 
-const categoryIcons = {
+const categoryIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   Food: Utensils,
   Outing: Briefcase,
   Clothes: Shirt,
@@ -37,12 +42,9 @@ const categoryIcons = {
   Bills: ReceiptText,
   Entertainment: Clapperboard,
   Travel: Plane,
-  SMM:Route,
+  SMM: Route,
   Others: BanknoteArrowUp,
-};
-
-type DecodedToken = {
-  email: string;
+  Other: BanknoteArrowUp,
 };
 
 interface Transaction {
@@ -70,7 +72,6 @@ export default function Dashboard() {
   const [net, setNet] = useState<number>(0);
   const [today, setToday] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
-
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -151,41 +152,13 @@ export default function Dashboard() {
     }
   }, []);
 
-  // Fetch transactions
+  // Fetch profile via auth token (no email exposure)
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) return;
-    fetch("/api/transactions", {
+    axios.get("/api/user/profile", {
       headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.transactions) setTxs(data.transactions);
-      })
-      .catch(console.error);
-
-    const fetchProfile = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          alert("No token found. Please login.");
-          return;
-        }
-
-        const decoded: DecodedToken = jwtDecode(token);
-
-        const { data } = await axios.get("/api/user/profile", {
-          params: { email: decoded.email },
-        });
-
-        setUser(data);
-      } catch (err) {
-        console.error(err);
-        alert("Failed to fetch profile" + err);
-      }
-    };
-
-    fetchProfile();
+    }).then(({ data }) => setUser(data)).catch(console.error);
   }, []);
 
   const handleDelete = async (id: string) => {
@@ -196,14 +169,12 @@ export default function Dashboard() {
       "Are you sure you want to delete this transaction?"
     );
     if (!confirm) return;
+
     try {
       const res = await fetch(`/api/transactions/${id}`, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
-
       const data = await res.json();
       if (data.success) {
         setTxs((prev) => prev.filter((tx) => tx._id !== id));
@@ -215,36 +186,35 @@ export default function Dashboard() {
     }
   };
 
-  const fetchTransactions = () => {
+  const fetchTransactions = useCallback(() => {
     const token = localStorage.getItem("token");
     if (!token) return;
-
-    setLoading(true); // start loading
-    fetch("/api/transactions", {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.transactions) setTxs(data.transactions);
-      })
+    setLoading(true);
+    fetch("/api/transactions", { headers: { Authorization: `Bearer ${token}` } })
+      .then((res) => { if (res.status === 401) { localStorage.removeItem("token"); window.location.href = "/login"; } return res.json(); })
+      .then((data) => { if (data.transactions) setTxs(data.transactions); })
       .catch(console.error)
-      .finally(() => setLoading(false)); // stop loading
-  };
+      .finally(() => setLoading(false));
+  }, []);
 
   useEffect(() => {
     if (user) fetchTransactions();
-  }, [user]);
+  }, [user, fetchTransactions]);
+
+  const now = new Date();
+  const monthName = now.toLocaleString("default", { month: "long" });
+  const savingsRate =
+    inflow > 0 ? Math.round(((inflow - expense) / inflow) * 100) : 0;
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-gray-900 via-black to-gray-800 text-white p-4 sm:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 text-white p-4 sm:p-8 pb-24">
       <div className={menuOpen ? "overflow-hidden h-screen" : ""}>
         <div className="max-w-5xl mx-auto">
           {/* Header */}
           <Header />
 
-          {/* Dashboard and Transactions */}
+          {/* Dashboard Title Row */}
           <div className="mb-5 mt-4 flex items-center justify-between">
-            {/* Left side: Heading and welcome text */}
             <div className="mt-0">
               <div className="flex items-center gap-2">
                 <FileDigit color="#00d138" />
@@ -257,7 +227,7 @@ export default function Dashboard() {
                   title="Refresh Data"
                 >
                   <RefreshCw
-                    className={`w-6 h-6 text-green-400 ${
+                    className={`w-6 h-6 text-green-300 ${
                       loading ? "animate-spin" : ""
                     }`}
                   />
@@ -265,7 +235,7 @@ export default function Dashboard() {
               </div>
               <p className="text-gray-400 mt-1 flex items-center font-bold gap-x-1">
                 Welcome back <HandMetal color="#ff9900" />,{" "}
-               <span className="text-green-300" > {user?.name || "User"} </span> 
+                <span className="text-green-300">{user?.name || "User"}</span>
               </p>
             </div>
 
@@ -279,75 +249,157 @@ export default function Dashboard() {
                 onClick={() => setMenuOpen(false)}
               />
             )}
-            {/* Menu */}
           </div>
 
-          <div className="flex items-center gap-2 text-2xl font-extrabold tracking-tight mb-4">
-            <CalendarClock color="#ec4899" />
-            Today :{" "}
-            <span className={`text-gray-300 ${loading ? "animate-pulse" : ""}`}>
-              {loading ? "Loading..." : `₹ ${today}.00`}
-            </span>{" "}
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 tracking-tight overflow-x-auto mb-4">
-            <Link href="/inflow" className="cursor-pointer">
-              <TxnCard
-                title={`Total Inflow (${new Date().toLocaleString("default", {
-                  month: "long",
-                })})`}
-                amount={
-                  loading ? "Loading..." : `₹ ${inflow.toLocaleString()}.00`
-                }
-                color="text-green-400"
-                icon={<ArrowDownCircle className="w-6 h-6 text-green-400" />}
-              />
-            </Link>
-
-            <Link href="/expenses" className="cursor-pointer">
-              <TxnCard
-                title={`Total Expenses (${new Date().toLocaleString("default", {
-                  month: "long",
-                })})`}
-                amount={
-                  loading ? "Loading..." : `₹ ${expense.toLocaleString()}.00`
-                }
-                color="text-red-500"
-                icon={<ArrowUpCircle className="w-6 h-6 text-red-500" />}
-              />
-            </Link>
-
-            <div>
-              <TxnCard
-                title={`Savings (${new Date().toLocaleString("default", {
-                  month: "long",
-                })})`}
-                amount={loading ? "Loading..." : `₹ ${net.toLocaleString()}.00`}
-                color="text-gray-300"
-                icon={<Wallet className="w-6 h-6 text-gray-300" />}
-              />
+          {/* Hero Card */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="bg-gradient-to-br from-gray-900/90 via-indigo-950/40 to-gray-900/90 border border-indigo-500/20 rounded-2xl p-6 mb-6 shadow-xl"
+          >
+            {/* Top row: month + savings badge */}
+            <div className="flex items-center justify-between mb-5">
+              <span className="text-sm font-bold text-gray-400">
+                {monthName} {now.getFullYear()}
+              </span>
+              <span
+                className={`text-xs font-bold px-3 py-1.5 rounded-full border ${
+                  savingsRate >= 0
+                    ? "bg-green-500/15 text-green-300 border-green-500/30"
+                    : "bg-red-500/15 text-red-400 border-red-500/30"
+                }`}
+              >
+                {savingsRate}% saved
+              </span>
             </div>
+
+            {/* Income & Expenses columns */}
+            <div className="grid grid-cols-2 gap-4 mb-5">
+              <div>
+                <Link href="/inflow">
+                  <p className="text-xs font-semibold text-green-300 uppercase tracking-wider mb-1">
+                    Income
+                  </p>
+                  {loading ? (
+                    <div className="h-10 w-32 bg-gray-700/50 rounded-lg animate-pulse" />
+                  ) : (
+                    <CountUp
+                      end={inflow}
+                      prefix="₹"
+                      className="text-4xl font-black text-green-300"
+                    />
+                  )}
+                </Link>
+              </div>
+              <div>
+                <Link href="/expenses">
+                  <p className="text-xs font-semibold text-red-400 uppercase tracking-wider mb-1">
+                    Expenses
+                  </p>
+                  {loading ? (
+                    <div className="h-10 w-32 bg-gray-700/50 rounded-lg animate-pulse" />
+                  ) : (
+                    <CountUp
+                      end={expense}
+                      prefix="₹"
+                      className="text-4xl font-black text-red-400"
+                    />
+                  )}
+                </Link>
+              </div>
+            </div>
+
+            {/* Divider */}
+            <div className="border-t border-gray-700/50 mb-4" />
+
+            {/* Net Savings row */}
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-gray-400 mb-1">Net Savings</p>
+                {loading ? (
+                  <div className="h-7 w-24 bg-gray-700/50 rounded-lg animate-pulse" />
+                ) : (
+                  <CountUp
+                    end={Math.abs(net)}
+                    prefix={net >= 0 ? "₹" : "-₹"}
+                    className={`text-2xl font-black ${
+                      net >= 0 ? "text-green-300" : "text-red-400"
+                    }`}
+                  />
+                )}
+              </div>
+              {!loading && (
+                <div className="text-right">
+                  <span className="text-xs text-gray-500">Today&apos;s Spend</span>
+                  <p className="text-sm font-bold text-orange-400">
+                    ₹{today.toLocaleString()}
+                  </p>
+                </div>
+              )}
+            </div>
+          </motion.div>
+
+          {/* Legacy TxnCards (hidden on mobile, compact grid) */}
+          <div className="hidden sm:grid grid-cols-3 gap-3 mb-6">
+            {loading ? (
+              <>
+                <SkeletonCard />
+                <SkeletonCard />
+                <SkeletonCard />
+              </>
+            ) : (
+              <>
+                <Link href="/inflow">
+                  <TxnCard
+                    title={`Total Inflow (${monthName})`}
+                    amount={`₹${inflow.toLocaleString()}`}
+                    color="text-green-300"
+                    icon={<ArrowDownCircle className="w-5 h-5 text-green-300" />}
+                  />
+                </Link>
+                <Link href="/expenses">
+                  <TxnCard
+                    title={`Total Expenses (${monthName})`}
+                    amount={`₹${expense.toLocaleString()}`}
+                    color="text-red-500"
+                    icon={<ArrowUpCircle className="w-5 h-5 text-red-500" />}
+                  />
+                </Link>
+                <TxnCard
+                  title={`Savings (${monthName})`}
+                  amount={`₹${net.toLocaleString()}`}
+                  color="text-gray-300"
+                  icon={<Wallet className="w-5 h-5 text-gray-300" />}
+                />
+              </>
+            )}
           </div>
 
-          {/* Add Transaction Form (kept above recent list) */}
+          {/* Add Transaction Form */}
           <AddTransactionForm onAdd={fetchTransactions} />
 
           {/* Recent Transactions */}
-          <div className="bg-gradient-to-br from-gray-900 via-black to-gray-800 rounded-xl p-6 shadow-lg ">
+          <div className="bg-gradient-to-br from-gray-900 via-black to-gray-800 rounded-xl p-6 shadow-lg mt-6">
             <div className="flex items-center gap-2 mb-4">
               <RefreshCcwDot color="#ec4899" />
-              <h2 className="text-xl font-semibold ">Recent Transactions</h2>
+              <h2 className="text-xl font-semibold">Recent Transactions</h2>
             </div>
 
             {loading ? (
-              <p className="text-gray-400 animate-pulse">
-                Loading transactions...
-              </p>
+              <div className="space-y-3">
+                <SkeletonTransactionRow />
+                <SkeletonTransactionRow />
+                <SkeletonTransactionRow />
+              </div>
             ) : txs.length === 0 ? (
               <p className="text-gray-400">No transactions yet.</p>
             ) : (
               <ul className="space-y-3 border-gray-900">
                 {[...txs].slice(0, 5).map((tx) => {
                   const Icon = categoryIcons[tx.category] || BanknoteArrowUp;
+                  const colors =
+                    CATEGORY_COLORS[tx.category] || CATEGORY_COLORS["Others"];
 
                   return (
                     <Link
@@ -355,27 +407,27 @@ export default function Dashboard() {
                       key={tx._id}
                       className="block"
                     >
-                      <li className="flex justify-between items-center p-4 bg-white/2 hover:bg-white/10 backdrop-blur-md border  rounded-xl transition-all duration-300 cursor-pointer shadow-md border-gray-900">
+                      <li className="flex justify-between items-center p-4 bg-white/2 hover:bg-white/10 backdrop-blur-md border border-gray-800 rounded-xl transition-all duration-300 cursor-pointer shadow-md">
                         <div className="flex items-center gap-3">
-                          <div className="bg-white/10 p-2 rounded-full">
-                            <Icon className="w-5 h-5 text-indigo-400" />
+                          <div
+                            className={`${colors.bg} border ${colors.border} p-2 rounded-full`}
+                          >
+                            <Icon className={`w-5 h-5 ${colors.text}`} />
                           </div>
                           <div>
-                            <p className=" font-bold">{tx.title}</p>
+                            <p className="font-bold">{tx.title}</p>
                             <p className="text-sm text-gray-400">
-                              {new Date(tx.date).toLocaleDateString()} •{" "}
-                              {tx.category} • {tx.paymentMode}
+                              {new Date(tx.date).toLocaleDateString()} &bull;{" "}
+                              {tx.category} &bull; {tx.paymentMode}
                             </p>
-                            <p className="text-sm text-gray-400">
-                              {tx.comment}
-                            </p>
+                            <p className="text-sm text-gray-400">{tx.comment}</p>
                           </div>
                         </div>
                         <div className="text-right">
                           <p
                             className={`font-bold ${
                               tx.type === "income"
-                                ? "text-green-400"
+                                ? "text-green-300"
                                 : "text-red-400"
                             }`}
                           >
@@ -383,8 +435,8 @@ export default function Dashboard() {
                           </p>
                           <button
                             onClick={(e) => {
-                              e.stopPropagation(); // prevent link navigation
-                              e.preventDefault(); // prevent default link behavior
+                              e.stopPropagation();
+                              e.preventDefault();
                               handleDelete(tx._id);
                             }}
                             className="text-sm text-red-500 hover:text-red-700 ml-4 cursor-pointer font-bold"
@@ -400,14 +452,19 @@ export default function Dashboard() {
             )}
 
             {!loading && (
-              <div className="font-bold text-blue-400 mt-1 text-right">
+              <div className="font-bold text-blue-400 mt-3 text-right">
                 <Link href="/transactions">See All Transactions</Link>
               </div>
             )}
           </div>
+
+          {/* Monthly Report */}
+          <MonthlyReport transactions={txs} userName={user?.name || "User"} />
         </div>
       </div>
+
       <Footer />
+      <BottomNav />
     </div>
   );
 }

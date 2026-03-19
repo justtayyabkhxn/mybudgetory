@@ -1,26 +1,19 @@
-import { NextResponse } from 'next/server';
-import  connectDB  from '@/lib/dbConnect';
-import User from '@/models/User'; // adjust path as needed
+import { NextResponse } from "next/server";
+import connectDB from "@/lib/dbConnect";
+import User from "@/models/User";
+import { getUserId, unauthorized } from "@/lib/auth";
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const email = searchParams.get('email');
-
-  if (!email) {
-    return NextResponse.json({ error: 'Email is required' }, { status: 400 });
-  }
+  // Auth required — user can only fetch their own profile
+  const userId = getUserId(request.headers.get("authorization") || "");
+  if (!userId) return unauthorized();
 
   try {
     await connectDB();
-    const user = await User.findOne({ email }).select('-password');
-
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
-
+    const user = await User.findById(userId).select("-password");
+    if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
     return NextResponse.json(user);
-  } catch (error) {
-    console.log(error)
-    return NextResponse.json({ error: 'Server error' }, { status: 500 });
+  } catch {
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

@@ -25,5 +25,10 @@ const TransactionSchema = new Schema<ITransaction>(
   { timestamps: true }
 );
 
+// Indexes for fast per-user queries
+TransactionSchema.index({ userId: 1, date: -1 });
+TransactionSchema.index({ userId: 1, type: 1 });
+TransactionSchema.index({ userId: 1, category: 1 });
+
 export default mongoose.models.Transaction ||
   mongoose.model<ITransaction>("Transaction", TransactionSchema);

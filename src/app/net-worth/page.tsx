@@ -2,6 +2,7 @@
 
 import { TxnCard } from "@/components/TxnCard";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Coins,
   Landmark,
@@ -17,6 +18,7 @@ import FloatingTransactionButton from "@/components/FloatingTransactionButton";
 import MenuButton from "@/components/Menu";
 
 export default function NetWorthPage() {
+  const router = useRouter();
   const [netWorth, setNetWorth] = useState<number>(0);
   const [loading, setLoading] = useState(true);
 
@@ -30,8 +32,11 @@ export default function NetWorthPage() {
   };
 
   useEffect(() => {
-    let isMounted = true;
+    const token = localStorage.getItem("token");
+    if (!token) { router.push("/login"); return; }
+    try { JSON.parse(atob(token.split(".")[1])); } catch { localStorage.removeItem("token"); router.push("/login"); return; }
 
+    let isMounted = true;
     fetchNetWorth(isMounted);
 
     return () => {

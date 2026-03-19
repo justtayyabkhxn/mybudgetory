@@ -23,7 +23,7 @@ export async function POST(req: Request) {
   const token = jwt.sign(
     { id: user._id.toString(), email: user.email },
     JWT_SECRET,
-    { expiresIn: '7d' }
+    { expiresIn: '14d' }
   );
 
   // return token in JSON body

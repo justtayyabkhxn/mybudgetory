@@ -1,30 +1,11 @@
-import jwt from 'jsonwebtoken';
 import connectDB from '@/lib/dbConnect';
 import Transaction from '@/models/Transaction';
-import { encrypt } from '@/utils/crypto'; // ⬅️ make sure this exists
-
-const JWT_SECRET = process.env.JWT_SECRET || 'secret';
-
-function getUserId(authHeader?: string): string | null {
-  if (!authHeader?.startsWith('Bearer ')) return null;
-  const token = authHeader.split(' ')[1];
-  try {
-    const payload = jwt.verify(token, JWT_SECRET) as { id: string };
-    return payload.id;
-  } catch {
-    return null;
-  }
-}
+import { encrypt } from '@/utils/crypto';
+import { getUserId, unauthorized } from '@/lib/auth';
 
 export async function POST(req: Request) {
-  const auth = req.headers.get('authorization') || '';
-  const userId = getUserId(auth);
-  if (!userId) {
-    return new Response(
-      JSON.stringify({ error: 'Unauthorized' }),
-      { status: 401, headers: { 'Content-Type': 'application/json' } }
-    );
-  }
+  const userId = getUserId(req.headers.get('authorization') || '');
+  if (!userId) return unauthorized();
 
   let transactions;
   try {
@@ -37,10 +18,10 @@ export async function POST(req: Request) {
   }
 
   if (!Array.isArray(transactions)) {
-    return new Response(
-      JSON.stringify({ error: 'Expected an array of transactions' }),
-      { status: 400, headers: { 'Content-Type': 'application/json' } }
-    );
+    return Response.json({ error: 'Expected an array of transactions' }, { status: 400 });
+  }
+  if (transactions.length > 1000) {
+    return Response.json({ error: 'Import limited to 1000 transactions at a time' }, { status: 400 });
   }
 
   await connectDB();

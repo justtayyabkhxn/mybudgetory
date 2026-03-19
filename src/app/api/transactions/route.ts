@@ -1,31 +1,13 @@
 // app/api/transactions/route.ts
-import jwt from "jsonwebtoken";
 import connectDB from "@/lib/dbConnect";
 import Transaction from "@/models/Transaction";
 import { encrypt, decrypt } from "@/utils/crypto";
-
-const JWT_SECRET = process.env.JWT_SECRET || "secret";
-
-function getUserId(authHeader?: string): string | null {
-  if (!authHeader?.startsWith("Bearer ")) return null;
-  const token = authHeader.split(" ")[1];
-  try {
-    const payload = jwt.verify(token, JWT_SECRET) as { id: string };
-    return payload.id;
-  } catch {
-    return null;
-  }
-}
+import { getUserId, unauthorized, serverError } from "@/lib/auth";
 
 export async function POST(req: Request) {
   const auth = req.headers.get("authorization") || "";
   const userId = getUserId(auth);
-  if (!userId) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401,
-      headers: { "Content-Type": "application/json" },
-    });
-  }
+  if (!userId) return unauthorized();
 
   const { title, amount, category, type, date, comment, paymentMode } =
     await req.json();
@@ -62,12 +44,7 @@ export async function POST(req: Request) {
 export async function GET(req: Request) {
   const auth = req.headers.get("authorization") || "";
   const userId = getUserId(auth);
-  if (!userId) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401,
-      headers: { "Content-Type": "application/json" },
-    });
-  }
+  if (!userId) return unauthorized();
 
   await connectDB();
 
@@ -85,23 +62,15 @@ export async function GET(req: Request) {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
-  } catch (err) {
-    return new Response(
-      JSON.stringify({ error: "Failed to fetch transactions"+err }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
-    );
+  } catch {
+    return serverError("Failed to fetch transactions");
   }
 }
 
 export async function DELETE(req: Request) {
   const auth = req.headers.get("authorization") || "";
   const userId = getUserId(auth);
-  if (!userId) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401,
-      headers: { "Content-Type": "application/json" },
-    });
-  }
+  if (!userId) return unauthorized();
 
   await connectDB();
 

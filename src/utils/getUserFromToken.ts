@@ -21,7 +21,7 @@ export async function getUserFromToken(req: Request) {
     const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
     const user = await User.findById(decoded.id).select("-password");
     return user || null;
-  } catch (error) {
-    return error;
+  } catch {
+    return null;
   }
 }
