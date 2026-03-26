@@ -18,6 +18,7 @@ import Footer from "@/components/Footer";
 import MenuButton from "@/components/Menu";
 import BottomNav from "@/components/BottomNav";
 import { CATEGORY_COLORS, CATEGORY_ICONS } from "@/lib/categoryConfig";
+import { SpeedometerGauge } from "@/components/DashboardInsights";
 
 interface Transaction {
   _id: string;
@@ -288,19 +289,29 @@ export default function BudgetGoalsPage() {
             )}
           </div>
           {totalLimit > 0 && (
-            <div className="mt-4 h-3 bg-gray-700/60 rounded-full overflow-hidden">
-              <div
-                className={`h-full rounded-full transition-all duration-700 ${getProgressColor(
-                  totalSpent,
-                  totalLimit
-                )}`}
-                style={{
-                  width: `${Math.min(
-                    (totalSpent / totalLimit) * 100,
-                    100
-                  )}%`,
-                }}
+            <div className="mt-4 flex items-center gap-6">
+              <SpeedometerGauge
+                pct={Math.round((totalSpent / totalLimit) * 100)}
+                hex={
+                  totalSpent > totalLimit ? "#f87171" :
+                  (totalSpent / totalLimit) >= 0.8 ? "#fb923c" :
+                  "#6366f1"
+                }
+                size={110}
               />
+              <div className="text-xs text-gray-500 space-y-1">
+                <p>
+                  <span className="text-gray-400">Utilisation: </span>
+                  <span className={`font-bold ${totalSpent > totalLimit ? "text-red-400" : "text-indigo-400"}`}>
+                    {Math.round((totalSpent / totalLimit) * 100)}%
+                  </span>
+                </p>
+                <p><span className="text-gray-400">Remaining: </span>
+                  <span className={`font-bold ${totalLimit - totalSpent >= 0 ? "text-green-400" : "text-red-400"}`}>
+                    {totalLimit - totalSpent >= 0 ? "₹" : "-₹"}{Math.abs(totalLimit - totalSpent).toLocaleString()}
+                  </span>
+                </p>
+              </div>
             </div>
           )}
         </motion.div>
@@ -358,23 +369,52 @@ export default function BudgetGoalsPage() {
                     </div>
                   </div>
 
-                  {/* Limit display */}
+                  {/* Speedometer gauge */}
                   {limit > 0 && (
                     <div className="mb-3">
-                      <div className="flex justify-between text-xs text-gray-400 mb-1">
-                        <span>₹{spent.toLocaleString()} spent</span>
-                        <span>₹{limit.toLocaleString()} limit</span>
-                      </div>
-                      <div className="h-2 bg-gray-700/60 rounded-full overflow-hidden">
-                        <motion.div
-                          className={`h-full rounded-full ${getProgressColor(
-                            spent,
-                            limit
-                          )}`}
-                          initial={{ width: 0 }}
-                          animate={{ width: `${pct}%` }}
-                          transition={{ duration: 0.6, delay: idx * 0.05 }}
-                        />
+                      <div className="flex items-end justify-between gap-2">
+                        {/* Gauge */}
+                        <div className="flex flex-col items-center">
+                          <SpeedometerGauge
+                            pct={pct}
+                            hex={
+                              pct > 100 ? "#f87171" :
+                              pct >= 80  ? "#fb923c" :
+                              pct >= 60  ? "#facc15" :
+                              colors.hex
+                            }
+                            size={96}
+                          />
+                          <span
+                            className="text-sm font-black -mt-1 tabular-nums"
+                            style={{
+                              color:
+                                pct > 100 ? "#f87171" :
+                                pct >= 80  ? "#fb923c" :
+                                pct >= 60  ? "#facc15" :
+                                colors.hex,
+                            }}
+                          >
+                            {Math.round(pct)}%
+                          </span>
+                        </div>
+                        {/* Text breakdown */}
+                        <div className="flex-1 space-y-1 text-xs text-gray-400 pb-1">
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Spent</span>
+                            <span className="font-semibold text-red-400">₹{spent.toLocaleString()}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Limit</span>
+                            <span className="font-semibold text-gray-300">₹{limit.toLocaleString()}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Remaining</span>
+                            <span className={`font-semibold ${limit - spent >= 0 ? "text-green-400" : "text-red-400"}`}>
+                              {limit - spent >= 0 ? "₹" : "-₹"}{Math.abs(limit - spent).toLocaleString()}
+                            </span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   )}

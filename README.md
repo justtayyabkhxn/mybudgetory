@@ -1,89 +1,122 @@
-# 💰 MyBudgetory – Your Smart Budget Tracker
+# MyBudgetory — Smart Personal Finance Tracker
 
-**MyBudgetory** is a sleek and intuitive budget tracking web application that empowers users to manage income and expenses with ease. Built using **Next.js** and **MongoDB**, it provides intelligent insights through visual dashboards, allowing users to make informed financial decisions.
+**MyBudgetory** is a full-stack personal finance app built with **Next.js 15**, **MongoDB**, and **Tailwind CSS**. Track income and expenses, visualise spending trends, and split bills with friends — all from a beautiful dark-themed interface.
 
-## 🚀 Features
+---
 
-* 🔐 **User Authentication** – Secure signup/login to manage your financial records.
-* 🧾 **Daily Entry System** – Add and view categorized expenses and inflows with notes.
-* 📊 **Stats Dashboard**
+## Features
 
-  * 💸 Most spending day
-  * 💰 Most inflow day
-  * 📆 Average monthly spending
-  * 🏆 Highest inflow & spending months
-  * 🧩 Top & least spent categories
-* 📅 **Timeframe Filters** – Toggle views by week, month, or year.
-* 📈 **Interactive Charts** – Bar and pie charts for visual breakdowns.
-* 🧠 **Smart Suggestions** (Coming Soon)
+### Dashboard
+- Add income and expense transactions with title, category, amount, and date
+- Filter transactions by week, month, or year
+- Interactive bar and pie charts (Recharts + Chart.js)
+- Export transactions as CSV
 
-  * Overspending alerts
-  * Irregular inflow detection
-* 📤 **Exporting Features** (Planned)
+### Statistics
+- Monthly summary: total income, expenses, net balance
+- Spending insights: most active day, avg monthly spending, top/least spent categories
+- Notable transactions: largest income and expense of the month
+- Top 3 highest-spend days
 
-  * Download data as CSV
-* 🧑‍🤝‍🧑 **Multi-User Collaboration** (Planned)
-* 📱 **Mobile Optimized & PWA Support** (Planned)
+### Split Bills
+- Enter a total bill amount and description
+- Add people manually or import from phone contacts (Chrome Mobile)
+- Auto-calculates each person's equal share
+- Send WhatsApp payment reminders with a personalised shareable link
+- Mark people as paid, delete individuals, or clear the entire split
 
-## 🛠️ Tech Stack
+### Auth
+- Secure signup and login with custom JWT authentication
+- Animated split-screen auth pages with live app preview cards
+- Password visibility toggle, focused input states, error handling
 
-* **Frontend**: [Next.js](https://nextjs.org/), [Tailwind CSS](https://tailwindcss.com)
-* **Backend**: \[Next.js API Routes], \[Node.js]
-* **Database**: [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
-* **Authentication**: \[NextAuth.js] or custom JWT-based system
+---
 
-## 📦 Installation
+## Tech Stack
+
+| Layer          | Technology                                    |
+|----------------|-----------------------------------------------|
+| Framework      | Next.js 15 (App Router)                       |
+| Language       | TypeScript                                    |
+| Styling        | Tailwind CSS 4, custom CSS animations         |
+| Database       | MongoDB Atlas + Mongoose                      |
+| Authentication | Custom JWT (`jsonwebtoken` + `jwt-decode`)    |
+| Charts         | Recharts, Chart.js, Highcharts, Tremor        |
+| Icons          | Lucide React                                  |
+| Animations     | Framer Motion, CSS keyframes                  |
+| HTTP Client    | Axios                                         |
+| Utilities      | date-fns, papaparse, bcryptjs, html-to-image  |
+
+---
+
+## Getting Started
+
+### 1. Clone & install
 
 ```bash
 git clone https://github.com/justtayyabkhxn/mybudgetory.git
-cd budgetory
+cd mybudgetory
 npm install
 ```
 
-### 📄 Configure `.env.local`
+### 2. Configure environment variables
 
-Create a `.env.local` file in the root directory with the following content:
+Create a `.env.local` file in the root:
 
 ```env
 MONGODB_URI=your_mongodb_connection_string
-NEXTAUTH_SECRET=your_secret
-NEXTAUTH_URL=http://localhost:3000
+JWT_SECRET=your_jwt_secret_key
 ```
 
-## 💻 Start Development Server
+### 3. Run the development server
 
 ```bash
 npm run dev
 ```
 
-Then open [http://localhost:3000](http://localhost:3000) in your browser.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-## 📁 Folder Structure
+---
+
+## Project Structure
 
 ```
-/pages
-  ├── /api          → API endpoints for auth, transactions, stats
-  ├── /auth         → Login and signup pages
-  └── index.tsx     → Main dashboard
-
-/components         → Reusable UI components
-/lib                → MongoDB connection, utility functions
-/styles             → Tailwind and global styles
+src/
+├── app/
+│   ├── api/                  # API routes (auth, transactions, stats)
+│   │   ├── login/
+│   │   ├── signup/
+│   │   └── transactions/
+│   ├── dashboard/            # Main dashboard page
+│   ├── login/                # Login page
+│   ├── signup/               # Signup page
+│   ├── stats/                # Statistics page
+│   ├── split/                # Bill splitter
+│   │   └── summary/[encoded] # Shareable payment summary
+│   └── globals.css           # Global styles & animations
+│
+├── components/               # Reusable UI components
+│   ├── Header.tsx
+│   ├── Footer.tsx
+│   ├── Menu.tsx
+│   └── FloatingTransactionButton.tsx
+│
+└── lib/                      # MongoDB connection, utilities
 ```
 
-## 🧠 Future Roadmap
+---
 
-* 🔔 Budget limit notifications
-* 📆 Recurring income/expenses
-* 📤 Import/export functionality (CSV/JSON)
-* 🧑‍🤝‍🧑 Shared budget management (households or teams)
-* 📱 PWA support for offline and mobile-first use
-* 🧠 AI-based financial tips and pattern detection
+## Roadmap
 
-## 🤝 Contributing
+- [ ] Budget limit alerts & overspending notifications
+- [ ] Recurring income/expense entries
+- [ ] AI-based financial tips and anomaly detection
+- [ ] Shared budgets for households or teams
+- [ ] PWA support for offline and mobile-first use
+- [ ] Dark/light theme toggle
 
-Contributions and suggestions are welcome!
-Feel free to fork the repository and submit a pull request.
+---
 
+## Contributing
 
-
+Contributions and suggestions are welcome. Fork the repo and open a pull request.

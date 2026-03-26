@@ -65,6 +65,7 @@ const CAT_HEX: Record<string, string> = {
   Entertainment: "#ec4899",
   Travel: "#06b6d4",
   SMM: "#10b981",
+  Vacation: "#84cc16",
   Others: "#6b7280",
   Other: "#6b7280",
 };
@@ -646,6 +647,315 @@ export const getDayOfWeekOptions = (data: {
     ],
   });
 
+// ─── 12. NEW: Category Trend Lines (last 12 months, one line per category) ───
+export const getCategoryTrendOptions = (data: {
+  months: string[];
+  series: { name: string; color: string; data: number[] }[];
+}): Highcharts.Options =>
+  merge(darkTheme, {
+    chart: { type: "spline", height: 360 },
+    title: { text: "Category Spending Trends – Last 12 Months", style: { color: "#e2e8f0", fontSize: "14px", fontWeight: "700" } },
+    xAxis: {
+      categories: data.months,
+      labels: { style: { color: "#94a3b8", fontSize: "11px", fontWeight: "600" } },
+      lineColor: "#1e293b",
+      tickColor: "#1e293b",
+    },
+    yAxis: {
+      title: { text: "Amount (₹)", style: { color: "#64748b", fontSize: "11px" } },
+      labels: {
+        style: { color: "#94a3b8", fontSize: "11px" },
+        formatter: function (this: Highcharts.AxisLabelsFormatterContextObject) {
+          const v = Number(this.value);
+          if (v >= 1000) return "₹" + (v / 1000).toFixed(1) + "k";
+          return "₹" + v;
+        },
+      },
+      gridLineColor: "#1e293b",
+      gridLineDashStyle: "Dot",
+    },
+    plotOptions: {
+      spline: {
+        lineWidth: 2.5,
+        marker: { enabled: false, states: { hover: { enabled: true, radius: 5 } } },
+        states: { hover: { lineWidth: 3 } },
+      },
+    },
+    tooltip: {
+      ...darkTheme.tooltip,
+      headerFormat: '<div style="font-size:12px;font-weight:700;margin-bottom:6px">{point.key}</div>',
+      pointFormat: '<span style="color:{series.color}">●</span> {series.name}: <b>₹{point.y:,.0f}</b><br/>',
+      shared: true,
+    },
+    legend: { ...darkTheme.legend, enabled: true },
+    series: data.series.map((s) => ({
+      name: s.name,
+      type: "spline" as const,
+      data: s.data,
+      color: s.color,
+    })),
+  });
+
+// ─── 13. NEW: Month-over-Month Category Comparison ────────────────────────────
+export const getMonthOverMonthOptions = (data: {
+  categories: string[];
+  thisMonth: number[];
+  lastMonth: number[];
+  thisMonthLabel: string;
+  lastMonthLabel: string;
+}): Highcharts.Options =>
+  merge(darkTheme, {
+    chart: { type: "column", height: 340 },
+    title: { text: "This Month vs Last Month – By Category", style: { color: "#e2e8f0", fontSize: "14px", fontWeight: "700" } },
+    xAxis: {
+      categories: data.categories,
+      labels: { style: { color: "#94a3b8", fontSize: "11px", fontWeight: "600" } },
+      lineColor: "#1e293b",
+      tickColor: "#1e293b",
+    },
+    yAxis: {
+      title: { text: "Amount (₹)", style: { color: "#64748b", fontSize: "11px" } },
+      labels: {
+        style: { color: "#94a3b8", fontSize: "11px" },
+        formatter: function (this: Highcharts.AxisLabelsFormatterContextObject) {
+          const v = Number(this.value);
+          if (v >= 1000) return "₹" + (v / 1000).toFixed(1) + "k";
+          return "₹" + v;
+        },
+      },
+      gridLineColor: "#1e293b",
+      gridLineDashStyle: "Dot",
+    },
+    plotOptions: {
+      column: {
+        borderRadius: 5,
+        borderWidth: 0,
+        groupPadding: 0.1,
+        states: { hover: { brightness: 0.15 } },
+      },
+    },
+    tooltip: {
+      ...darkTheme.tooltip,
+      headerFormat: '<div style="font-size:12px;font-weight:700;margin-bottom:6px">{point.key}</div>',
+      pointFormat: '<span style="color:{series.color}">●</span> {series.name}: <b>₹{point.y:,.0f}</b><br/>',
+      shared: true,
+    },
+    legend: { ...darkTheme.legend, enabled: true },
+    series: [
+      {
+        name: data.thisMonthLabel,
+        type: "column" as const,
+        data: data.thisMonth,
+        color: {
+          linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
+          stops: [[0, "#818cf8"], [1, "#4338ca"]],
+        } as unknown as string,
+      },
+      {
+        name: data.lastMonthLabel,
+        type: "column" as const,
+        data: data.lastMonth,
+        color: "rgba(100,116,139,0.45)",
+      },
+    ],
+  });
+
+// ─── 14. NEW: Income Sources Over Time (stacked by income category) ───────────
+export const getIncomeSourcesOptions = (data: {
+  months: string[];
+  series: { name: string; color: string; data: number[] }[];
+}): Highcharts.Options =>
+  merge(darkTheme, {
+    chart: { type: "column", height: 340 },
+    title: { text: "Income Sources Over Time", style: { color: "#e2e8f0", fontSize: "14px", fontWeight: "700" } },
+    xAxis: {
+      categories: data.months,
+      labels: { style: { color: "#94a3b8", fontSize: "11px", fontWeight: "600" } },
+      lineColor: "#1e293b",
+      tickColor: "#1e293b",
+    },
+    yAxis: {
+      title: { text: "Amount (₹)", style: { color: "#64748b", fontSize: "11px" } },
+      labels: {
+        style: { color: "#94a3b8", fontSize: "11px" },
+        formatter: function (this: Highcharts.AxisLabelsFormatterContextObject) {
+          const v = Number(this.value);
+          if (v >= 1000) return "₹" + (v / 1000).toFixed(1) + "k";
+          return "₹" + v;
+        },
+      },
+      gridLineColor: "#1e293b",
+      gridLineDashStyle: "Dot",
+      stackLabels: {
+        enabled: true,
+        style: { color: "#94a3b8", fontSize: "10px", fontWeight: "600", textOutline: "none" },
+        formatter: function (this: Highcharts.StackItemObject) {
+          const v = this.total ?? 0;
+          if (v >= 1000) return "₹" + (v / 1000).toFixed(1) + "k";
+          return "₹" + v;
+        },
+      },
+    },
+    plotOptions: {
+      column: {
+        stacking: "normal",
+        borderWidth: 0,
+        borderRadius: 4,
+        states: { hover: { brightness: 0.12 } },
+      },
+    },
+    tooltip: {
+      ...darkTheme.tooltip,
+      headerFormat: '<div style="font-size:12px;font-weight:700;margin-bottom:6px">{point.key}</div>',
+      pointFormat: '<span style="color:{series.color}">●</span> {series.name}: <b>₹{point.y:,.0f}</b><br/>',
+      shared: true,
+    },
+    legend: { ...darkTheme.legend, enabled: true },
+    series: data.series.map((s) => ({
+      name: s.name,
+      type: "column" as const,
+      data: s.data,
+      color: s.color,
+    })),
+  });
+
+// ─── 15. NEW: Cash vs UPI Trend Over Months ───────────────────────────────────
+export const getCashUpiTrendOptions = (data: {
+  months: string[];
+  cash: number[];
+  upi: number[];
+}): Highcharts.Options =>
+  merge(darkTheme, {
+    chart: { type: "column", height: 320 },
+    title: { text: "Cash vs UPI – Monthly Trend", style: { color: "#e2e8f0", fontSize: "14px", fontWeight: "700" } },
+    xAxis: {
+      categories: data.months,
+      labels: { style: { color: "#94a3b8", fontSize: "11px", fontWeight: "600" } },
+      lineColor: "#1e293b",
+      tickColor: "#1e293b",
+    },
+    yAxis: {
+      title: { text: "Amount (₹)", style: { color: "#64748b", fontSize: "11px" } },
+      labels: {
+        style: { color: "#94a3b8", fontSize: "11px" },
+        formatter: function (this: Highcharts.AxisLabelsFormatterContextObject) {
+          const v = Number(this.value);
+          if (v >= 1000) return "₹" + (v / 1000).toFixed(1) + "k";
+          return "₹" + v;
+        },
+      },
+      gridLineColor: "#1e293b",
+      gridLineDashStyle: "Dot",
+      stackLabels: {
+        enabled: true,
+        style: { color: "#94a3b8", fontSize: "10px", fontWeight: "600", textOutline: "none" },
+        formatter: function (this: Highcharts.StackItemObject) {
+          const v = this.total ?? 0;
+          if (v >= 1000) return "₹" + (v / 1000).toFixed(1) + "k";
+          return "₹" + v;
+        },
+      },
+    },
+    plotOptions: {
+      column: {
+        stacking: "normal",
+        borderWidth: 0,
+        borderRadius: 4,
+        states: { hover: { brightness: 0.12 } },
+      },
+    },
+    tooltip: {
+      ...darkTheme.tooltip,
+      headerFormat: '<div style="font-size:12px;font-weight:700;margin-bottom:6px">{point.key}</div>',
+      pointFormat: '<span style="color:{series.color}">●</span> {series.name}: <b>₹{point.y:,.0f}</b><br/>',
+      shared: true,
+    },
+    legend: { ...darkTheme.legend, enabled: true },
+    series: [
+      {
+        name: "Cash",
+        type: "column" as const,
+        data: data.cash,
+        color: {
+          linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
+          stops: [[0, "#fbbf24"], [1, "#d97706"]],
+        } as unknown as string,
+      },
+      {
+        name: "UPI",
+        type: "column" as const,
+        data: data.upi,
+        color: {
+          linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
+          stops: [[0, "#818cf8"], [1, "#4338ca"]],
+        } as unknown as string,
+      },
+    ],
+  });
+
+// ─── 16. NEW: Week-of-Month Spending Pattern ──────────────────────────────────
+export const getWeekOfMonthOptions = (data: {
+  weeks: string[];
+  data: number[];
+}): Highcharts.Options =>
+  merge(darkTheme, {
+    chart: { type: "column", height: 300 },
+    title: { text: "Week-of-Month Spending Pattern", style: { color: "#e2e8f0", fontSize: "14px", fontWeight: "700" } },
+    xAxis: {
+      categories: data.weeks,
+      labels: { style: { color: "#94a3b8", fontSize: "12px", fontWeight: "700" } },
+      lineColor: "#1e293b",
+      tickColor: "#1e293b",
+    },
+    yAxis: {
+      title: { text: "Total Spent (₹)", style: { color: "#64748b", fontSize: "11px" } },
+      labels: {
+        style: { color: "#94a3b8", fontSize: "11px" },
+        formatter: function (this: Highcharts.AxisLabelsFormatterContextObject) {
+          const v = Number(this.value);
+          if (v >= 1000) return "₹" + (v / 1000).toFixed(1) + "k";
+          return "₹" + v;
+        },
+      },
+      gridLineColor: "#1e293b",
+      gridLineDashStyle: "Dot",
+    },
+    plotOptions: {
+      column: {
+        borderRadius: 8,
+        borderWidth: 0,
+        dataLabels: {
+          enabled: true,
+          style: { color: "#94a3b8", fontSize: "11px", fontWeight: "700", textOutline: "none" },
+          formatter: function (this: Highcharts.Point) {
+            const v = this.y ?? 0;
+            if (v >= 1000) return "₹" + (v / 1000).toFixed(1) + "k";
+            return "₹" + v;
+          },
+        },
+        states: { hover: { brightness: 0.15 } },
+      },
+    },
+    tooltip: {
+      ...darkTheme.tooltip,
+      pointFormat: '<span style="color:{point.color}">●</span> Spent: <b>₹{point.y:,.0f}</b><br/>',
+    },
+    legend: { enabled: false },
+    series: [{
+      name: "Spent",
+      type: "column" as const,
+      data: data.data.map((v, i) => ({
+        y: v,
+        color: [
+          { linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 }, stops: [[0, "#6366f1"], [1, "#4338ca"]] },
+          { linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 }, stops: [[0, "#06b6d4"], [1, "#0891b2"]] },
+          { linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 }, stops: [[0, "#f97316"], [1, "#ea580c"]] },
+          { linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 }, stops: [[0, "#a855f7"], [1, "#9333ea"]] },
+        ][i % 4],
+      })),
+    } as Highcharts.SeriesColumnOptions],
+  });
+
 // ─── 11. NEW: Savings Rate Line Chart ────────────────────────────────────────
 export const getSavingsRateOptions = (data: {
   categories: string[];
@@ -711,4 +1021,123 @@ export const getSavingsRateOptions = (data: {
       data: data.rates,
       color: "#6366f1",
     }],
+  });
+
+// ─── 17. NEW: Rolling 30-Day Expense Line ─────────────────────────────────────
+export const getRolling30DayOptions = (data: {
+  labels: string[];
+  values: number[];
+}): Highcharts.Options =>
+  merge(darkTheme, {
+    chart: { type: "area", height: 320 },
+    title: { text: "Rolling 30-Day Expenses", style: { color: "#e2e8f0", fontSize: "14px", fontWeight: "700" } },
+    xAxis: {
+      categories: data.labels,
+      labels: {
+        style: { color: "#94a3b8", fontSize: "10px", fontWeight: "600" },
+        step: 5,
+      },
+      lineColor: "#1e293b",
+      tickColor: "#1e293b",
+    },
+    yAxis: {
+      title: { text: "Amount (₹)", style: { color: "#64748b", fontSize: "11px" } },
+      labels: {
+        style: { color: "#94a3b8", fontSize: "11px" },
+        formatter: function (this: Highcharts.AxisLabelsFormatterContextObject) {
+          const v = Number(this.value);
+          if (v >= 1000) return "₹" + (v / 1000).toFixed(1) + "k";
+          return "₹" + v;
+        },
+      },
+      gridLineColor: "#1e293b",
+      gridLineDashStyle: "Dot",
+    },
+    plotOptions: {
+      area: {
+        lineWidth: 2.5,
+        marker: { enabled: false, states: { hover: { enabled: true, radius: 5 } } },
+        fillColor: {
+          linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
+          stops: [[0, "rgba(239,68,68,0.25)"], [1, "rgba(239,68,68,0.0)"]],
+        } as unknown as string,
+        states: { hover: { lineWidth: 3 } },
+      },
+    },
+    tooltip: {
+      ...darkTheme.tooltip,
+      pointFormatter: function (this: Highcharts.Point) {
+        const v = this.y ?? 0;
+        return `<span style="color:#f87171">●</span> Spent: <b>₹${v.toLocaleString()}</b><br/>`;
+      },
+    },
+    series: [{
+      name: "Daily Expense",
+      type: "area",
+      data: data.values,
+      color: "#ef4444",
+    }],
+  });
+
+// ─── 18. NEW: Average Transaction Size Over Time ──────────────────────────────
+export const getAvgTxnSizeOptions = (data: {
+  months: string[];
+  avgExpense: number[];
+  avgIncome: number[];
+}): Highcharts.Options =>
+  merge(darkTheme, {
+    chart: { type: "spline", height: 320 },
+    title: { text: "Average Transaction Size Over Time", style: { color: "#e2e8f0", fontSize: "14px", fontWeight: "700" } },
+    xAxis: {
+      categories: data.months,
+      labels: { style: { color: "#94a3b8", fontSize: "11px", fontWeight: "600" } },
+      lineColor: "#1e293b",
+      tickColor: "#1e293b",
+    },
+    yAxis: {
+      title: { text: "Avg Amount (₹)", style: { color: "#64748b", fontSize: "11px" } },
+      labels: {
+        style: { color: "#94a3b8", fontSize: "11px" },
+        formatter: function (this: Highcharts.AxisLabelsFormatterContextObject) {
+          const v = Number(this.value);
+          if (v >= 1000) return "₹" + (v / 1000).toFixed(1) + "k";
+          return "₹" + v;
+        },
+      },
+      gridLineColor: "#1e293b",
+      gridLineDashStyle: "Dot",
+    },
+    plotOptions: {
+      spline: {
+        lineWidth: 2.5,
+        marker: {
+          enabled: true,
+          radius: 4,
+          symbol: "circle",
+          states: { hover: { radius: 6 } },
+        },
+        states: { hover: { lineWidth: 3 } },
+      },
+    },
+    tooltip: {
+      ...darkTheme.tooltip,
+      headerFormat: '<div style="font-size:12px;font-weight:700;margin-bottom:6px">{point.key}</div>',
+      pointFormat: '<span style="color:{series.color}">●</span> {series.name}: <b>₹{point.y:,.0f}</b><br/>',
+      shared: true,
+    },
+    legend: { ...darkTheme.legend, enabled: true },
+    series: [
+      {
+        name: "Avg Expense",
+        type: "spline",
+        data: data.avgExpense,
+        color: "#f87171",
+      },
+      {
+        name: "Avg Income",
+        type: "spline",
+        data: data.avgIncome,
+        color: "#34d399",
+      },
+    ],
   });

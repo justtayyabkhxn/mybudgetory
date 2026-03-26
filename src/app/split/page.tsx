@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Users2, Trash2, Contact } from "lucide-react";
+import {
+  Users2, Trash2, Contact, Plus, CheckCircle2, Circle,
+  IndianRupee, MessageCircle, UserMinus, ChevronRight,
+} from "lucide-react";
 import MenuButton from "@/components/Menu";
 import Header from "@/components/Header";
 
-// Person type
 type Person = {
   name: string;
   phone: string;
@@ -20,12 +22,7 @@ declare global {
       select: (
         properties: ("name" | "tel")[],
         options?: { multiple: boolean }
-      ) => Promise<
-        {
-          name?: string[];
-          tel?: string[];
-        }[]
-      >;
+      ) => Promise<{ name?: string[]; tel?: string[] }[]>;
     };
   }
 }
@@ -33,11 +30,12 @@ declare global {
 const STORAGE_KEY = "split-data";
 
 export default function SplitPage() {
-  const [totalAmount, setTotalAmount] = useState<number | "">("");
-  const [people, setPeople] = useState<Person[]>([]);
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [description, setDescription] = useState("");
+  const [totalAmount, setTotalAmount]   = useState<number | "">("");
+  const [people, setPeople]             = useState<Person[]>([]);
+  const [name, setName]                 = useState("");
+  const [phone, setPhone]               = useState("");
+  const [description, setDescription]  = useState("");
+  const [focused, setFocused]           = useState<string | null>(null);
 
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -53,39 +51,25 @@ export default function SplitPage() {
   }, [totalAmount, people]);
 
   useEffect(() => {
-  if (totalAmount !== "" && people.length > 0) {
-    const newTotal = Number(totalAmount);
-    const share = Math.round(newTotal / people.length);
-
-    const updatedPeople = people.map((person) => {
-      const payload = {
-        total: newTotal,
-        name: person.name,
-        phone: person.phone,
-        share,
-        description,
-      };
-
-      // Safe btoa for Unicode support
-      const safeBtoa = (str: string) =>
-        btoa(unescape(encodeURIComponent(str)));
-
-      const encoded = encodeURIComponent(safeBtoa(JSON.stringify(payload)));
-      const link = `${window.location.origin}/split/summary/${encoded}`;
-      return { ...person, link };
-    });
-
-    setPeople(updatedPeople);
-  }
-}, [people.length, totalAmount, description]);
-
+    if (totalAmount !== "" && people.length > 0) {
+      const newTotal = Number(totalAmount);
+      const share    = Math.round(newTotal / people.length);
+      const updatedPeople = people.map((person) => {
+        const payload = { total: newTotal, name: person.name, phone: person.phone, share, description };
+        const safeBtoa = (str: string) => btoa(unescape(encodeURIComponent(str)));
+        const encoded  = encodeURIComponent(safeBtoa(JSON.stringify(payload)));
+        const link     = `${window.location.origin}/split/summary/${encoded}`;
+        return { ...person, link };
+      });
+      setPeople(updatedPeople);
+    }
+  }, [people.length, totalAmount, description]);
 
   const handleAddPerson = () => {
     if (!name.trim() || !phone.trim() || totalAmount === "" || isNaN(Number(totalAmount))) {
       alert("Please fill all fields correctly.");
       return;
     }
-
     setPeople((prev) => [...prev, { name, phone, paid: false }]);
     setName("");
     setPhone("");
@@ -96,12 +80,8 @@ export default function SplitPage() {
       alert("Contact Picker API only works in supported browsers like Chrome Mobile.");
       return;
     }
-
     try {
-      const contacts = await navigator.contacts.select(["name", "tel"], {
-        multiple: false,
-      });
-
+      const contacts = await navigator.contacts.select(["name", "tel"], { multiple: false });
       if (contacts.length > 0) {
         const c = contacts[0];
         setName(c.name?.[0] || "");
@@ -112,156 +92,285 @@ export default function SplitPage() {
     }
   };
 
-  const equalShare =
-    totalAmount !== "" && people.length > 0 ? Number(totalAmount) / people.length : 0;
+  const equalShare = totalAmount !== "" && people.length > 0 ? Number(totalAmount) / people.length : 0;
 
-  const handleTogglePaid = (index: number) => {
-    setPeople((prev) =>
-      prev.map((p, i) => (i === index ? { ...p, paid: !p.paid } : p))
-    );
-  };
+  const handleTogglePaid   = (index: number) =>
+    setPeople((prev) => prev.map((p, i) => (i === index ? { ...p, paid: !p.paid } : p)));
 
-  const handleDeletePerson = (index: number) => {
+  const handleDeletePerson = (index: number) =>
     setPeople((prev) => prev.filter((_, i) => i !== index));
-  };
 
   const handleClearAll = () => {
-    const confirmDelete = window.confirm("Delete total and all people?");
-    if (confirmDelete) {
+    if (window.confirm("Delete total amount and all people?")) {
       setTotalAmount("");
       setPeople([]);
       localStorage.removeItem(STORAGE_KEY);
     }
   };
 
+  const inputCls = (name: string) =>
+    `w-full flex items-center gap-3 rounded-xl border px-4 py-3 transition-all duration-200 ${
+      focused === name
+        ? "border-indigo-500/50 bg-indigo-500/[0.08] shadow-[0_0_0_3px_rgba(99,102,241,0.12)]"
+        : "border-white/[0.07] bg-white/[0.03] hover:border-white/[0.12]"
+    }`;
+
+  const paidCount    = people.filter((p) => p.paid).length;
+  const pendingCount = people.length - paidCount;
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 text-white p-4 sm:p-8">
-      <div className="max-w-5xl mx-auto">
+    <div className="min-h-screen bg-[#060608] text-white">
+
+      {/* ── Background glow blobs ── */}
+      <div className="pointer-events-none fixed inset-0 overflow-hidden">
+        <div className="absolute -top-40 -left-40 w-[600px] h-[600px] rounded-full bg-indigo-600/10 blur-[160px]" />
+        <div className="absolute -bottom-40 -right-20 w-[500px] h-[500px] rounded-full bg-violet-600/8 blur-[140px]" />
+      </div>
+
+      <div className="relative z-10 max-w-2xl mx-auto px-5 py-6">
         <Header />
 
-        <div className="flex justify-between items-center mb-5">
-          <div className="flex items-center gap-2">
-            <Users2 className="text-white" />
-            <h1 className="text-4xl font-extrabold tracking-tight text-white">Split Expenses</h1>
+        {/* ── Page header ── */}
+        <div className="flex justify-between items-start mb-8 mt-2">
+          <div>
+            <div className="flex items-center gap-2.5 mb-1">
+              <div className="w-8 h-8 rounded-lg bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center">
+                <Users2 size={16} className="text-indigo-400" />
+              </div>
+              <h1 className="text-3xl font-extrabold tracking-tight">Split Expenses</h1>
+            </div>
+            <p className="text-sm text-gray-500 ml-10">Divide bills equally among friends</p>
           </div>
           <MenuButton />
         </div>
 
-        <div className="bg-[#111]/80 backdrop-blur-sm border border-gray-700 rounded-xl p-6 shadow-lg mb-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Total Amount Spent</h2>
-            <button
-              onClick={handleClearAll}
-              className="text-red-400 hover:text-red-600 flex items-center gap-1 text-sm"
-            >
-              <Trash2 size={16} /> Delete All
-            </button>
+        {/* ── Step 1: Total Amount ── */}
+        <StepCard step={1} title="Set the Total Amount">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium text-gray-500">Total bill amount</span>
+              {(totalAmount !== "" || people.length > 0) && (
+                <button
+                  onClick={handleClearAll}
+                  className="flex items-center gap-1 text-xs text-red-500 hover:text-red-400 transition-colors"
+                >
+                  <Trash2 size={12} /> Clear all
+                </button>
+              )}
+            </div>
+
+            {/* Amount input */}
+            <div className={inputCls("amount")}>
+              <IndianRupee size={15} className={focused === "amount" ? "text-indigo-400 shrink-0" : "text-gray-600 shrink-0"} />
+              <input
+                type="number"
+                placeholder="0.00"
+                className="flex-1 bg-transparent text-sm text-white placeholder:text-gray-600 outline-none"
+                value={totalAmount}
+                onFocus={() => setFocused("amount")}
+                onBlur={() => setFocused(null)}
+                onChange={(e) => setTotalAmount(e.target.value === "" ? "" : Number(e.target.value))}
+              />
+            </div>
+
+            {/* Description input */}
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1.5">
+                Description <span className="text-gray-700">(optional)</span>
+              </label>
+              <textarea
+                placeholder="e.g. Dinner at XYZ restaurant"
+                className="w-full rounded-xl border border-white/[0.07] bg-white/[0.03] px-4 py-3 text-sm text-white placeholder:text-gray-600 outline-none focus:border-indigo-500/50 focus:bg-indigo-500/[0.08] focus:shadow-[0_0_0_3px_rgba(99,102,241,0.12)] transition-all duration-200 resize-none"
+                rows={2}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+            </div>
           </div>
-          <input
-            type="number"
-            placeholder="Enter total amount (₹)"
-            className="w-full p-3 rounded-xl bg-gray-800 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            value={totalAmount}
-            onChange={(e) =>
-              setTotalAmount(e.target.value === "" ? "" : Number(e.target.value))
-            }
-          />
-          <textarea
-            placeholder="Description (optional, e.g., Dinner at XYZ)"
-            className="w-full mt-4 p-3 rounded-xl bg-gray-800 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
-        </div>
+        </StepCard>
 
-        <div className="bg-[#111]/80 backdrop-blur-sm border border-gray-700 rounded-xl p-6 shadow-lg mb-6">
-          <h2 className="text-xl font-semibold mb-4">Add People</h2>
-          <div className="space-y-4">
-            <input
-              type="text"
-              placeholder="Name"
-              className="w-full p-3 rounded-xl bg-gray-800 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-            <input
-              type="tel"
-              placeholder="Phone Number (optional)"
-              className="w-full p-3 rounded-xl bg-gray-800 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-            />
+        {/* ── Step 2: Add People ── */}
+        <StepCard step={2} title="Add People">
+          <div className="space-y-3">
+            {/* Name */}
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1.5">Name</label>
+              <div className={inputCls("name")}>
+                <Users2 size={15} className={focused === "name" ? "text-indigo-400 shrink-0" : "text-gray-600 shrink-0"} />
+                <input
+                  type="text"
+                  placeholder="Person's name"
+                  className="flex-1 bg-transparent text-sm text-white placeholder:text-gray-600 outline-none"
+                  value={name}
+                  onFocus={() => setFocused("name")}
+                  onBlur={() => setFocused(null)}
+                  onChange={(e) => setName(e.target.value)}
+                />
+              </div>
+            </div>
 
-            <div className="flex justify-between gap-3">
+            {/* Phone */}
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1.5">
+                Phone <span className="text-gray-700">(for WhatsApp)</span>
+              </label>
+              <div className={inputCls("phone")}>
+                <MessageCircle size={15} className={focused === "phone" ? "text-indigo-400 shrink-0" : "text-gray-600 shrink-0"} />
+                <input
+                  type="tel"
+                  placeholder="Phone number"
+                  className="flex-1 bg-transparent text-sm text-white placeholder:text-gray-600 outline-none"
+                  value={phone}
+                  onFocus={() => setFocused("phone")}
+                  onBlur={() => setFocused(null)}
+                  onChange={(e) => setPhone(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* Action buttons */}
+            <div className="flex gap-3 pt-1">
               <button
                 onClick={handleImportContact}
-                className="flex-1 bg-blue-800 hover:bg-blue-700 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all"
+                className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.04] hover:bg-white/[0.07] py-2.5 text-sm font-medium text-gray-300 hover:text-white transition-all duration-200 active:scale-[0.98]"
               >
-                <Contact size={18} /> Import Number
+                <Contact size={15} /> Import Contact
               </button>
               <button
                 onClick={handleAddPerson}
-                className="flex-1 bg-green-600 hover:bg-green-700 py-3 rounded-xl font-bold text-sm transition-all"
+                className="flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold text-white transition-all duration-200 active:scale-[0.98]
+                  bg-gradient-to-b from-indigo-500 to-indigo-700
+                  shadow-[0_1px_0_rgba(255,255,255,0.15)_inset,0_4px_16px_rgba(99,102,241,0.35)]
+                  hover:shadow-[0_1px_0_rgba(255,255,255,0.18)_inset,0_6px_24px_rgba(99,102,241,0.5)]
+                  hover:from-indigo-400 hover:to-indigo-600"
               >
-                Add Person
+                <Plus size={15} /> Add Person
               </button>
             </div>
           </div>
-        </div>
+        </StepCard>
 
+        {/* ── Step 3: Split Summary ── */}
         {people.length > 0 && totalAmount !== "" && (
-          <div className="bg-[#111]/80 backdrop-blur-sm border border-gray-700 rounded-xl p-6 shadow-lg">
-            <h2 className="text-xl font-semibold mb-4">
-              Each person owes: ₹{equalShare.toFixed(2)}
-            </h2>
+          <StepCard step={3} title="Split Summary">
+            {/* Summary bar */}
+            <div className="flex items-center gap-4 mb-5 p-4 rounded-xl bg-white/[0.03] border border-white/[0.05]">
+              <div className="flex-1">
+                <p className="text-xs text-gray-500 mb-0.5">Each person owes</p>
+                <p className="text-2xl font-extrabold text-indigo-300">₹ {equalShare.toFixed(2)}</p>
+              </div>
+              <div className="flex gap-3 text-right">
+                <div>
+                  <p className="text-xs text-gray-500">Pending</p>
+                  <p className="text-base font-bold text-rose-400">{pendingCount}</p>
+                </div>
+                <div className="w-px bg-white/[0.06]" />
+                <div>
+                  <p className="text-xs text-gray-500">Paid</p>
+                  <p className="text-base font-bold text-emerald-400">{paidCount}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* People list */}
             <ul className="space-y-3">
               {people.map((p, i) => (
                 <li
                   key={i}
-                  className="flex justify-between items-center p-4 bg-white/5 rounded-md"
+                  className={`relative rounded-xl border p-4 transition-all duration-200 ${
+                    p.paid
+                      ? "border-emerald-500/20 bg-emerald-500/[0.04]"
+                      : "border-white/[0.07] bg-white/[0.03]"
+                  }`}
                 >
-                  <div>
-                    <p className="font-medium">{p.name}</p>
-                    <p className="text-sm text-gray-400 mb-1">
-                      Owes ₹{equalShare.toFixed(2)}
-                    </p>
-                    <label className="text-sm flex items-center gap-2 text-green-400">
-                      <input
-                        type="checkbox"
-                        checked={p.paid}
-                        onChange={() => handleTogglePaid(i)}
-                        className="accent-green-500"
-                      />
-                      Mark as Paid
-                    </label>
-                  </div>
-                  <div className="text-right space-y-2">
-                    {!p.paid && p.phone && p.link && (
-                      <Link
-                        href={`https://wa.me/${p.phone}?text=${encodeURIComponent(
-                          `Hi ${p.name}, you owe ₹${equalShare.toFixed(2)} for the shared expense.${
-                            description ? `\n${description}` : ""
-                          }\nPay here: ${p.link}`
-                        )}`}
-                        target="_blank"
-                        className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded text-sm font-semibold"
+                  <div className="absolute top-0 left-6 right-6 h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
+
+                  <div className="flex items-start justify-between gap-3">
+                    {/* Left: avatar + info */}
+                    <div className="flex items-start gap-3">
+                      {/* Avatar */}
+                      <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${
+                        p.paid ? "bg-emerald-500/20 text-emerald-300" : "bg-indigo-500/20 text-indigo-300"
+                      }`}>
+                        {p.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <p className={`font-semibold text-sm ${p.paid ? "text-gray-400 line-through" : "text-white"}`}>
+                          {p.name}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          Owes ₹ {equalShare.toFixed(2)}
+                        </p>
+                        {/* Paid toggle */}
+                        <button
+                          onClick={() => handleTogglePaid(i)}
+                          className={`flex items-center gap-1.5 mt-2 text-xs font-medium transition-colors duration-150 ${
+                            p.paid ? "text-emerald-400" : "text-gray-500 hover:text-emerald-400"
+                          }`}
+                        >
+                          {p.paid
+                            ? <CheckCircle2 size={13} className="text-emerald-400" />
+                            : <Circle size={13} />
+                          }
+                          {p.paid ? "Paid" : "Mark as paid"}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Right: actions */}
+                    <div className="flex items-center gap-2 shrink-0 mt-1">
+                      {!p.paid && p.phone && p.link && (
+                        <Link
+                          href={`https://wa.me/${p.phone}?text=${encodeURIComponent(
+                            `Hi ${p.name}, you owe ₹${equalShare.toFixed(2)} for the shared expense.${
+                              description ? `\n${description}` : ""
+                            }\nPay here: ${p.link}`
+                          )}`}
+                          target="_blank"
+                          className="flex items-center gap-1.5 rounded-lg bg-green-600/20 border border-green-600/30 hover:bg-green-600/30 px-3 py-1.5 text-xs font-semibold text-green-400 transition-all duration-150"
+                        >
+                          <MessageCircle size={12} /> WhatsApp
+                          <ChevronRight size={10} />
+                        </Link>
+                      )}
+                      <button
+                        onClick={() => handleDeletePerson(i)}
+                        className="w-7 h-7 rounded-lg bg-red-500/10 hover:bg-red-500/20 flex items-center justify-center text-red-500 hover:text-red-400 transition-all duration-150"
                       >
-                        Send Msg
-                      </Link>
-                    )}
-                    <button
-                      onClick={() => handleDeletePerson(i)}
-                      className="text-red-400 ml-4 hover:text-red-600 text-sm"
-                    >
-                      Delete
-                    </button>
+                        <UserMinus size={13} />
+                      </button>
+                    </div>
                   </div>
                 </li>
               ))}
             </ul>
-          </div>
+          </StepCard>
         )}
+
+        <div className="h-12" />
       </div>
+    </div>
+  );
+}
+
+/* ── StepCard ── */
+function StepCard({
+  step, title, children,
+}: {
+  step: number;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="relative rounded-2xl border border-white/[0.07] bg-white/[0.025] backdrop-blur-xl p-6 mb-4 shadow-[0_8px_40px_rgba(0,0,0,0.4)]">
+      <div className="absolute top-0 left-8 right-8 h-px bg-gradient-to-r from-transparent via-white/[0.08] to-transparent" />
+      <div className="flex items-center gap-3 mb-5">
+        <span className="flex items-center justify-center w-6 h-6 rounded-full bg-indigo-500/20 border border-indigo-500/30 text-xs font-bold text-indigo-400 shrink-0">
+          {step}
+        </span>
+        <h2 className="text-base font-semibold text-white">{title}</h2>
+      </div>
+      {children}
     </div>
   );
 }

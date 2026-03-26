@@ -24,6 +24,7 @@ import {
   RefreshCw,
   HandMetal,
   Route,
+  Umbrella,
 } from "lucide-react";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
@@ -33,6 +34,8 @@ import { SkeletonCard, SkeletonTransactionRow } from "@/components/SkeletonLoade
 import MonthlyReport from "@/components/MonthlyReport";
 import BottomNav from "@/components/BottomNav";
 import { CATEGORY_COLORS } from "@/lib/categoryConfig";
+import DashboardInsights from "@/components/DashboardInsights";
+import MonthEndReview from "@/components/MonthEndReview";
 
 const categoryIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   Food: Utensils,
@@ -42,6 +45,7 @@ const categoryIcons: Record<string, React.ComponentType<{ className?: string }>>
   Bills: ReceiptText,
   Entertainment: Clapperboard,
   Travel: Plane,
+  Vacation: Umbrella,
   SMM: Route,
   Others: BanknoteArrowUp,
   Other: BanknoteArrowUp,
@@ -340,6 +344,11 @@ export default function Dashboard() {
             </div>
           </motion.div>
 
+          {/* Month-end review — visible days 1-3 of new month */}
+          {!loading && (
+            <MonthEndReview transactions={txs} userName={user?.name} />
+          )}
+
           {/* Legacy TxnCards (hidden on mobile, compact grid) */}
           <div className="hidden sm:grid grid-cols-3 gap-3 mb-6">
             {loading ? (
@@ -442,7 +451,6 @@ export default function Dashboard() {
                             className="text-sm text-red-500 hover:text-red-700 ml-4 cursor-pointer font-bold"
                           >
                           <span>
-
                             Delete
                           </span>
                           </button>
@@ -460,6 +468,9 @@ export default function Dashboard() {
               </div>
             )}
           </div>
+
+          {/* ── Insights: Velocity, Race, Health, Streak, Digest, What If ── */}
+          <DashboardInsights txs={txs} inflow={inflow} expense={expense} loading={loading} />
 
           {/* Monthly Report */}
           <MonthlyReport transactions={txs} userName={user?.name || "User"} />

@@ -8,6 +8,7 @@ import {
   Plane,
   Route,
   BanknoteArrowUp,
+  Umbrella,
 } from "lucide-react";
 
 export const CATEGORY_COLORS: Record<
@@ -62,6 +63,12 @@ export const CATEGORY_COLORS: Record<
     border: "border-emerald-500/30",
     hex: "#10b981",
   },
+  Vacation: {
+    bg: "bg-lime-500/20",
+    text: "text-lime-400",
+    border: "border-lime-500/30",
+    hex: "#84cc16",
+  },
   Others: {
     bg: "bg-gray-500/20",
     text: "text-gray-400",
@@ -87,6 +94,7 @@ export const CATEGORY_ICONS: Record<
   Bills: ReceiptText,
   Entertainment: Clapperboard,
   Travel: Plane,
+  Vacation: Umbrella,
   SMM: Route,
   Others: BanknoteArrowUp,
   Other: BanknoteArrowUp,
