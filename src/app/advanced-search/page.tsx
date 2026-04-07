@@ -33,7 +33,7 @@ const SORT_OPTIONS = [
   { value: "amount-asc", label: "Amount ↑" },
 ];
 
-const ALL_CATEGORIES = ["Food","Outing","Clothes","Travel","Medical","Entertainment","Bills","SMM","Others"];
+const ALL_CATEGORIES = ["Food","Outing","Clothes","Travel","Vacation","Medical","Entertainment","Bills","SMM","Others"];
 
 export default function AdvancedSearchPage() {
   const router = useRouter();
