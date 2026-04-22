@@ -343,7 +343,7 @@ export default function MonthEndReview({ transactions, userName }: Props) {
                           {card.label}
                         </span>
                       </div>
-                      <p className="text-lg font-black text-white leading-tight mb-1">
+                      <p className="text-lg font-black text-white leading-none mb-1">
                         {card.headline}
                       </p>
                       <p className="text-xs text-gray-500 leading-relaxed">

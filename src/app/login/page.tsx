@@ -131,7 +131,7 @@ export default function LoginPage() {
                 </p>
 
                 {/* Headline */}
-                <h2 className="text-gradient-indigo text-[2rem] font-extrabold leading-tight mb-3">
+                <h2 className="text-gradient-indigo text-[2rem] font-extrabold leading-none mb-3">
                   Take control<br />of your finances.
                 </h2>
                 <p className="text-sm text-gray-500 leading-relaxed mb-8 max-w-xs">
@@ -193,7 +193,7 @@ export default function LoginPage() {
                   {FEATURES.map(({ icon: Icon, color, bg, label }) => (
                     <div key={label} className={`flex items-center gap-2 rounded-xl border ${bg} px-2.5 py-2`}>
                       <Icon size={12} className={`${color} shrink-0`} />
-                      <span className="text-[11px] text-gray-400 leading-tight">{label}</span>
+                      <span className="text-[11px] text-gray-400 leading-none">{label}</span>
                     </div>
                   ))}
                 </div>

@@ -1,10 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Papa from "papaparse";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import MenuButton from "@/components/Menu";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -12,10 +11,15 @@ import FloatingTransactionButton from "@/components/FloatingTransactionButton";
 import BottomNav from "@/components/BottomNav";
 import { SkeletonTransactionRow } from "@/components/SkeletonLoader";
 import { CATEGORY_COLORS, CATEGORY_ICONS } from "@/lib/categoryConfig";
+import ConfirmDialog from "@/components/ConfirmDialog";
+import EditTransactionModal from "@/components/EditTransactionModal";
+import { useAuthGuard } from "@/hooks/useAuthGuard";
+import { apiFetch } from "@/utils/apiFetch";
+import { toast } from "@/lib/toast";
 import {
   Search, Receipt, ChevronLeft, ChevronRight,
   Download, Trash2, ArrowDownCircle, ArrowUpCircle,
-  X, TrendingUp, TrendingDown, Wallet, ExternalLink,
+  X, TrendingUp, TrendingDown, Wallet, ExternalLink, Pencil,
 } from "lucide-react";
 
 const PAGE_SIZE = 20;
@@ -32,26 +36,20 @@ interface Transaction {
 }
 
 export default function Transactions() {
+  useAuthGuard();
+
   const [txs, setTxs] = useState<Transaction[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState<"" | "income" | "expense">("");
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const router = useRouter();
-
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) { router.push("/login"); return; }
-    try { JSON.parse(atob(token.split(".")[1])); }
-    catch { localStorage.removeItem("token"); router.push("/login"); }
-  }, []);
+  const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [editingTx, setEditingTx] = useState<Transaction | null>(null);
 
   const fetchTransactions = () => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
     setLoading(true);
-    fetch("/api/transactions", { headers: { Authorization: `Bearer ${token}` } })
+    apiFetch("/api/transactions")
       .then(r => r.json())
       .then(data => { if (data.transactions) setTxs(data.transactions); })
       .catch(console.error)
@@ -62,19 +60,23 @@ export default function Transactions() {
   useEffect(() => { setPage(1); }, [searchQuery, typeFilter]);
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm("Delete this transaction?")) return;
-    const token = localStorage.getItem("token");
-    if (!token) return;
     setDeletingId(id);
     try {
-      const res = await fetch(`/api/transactions/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await apiFetch(`/api/transactions/${id}`, { method: "DELETE" });
       const data = await res.json();
-      if (data.success) setTxs(prev => prev.filter(tx => tx._id !== id));
-    } catch (e) { console.error(e); }
-    finally { setDeletingId(null); }
+      if (data.success) {
+        setTxs(prev => prev.filter(tx => tx._id !== id));
+        toast("Transaction deleted", "success");
+      } else {
+        toast(data.error || "Failed to delete", "error");
+      }
+    } catch (e) {
+      console.error(e);
+      toast("Failed to delete transaction", "error");
+    } finally {
+      setDeletingId(null);
+      setConfirmId(null);
+    }
   };
 
   const handleExportCSV = () => {
@@ -254,11 +256,7 @@ export default function Transactions() {
             <p className="text-lg font-bold text-gray-400 mb-1">No matches found</p>
             <p className="text-sm text-gray-600">Try different search terms or clear filters</p>
             <button onClick={() => { setSearchQuery(""); setTypeFilter(""); }} className="mt-4 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-gray-400 rounded-xl text-sm font-bold transition-colors cursor-pointer">
-            
-            <span>
-
               Clear Filters
-            </span>
             </button>
           </motion.div>
         ) : (
@@ -299,7 +297,7 @@ export default function Transactions() {
                             <Link href={`/transactions/${tx._id}`} className="flex-1 min-w-0">
                               <div className="flex items-start justify-between gap-2">
                                 <div className="min-w-0">
-                                  <p className="font-bold text-gray-100 text-sm truncate leading-tight">{tx.title}</p>
+                                  <p className="font-bold text-gray-100 text-sm truncate leading-none">{tx.title}</p>
                                   <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                                     <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${colors.bg} ${colors.text}`}>
                                       {tx.category}
@@ -319,16 +317,25 @@ export default function Transactions() {
 
                                 {/* Amount */}
                                 <div className="text-right flex-shrink-0">
-                                  <p className={`font-black text-base leading-tight ${tx.type === "income" ? "text-green-400" : "text-red-400"}`}>
+                                  <p className={`font-black text-base leading-none ${tx.type === "income" ? "text-green-400" : "text-red-400"}`}>
                                     {tx.type === "income" ? "+" : "-"}₹{tx.amount.toLocaleString()}
                                   </p>
                                 </div>
                               </div>
                             </Link>
 
+                            {/* Edit button — visible on hover */}
+                            <button
+                              onClick={() => setEditingTx(tx)}
+                              className="flex-shrink-0 p-2 rounded-lg text-gray-700 hover:text-indigo-400 hover:bg-indigo-500/10 opacity-0 group-hover:opacity-100 transition-all duration-200 cursor-pointer"
+                              aria-label="Edit transaction"
+                            >
+                              <Pencil size={14} />
+                            </button>
+
                             {/* Delete button — visible on hover */}
                             <button
-                              onClick={() => handleDelete(tx._id)}
+                              onClick={() => setConfirmId(tx._id)}
                               disabled={deletingId === tx._id}
                               className="flex-shrink-0 p-2 rounded-lg text-gray-700 hover:text-red-400 hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition-all duration-200 cursor-pointer disabled:opacity-50"
                             >
@@ -351,10 +358,7 @@ export default function Transactions() {
                   disabled={page === 1}
                   className="flex items-center gap-1.5 px-4 py-2 bg-white/5 hover:bg-white/10 border border-gray-700 rounded-xl text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
                 >
-                  <span>
-
                   <ChevronLeft size={15} /> Prev
-                  </span>
                 </button>
 
                 <div className="flex items-center gap-1">
@@ -373,10 +377,7 @@ export default function Transactions() {
                           page === p ? "bg-indigo-600 text-white" : "bg-white/5 hover:bg-white/10 text-gray-400"
                         }`}
                       >
-                        <span>
-
                         {p}
-                        </span>
                       </button>
                     );
                   })}
@@ -387,10 +388,7 @@ export default function Transactions() {
                   disabled={page === totalPages}
                   className="flex items-center gap-1.5 px-4 py-2 bg-white/5 hover:bg-white/10 border border-gray-700 rounded-xl text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
                 >
-                  <span>
-
                   Next <ChevronRight size={15} />
-                  </span>
                 </button>
               </div>
             )}
@@ -404,8 +402,27 @@ export default function Transactions() {
       </div>
 
       <Footer />
-      <FloatingTransactionButton />
+      <FloatingTransactionButton onAdd={fetchTransactions} />
       <BottomNav />
+
+      <ConfirmDialog
+        open={confirmId !== null}
+        title="Delete Transaction"
+        message="This will permanently remove this transaction."
+        confirmLabel="Delete"
+        danger
+        onConfirm={() => { if (confirmId) handleDelete(confirmId); }}
+        onCancel={() => setConfirmId(null)}
+      />
+      <EditTransactionModal
+        tx={editingTx}
+        onClose={() => setEditingTx(null)}
+        onSave={updated => {
+          setTxs(prev => prev.map(t => t._id === updated._id ? updated : t));
+          toast("Transaction updated!", "success");
+        }}
+      />
+
     </div>
   );
 }

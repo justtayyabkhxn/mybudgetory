@@ -5,12 +5,22 @@ import { Plus, X } from "lucide-react";
 import { AddTransactionForm } from "@/components/AddTransactionForm";
 import { motion, AnimatePresence } from "framer-motion";
 
-export default function FloatingTransactionButton() {
+interface Props {
+  onAdd?: () => void;
+}
+
+export default function FloatingTransactionButton({ onAdd }: Props = {}) {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
+  }, [open]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    if (open) window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
   }, [open]);
 
   return (
@@ -58,6 +68,8 @@ export default function FloatingTransactionButton() {
               transition={{ type: "spring", stiffness: 280, damping: 28 }}
             >
               <div
+                role="dialog"
+                aria-modal="true"
                 className="relative w-full sm:max-w-md bg-[#0e0e1c] border border-white/10
                            rounded-t-3xl sm:rounded-2xl shadow-2xl
                            max-h-[92dvh] overflow-y-auto"
@@ -81,7 +93,7 @@ export default function FloatingTransactionButton() {
 
                 {/* Form */}
                 <div className="px-2 pb-6 pt-2 sm:px-0 sm:pt-0 sm:pb-0">
-                  <AddTransactionForm onAdd={() => setOpen(false)} />
+                  <AddTransactionForm onAdd={() => { setOpen(false); onAdd?.(); }} />
                 </div>
               </div>
             </motion.div>

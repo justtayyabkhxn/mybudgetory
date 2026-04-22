@@ -6,12 +6,14 @@ export async function POST(req: Request) {
   const userId = getUserId(req.headers.get("authorization") || "");
   if (!userId) return unauthorized();
 
-  const { person, amount, type, status, date, comment } = await req.json();
+  const { person, amount, type, dueDate, reason } = await req.json();
   await connectDB();
   try {
     const entry = await DebtLent.create({
-      userId, person, amount: Number(amount), type, status,
-      date: new Date(date), comment,
+      userId, person, amount: Number(amount), type,
+      status: "pending",
+      reason,
+      ...(dueDate ? { dueDate: new Date(dueDate) } : {}),
     });
     return Response.json({ entry }, { status: 201 });
   } catch {

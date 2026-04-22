@@ -250,7 +250,7 @@ export default function SignupPage() {
                 </div>
 
                 {/* Headline */}
-                <h2 className="text-gradient-violet text-[1.85rem] font-extrabold leading-tight mb-3">
+                <h2 className="text-gradient-violet text-[1.85rem] font-extrabold leading-none mb-3">
                   Everything you<br />need in one app.
                 </h2>
                 <p className="text-sm text-gray-500 leading-relaxed mb-6 max-w-xs">

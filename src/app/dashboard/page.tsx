@@ -1,20 +1,12 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
 import { AddTransactionForm } from "../../components/AddTransactionForm";
 import { TxnCard } from "../../components/TxnCard";
 import Link from "next/link";
 import Menu from "@/components/Menu";
 import {
-  Utensils,
-  Shirt,
-  Briefcase,
-  HeartPulse,
-  ReceiptText,
-  Clapperboard,
-  Plane,
   BanknoteArrowUp,
   FileDigit,
   RefreshCcwDot,
@@ -23,8 +15,8 @@ import {
   Wallet,
   RefreshCw,
   HandMetal,
-  Route,
-  Umbrella,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
@@ -33,23 +25,14 @@ import CountUp from "@/components/CountUp";
 import { SkeletonCard, SkeletonTransactionRow } from "@/components/SkeletonLoader";
 import MonthlyReport from "@/components/MonthlyReport";
 import BottomNav from "@/components/BottomNav";
-import { CATEGORY_COLORS } from "@/lib/categoryConfig";
+import { CATEGORY_COLORS, CATEGORY_ICONS } from "@/lib/categoryConfig";
 import DashboardInsights from "@/components/DashboardInsights";
 import MonthEndReview from "@/components/MonthEndReview";
-
-const categoryIcons: Record<string, React.ComponentType<{ className?: string }>> = {
-  Food: Utensils,
-  Outing: Briefcase,
-  Clothes: Shirt,
-  Medical: HeartPulse,
-  Bills: ReceiptText,
-  Entertainment: Clapperboard,
-  Travel: Plane,
-  Vacation: Umbrella,
-  SMM: Route,
-  Others: BanknoteArrowUp,
-  Other: BanknoteArrowUp,
-};
+import { useAuthGuard } from "@/hooks/useAuthGuard";
+import { apiFetch } from "@/utils/apiFetch";
+import { toast } from "@/lib/toast";
+import ConfirmDialog from "@/components/ConfirmDialog";
+import EditTransactionModal from "@/components/EditTransactionModal";
 
 interface Transaction {
   _id: string;
@@ -69,14 +52,23 @@ type User = {
 };
 
 export default function Dashboard() {
+  useAuthGuard();
+
   const [user, setUser] = useState<User | null>(null);
   const [txs, setTxs] = useState<Transaction[]>([]);
-  const [inflow, setInflow] = useState<number>(0);
-  const [expense, setExpense] = useState<number>(0);
-  const [net, setNet] = useState<number>(0);
-  const [today, setToday] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [editingTx, setEditingTx] = useState<Transaction | null>(null);
+
+  const { inflow, expense, net, today } = useMemo(() => {
+    const now = new Date();
+    const cm = now.getMonth(), cy = now.getFullYear();
+    const inflowSum  = txs.filter(tx => tx.type === "income"  && new Date(tx.date).getMonth() === cm && new Date(tx.date).getFullYear() === cy).reduce((s, tx) => s + tx.amount, 0);
+    const expenseSum = txs.filter(tx => tx.type === "expense" && new Date(tx.date).getMonth() === cm && new Date(tx.date).getFullYear() === cy).reduce((s, tx) => s + tx.amount, 0);
+    const todaySum   = txs.filter(tx => { const d = new Date(tx.date); return tx.type === "expense" && d.getDate() === now.getDate() && d.getMonth() === cm && d.getFullYear() === cy; }).reduce((s, tx) => s + tx.amount, 0);
+    return { inflow: inflowSum, expense: expenseSum, net: inflowSum - expenseSum, today: todaySum };
+  }, [txs]);
 
   useEffect(() => {
     function preventTouchMove(e: TouchEvent) {
@@ -97,65 +89,6 @@ export default function Dashboard() {
     };
   }, [menuOpen]);
 
-  const router = useRouter();
-
-  useEffect(() => {
-    const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
-
-    const inflowSum = txs
-      .filter(
-        (tx) =>
-          tx.type === "income" &&
-          new Date(tx.date).getMonth() === currentMonth &&
-          new Date(tx.date).getFullYear() === currentYear
-      )
-      .reduce((sum, tx) => sum + tx.amount, 0);
-
-    const expenseSum = txs
-      .filter(
-        (tx) =>
-          tx.type === "expense" &&
-          new Date(tx.date).getMonth() === currentMonth &&
-          new Date(tx.date).getFullYear() === currentYear
-      )
-      .reduce((sum, tx) => sum + tx.amount, 0);
-
-    const todaySum = txs
-      .filter((tx) => {
-        const txDate = new Date(tx.date);
-        return (
-          tx.type === "expense" &&
-          txDate.getDate() === now.getDate() &&
-          txDate.getMonth() === now.getMonth() &&
-          txDate.getFullYear() === now.getFullYear()
-        );
-      })
-      .reduce((sum, tx) => sum + tx.amount, 0);
-
-    setToday(todaySum);
-    setInflow(inflowSum);
-    setExpense(expenseSum);
-    setNet(inflowSum - expenseSum);
-  }, [txs]);
-
-  // Check auth + decode user
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      router.push("/login");
-      return;
-    }
-    try {
-      const payload = JSON.parse(atob(token.split(".")[1]));
-      setUser(payload);
-    } catch {
-      localStorage.removeItem("token");
-      router.push("/login");
-    }
-  }, []);
-
   // Fetch profile via auth token (no email exposure)
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -166,44 +99,30 @@ export default function Dashboard() {
   }, []);
 
   const handleDelete = async (id: string) => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
-
-    const confirm = window.confirm(
-      "Are you sure you want to delete this transaction?"
-    );
-    if (!confirm) return;
-
     try {
-      const res = await fetch(`/api/transactions/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await apiFetch(`/api/transactions/${id}`, { method: "DELETE" });
       const data = await res.json();
       if (data.success) {
         setTxs((prev) => prev.filter((tx) => tx._id !== id));
       } else {
-        alert("Failed to delete transaction");
+        toast("Failed to delete transaction", "error");
       }
     } catch (error) {
       console.error("Delete error:", error);
+      toast("Failed to delete transaction", "error");
     }
   };
 
   const fetchTransactions = useCallback(() => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
     setLoading(true);
-    fetch("/api/transactions", { headers: { Authorization: `Bearer ${token}` } })
-      .then((res) => { if (res.status === 401) { localStorage.removeItem("token"); window.location.href = "/login"; } return res.json(); })
+    apiFetch("/api/transactions")
+      .then((res) => res.json())
       .then((data) => { if (data.transactions) setTxs(data.transactions); })
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
 
-  useEffect(() => {
-    if (user) fetchTransactions();
-  }, [user, fetchTransactions]);
+  useEffect(() => { fetchTransactions(); }, [fetchTransactions]);
 
   const now = new Date();
   const monthName = now.toLocaleString("default", { month: "long" });
@@ -406,7 +325,7 @@ export default function Dashboard() {
             ) : (
               <ul className="space-y-3 border-gray-900">
                 {[...txs].slice(0, 5).map((tx) => {
-                  const Icon = categoryIcons[tx.category] || BanknoteArrowUp;
+                  const Icon = CATEGORY_ICONS[tx.category] || BanknoteArrowUp;
                   const colors =
                     CATEGORY_COLORS[tx.category] || CATEGORY_COLORS["Others"];
 
@@ -416,7 +335,7 @@ export default function Dashboard() {
                       key={tx._id}
                       className="block"
                     >
-                      <li className="flex justify-between items-center p-4 bg-white/2 hover:bg-white/10 backdrop-blur-md border border-gray-800 rounded-xl transition-all duration-300 cursor-pointer shadow-md">
+                      <li className="group flex justify-between items-center p-4 bg-white/2 hover:bg-white/10 backdrop-blur-md border border-gray-800 rounded-xl transition-all duration-300 cursor-pointer shadow-md">
                         <div className="flex items-center gap-3">
                           <div
                             className={`${colors.bg} border ${colors.border} p-2 rounded-full`}
@@ -432,7 +351,7 @@ export default function Dashboard() {
                             <p className="text-sm text-gray-400">{tx.comment}</p>
                           </div>
                         </div>
-                        <div className="text-right">
+                        <div className="text-right flex items-center gap-1">
                           <p
                             className={`font-bold ${
                               tx.type === "income"
@@ -446,13 +365,23 @@ export default function Dashboard() {
                             onClick={(e) => {
                               e.stopPropagation();
                               e.preventDefault();
-                              handleDelete(tx._id);
+                              setEditingTx(tx);
                             }}
-                            className="text-sm text-red-500 hover:text-red-700 ml-4 cursor-pointer font-bold"
+                            className="p-2 rounded-lg text-gray-700 hover:text-indigo-400 hover:bg-indigo-500/10 opacity-0 group-hover:opacity-100 transition-all duration-200 cursor-pointer"
+                            aria-label="Edit transaction"
                           >
-                          <span>
-                            Delete
-                          </span>
+                            <Pencil size={13} />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              e.preventDefault();
+                              setConfirmDeleteId(tx._id);
+                            }}
+                            className="p-2 rounded-lg text-gray-700 hover:text-red-400 hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition-all duration-200 cursor-pointer"
+                            aria-label="Delete transaction"
+                          >
+                            <Trash2 size={13} />
                           </button>
                         </div>
                       </li>
@@ -479,6 +408,21 @@ export default function Dashboard() {
 
       <Footer />
       <BottomNav />
+
+      <ConfirmDialog
+        open={confirmDeleteId !== null}
+        title="Delete Transaction"
+        message="This will permanently remove this transaction."
+        confirmLabel="Delete"
+        danger
+        onConfirm={() => { if (confirmDeleteId) { handleDelete(confirmDeleteId); setConfirmDeleteId(null); } }}
+        onCancel={() => setConfirmDeleteId(null)}
+      />
+      <EditTransactionModal
+        tx={editingTx}
+        onClose={() => setEditingTx(null)}
+        onSave={updated => setTxs(prev => prev.map(t => t._id === updated._id ? { ...t, ...updated } : t))}
+      />
     </div>
   );
 }

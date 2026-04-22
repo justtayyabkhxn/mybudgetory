@@ -951,7 +951,7 @@ export const getWeekOfMonthOptions = (data: {
           { linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 }, stops: [[0, "#06b6d4"], [1, "#0891b2"]] },
           { linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 }, stops: [[0, "#f97316"], [1, "#ea580c"]] },
           { linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 }, stops: [[0, "#a855f7"], [1, "#9333ea"]] },
-        ][i % 4] as unknown as string,
+        ][i % 4],
       })),
     } as Highcharts.SeriesColumnOptions],
   });

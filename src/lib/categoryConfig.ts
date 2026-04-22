@@ -1,3 +1,4 @@
+import React from "react";
 import {
   Utensils,
   Briefcase,
@@ -99,3 +100,16 @@ export const CATEGORY_ICONS: Record<
   Others: BanknoteArrowUp,
   Other: BanknoteArrowUp,
 };
+
+export const CATEGORIES: { name: string; icon: React.ComponentType<{ className?: string; size?: number }> }[] = [
+  { name: "Food",          icon: Utensils },
+  { name: "Outing",        icon: Briefcase },
+  { name: "Clothes",       icon: Shirt },
+  { name: "Travel",        icon: Plane },
+  { name: "Vacation",      icon: Umbrella },
+  { name: "Medical",       icon: HeartPulse },
+  { name: "Entertainment", icon: Clapperboard },
+  { name: "Bills",         icon: ReceiptText },
+  { name: "SMM",           icon: Route },
+  { name: "Others",        icon: BanknoteArrowUp },
+];

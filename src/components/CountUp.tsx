@@ -2,25 +2,72 @@
 
 import { motion } from "framer-motion";
 
-const CELL_H = 1.15; // em — height of each digit row
+const CELL_H = 1.2; // em — height of each digit row
+const CYCLES = 3;   // full cycles before landing
 
-function DigitRoller({ digit, delay = 0 }: { digit: string; delay?: number }) {
+// Build a column of digits that spins through CYCLES full rotations
+const COLUMN = Array.from({ length: CYCLES }, () =>
+  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+).flat();
+
+function DigitRoller({
+  digit,
+  delay = 0,
+  duration = 1.0,
+}: {
+  digit: string;
+  delay?: number;
+  duration?: number;
+}) {
   const d = parseInt(digit);
+  // Land on digit d in the last cycle
+  const targetIndex = (CYCLES - 1) * 10 + d;
 
   return (
     <span
-      className="inline-block overflow-hidden"
-      style={{ height: `${CELL_H}em`, lineHeight: `${CELL_H}em`, verticalAlign: "bottom" }}
+      className="inline-block overflow-hidden relative"
+      style={{
+        height: `${CELL_H}em`,
+        lineHeight: `${CELL_H}em`,
+        verticalAlign: "bottom",
+      }}
     >
+      {/* top fade */}
+      <span
+        className="pointer-events-none absolute inset-x-0 top-0 z-10"
+        style={{
+          height: "40%",
+          // background: "linear-gradient(to bottom, currentColor 0%, transparent 100%)",
+          opacity: 0.15,
+        }}
+      />
+      {/* bottom fade */}
+      <span
+        className="pointer-events-none absolute inset-x-0 bottom-0 z-10"
+        style={{
+          height: "40%",
+          // background: "linear-gradient(to top, currentColor 0%, transparent 100%)",
+          opacity: 0.15,
+        }}
+      />
+
       <motion.span
         initial={{ y: 0 }}
-        animate={{ y: `${-d * CELL_H}em` }}
-        transition={{ duration: 0.6, delay, ease: [0.22, 1, 0.36, 1] }}
-        style={{ display: "flex", flexDirection: "column", willChange: "transform" }}
+        animate={{ y: `${-targetIndex * CELL_H}em` }}
+        transition={{
+          duration,
+          delay,
+          ease: [0.12, 1, 0.28, 1], // expo out — fast spin, smooth land
+        }}
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          willChange: "transform",
+        }}
       >
-        {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
+        {COLUMN.map((n, i) => (
           <span
-            key={n}
+            key={i}
             style={{
               height: `${CELL_H}em`,
               lineHeight: `${CELL_H}em`,
@@ -41,7 +88,7 @@ interface CountUpProps {
   prefix?: string;
   suffix?: string;
   className?: string;
-  duration?: number; // unused — kept for API compatibility
+  duration?: number;
 }
 
 export default function CountUp({
@@ -49,38 +96,50 @@ export default function CountUp({
   prefix = "",
   suffix = "",
   className = "",
+  duration = 1.1,
 }: CountUpProps) {
   const formatted = end.toLocaleString();
+  const chars = formatted.split("");
+
+  // Count only numeric chars to compute per-digit stagger
+  const numericTotal = chars.filter((c) => /\d/.test(c)).length;
+  let numericIndex = 0;
 
   return (
-    <span className={`inline-flex items-end ${className}`} style={{ gap: 0 }}>
+    <span
+      className={`inline-flex items-end tabular-nums ${className}`}
+      style={{ gap: 0 }}
+    >
       {prefix && (
         <span style={{ lineHeight: `${CELL_H}em`, verticalAlign: "bottom" }}>
           {prefix}
         </span>
       )}
 
-      {formatted.split("").map((char, i) => {
+      {chars.map((char, i) => {
         if (!/\d/.test(char)) {
-          // Comma / separator — static, vertically centred
           return (
             <span
               key={`sep-${i}`}
-              style={{ lineHeight: `${CELL_H}em`, verticalAlign: "bottom", padding: 0, margin: 0 }}
+              style={{ lineHeight: `${CELL_H}em`, verticalAlign: "bottom" }}
             >
               {char}
             </span>
           );
         }
 
-        // Key by position-from-right so only changed digits re-roll
-        const posFromRight = formatted.length - 1 - i;
+        const idx = numericIndex++;
+        // Left-to-right stagger: leftmost digit settles first (slot-machine feel)
+        // units digit gets the longest spin
+        const digitDelay = idx * (0.06 / Math.max(numericTotal - 1, 1)) * (numericTotal - 1);
+        const digitDuration = duration + idx * 0.04;
 
         return (
           <DigitRoller
-            key={`pos-${posFromRight}`}
+            key={`pos-${numericTotal - 1 - idx}`}
             digit={char}
-            delay={i * 0.03}
+            delay={digitDelay}
+            duration={digitDuration}
           />
         );
       })}

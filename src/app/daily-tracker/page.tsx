@@ -63,7 +63,7 @@ export default function LandingPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.3 }}
-            className="text-6xl md:text-7xl font-extrabold tracking-tight leading-tight"
+            className="text-6xl md:text-7xl font-extrabold tracking-tight leading-none"
           >
             Track Budget Efficiently! With{" "}
             <span className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">

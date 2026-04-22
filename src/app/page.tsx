@@ -191,12 +191,9 @@ export default function LandingPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.3 }}
-            className="text-6xl md:text-7xl font-extrabold tracking-tight leading-tight"
+            className="text-6xl md:text-7xl font-extrabold tracking-tight leading-none"
           >
-            <span>
-
-            Manage Money Smarter with{" "}
-            </span>
+            <span>Manage Money Smarter with </span>
             <span className="bg-gradient-to-r font-extrabold tracking-tight from-emerald-400 via-green-500 to-teal-500 bg-clip-text text-transparent">
               MyBudgetory
             </span>
@@ -225,10 +222,17 @@ export default function LandingPage() {
                   size={20}
                   className="group-hover:scale-110 transition-transform"
                 />
-                <span>
+                <span>Dashboard</span>
+              </button>
+            </Link>
 
-                Dashboard
-                </span>
+            <Link href="/features">
+              <button className="group bg-white dark:bg-gray-800 border-2 border-indigo-400 dark:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 px-8 py-3.5 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 font-bold text-lg flex items-center justify-center gap-3 text-indigo-700 dark:text-indigo-300 cursor-pointer">
+                <Sparkles
+                  size={20}
+                  className="group-hover:scale-110 transition-transform"
+                />
+                <span>Features</span>
               </button>
             </Link>
 
@@ -238,10 +242,7 @@ export default function LandingPage() {
                   size={20}
                   className="group-hover:scale-110 transition-transform"
                 />
-                <span>
-
-                Login
-                </span>
+                <span>Login</span>
               </button>
             </Link>
           </motion.div>
@@ -266,10 +267,7 @@ export default function LandingPage() {
           <section className="mt-24 max-w-5xl mx-auto text-center">
             <div className="h-px bg-gradient-to-r from-transparent via-emerald-300 dark:via-emerald-700 to-transparent mb-12" />
             <h2 className="text-4xl md:text-5xl mb-6 bg-gradient-to-r from-emerald-500 to-teal-600 bg-clip-text text-transparent font-extrabold tracking-tight">
-              <span>
-
-              Why Choose MyBudgetory?
-              </span>
+              <span>Why Choose MyBudgetory?</span>
             </h2>
             <p className="text-xl text-gray-600 dark:text-gray-300 leading-relaxed max-w-3xl mx-auto">
               Whether you&apos;re keeping track of daily coffee runs or planning
@@ -290,10 +288,7 @@ export default function LandingPage() {
                   size={20}
                   className="group-hover:scale-110 transition-transform"
                 />
-                <span>
-
-                Get Started Free
-                </span>
+                <span>Get Started Free</span>
               </button>
 
               <a
@@ -306,10 +301,7 @@ export default function LandingPage() {
                     size={20}
                     className="group-hover:scale-110 transition-transform"
                   />
-                  <span>
-                    
-                  View on GitHub
-                  </span>
+                  <span>View on GitHub</span>
                 </button>
               </a>
             </div>
@@ -378,10 +370,7 @@ export default function LandingPage() {
                   href="/daily-tracker"
                   className="group bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white px-8 py-4 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 font-bold text-lg flex items-center justify-center gap-2"
                 >
-                  <span>
-
-                  Start Daily Tracking
-                  </span>
+                  <span>Start Daily Tracking</span>
                   <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
                 </Link>
 
@@ -389,10 +378,7 @@ export default function LandingPage() {
                   href="/event-budget"
                   className="group bg-white dark:bg-gray-800 border-2 border-emerald-500 dark:border-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 px-8 py-4 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 font-bold text-lg flex items-center justify-center gap-2 text-emerald-700 dark:text-emerald-300"
                 >
-                  <span>
-
-                  Plan Event Budget
-                  </span>
+                  <span>Plan Event Budget</span>
                   <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
                 </Link>
               </div>

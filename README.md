@@ -1,51 +1,97 @@
-# MyBudgetory — Smart Personal Finance Tracker
+# MyBudgetory — Personal Finance Tracker
 
-**MyBudgetory** is a full-stack personal finance app built with **Next.js 15**, **MongoDB**, and **Tailwind CSS**. Track income and expenses, visualise spending trends, and split bills with friends — all from a beautiful dark-themed interface.
+**MyBudgetory** is a full-stack personal finance app built with **Next.js 15**, **MongoDB**, and **Tailwind CSS**. Track income and expenses, set budget goals, manage recurring transactions, monitor debt, and visualise spending — all from a clean dark-themed interface.
 
 ---
 
 ## Features
 
 ### Dashboard
-- Add income and expense transactions with title, category, amount, and date
-- Filter transactions by week, month, or year
-- Interactive bar and pie charts (Recharts + Chart.js)
-- Export transactions as CSV
+- Monthly income, expenses, and net savings at a glance
+- Savings rate badge and today's spend tracker
+- Recent 5 transactions with hover-reveal edit and delete
+- Smart insights: spending velocity, category race, health score, streak tracker, monthly digest, and what-if simulator
+- Month-end review panel (visible days 1–3 of each new month)
+- Monthly PDF-style report
 
-### Statistics
-- Monthly summary: total income, expenses, net balance
-- Spending insights: most active day, avg monthly spending, top/least spent categories
-- Notable transactions: largest income and expense of the month
-- Top 3 highest-spend days
+### Transactions
+- Full CRUD — add, view, edit, delete
+- Edit modal with category pills, type toggle, payment mode, and note
+- Filter by month, search by title
+- Color-coded category icons throughout
+- Confirm dialog on delete (no `window.confirm`)
 
-### Split Bills
-- Enter a total bill amount and description
-- Add people manually or import from phone contacts (Chrome Mobile)
-- Auto-calculates each person's equal share
-- Send WhatsApp payment reminders with a personalised shareable link
-- Mark people as paid, delete individuals, or clear the entire split
+### Calendar View
+- Heat-map grid — 4-tier coloring based on daily spend intensity
+- Month navigation with animated month name transitions
+- Month stats bar: income / expenses / net for the viewed month
+- Income dot per day (green indicator)
+- Day detail panel with transaction list — each item links to transaction detail
+- Weekly rhythm sparklines
+
+### Budget Goals
+- Set monthly spending limits per category
+- Speedometer gauge showing real-time utilization
+- Color progression: green → yellow → orange → red at 100%
+- Over Budget and Warning badges
+- Remaining amount calculation per category
+
+### Recurring Transactions
+- Track subscriptions, rent, salary, EMIs — any repeating payment
+- Daily / weekly / monthly frequency
+- Log Now — instantly posts a transaction to your history
+- Pause and resume without deleting
+- Monthly recurring outflow summary
+
+### Debt & Lent Tracker
+- Track money you've lent to others and money you owe
+- Optional due date with overdue badge
+- Mark as cleared
+- Pending and cleared entries in separate sections
+- Total owed / owed-to summary cards
+
+### Net Worth
+- Bank balance tracking with inline edit (Enter to save, Escape to cancel)
+- Total net worth card
+
+### Charts & Analytics
+- Category breakdown pie chart
+- Monthly income vs expense bar chart
+- Trend lines over time
+- Advanced charts page with deeper breakdowns
+
+### Expenses & Income Views
+- Dedicated filtered views — expenses-only and income-only
+- Month selector with running total
+- Edit and delete inline
+
+### Profile & Data
+- Export all transactions as JSON
+- Import transactions from a JSON backup
+- Change password (current + new + confirm)
+- Delete all transactions with typed confirmation (`"delete"`)
 
 ### Auth
-- Secure signup and login with custom JWT authentication
-- Animated split-screen auth pages with live app preview cards
-- Password visibility toggle, focused input states, error handling
+- Custom JWT authentication (signup / login)
+- `useAuthGuard` hook — automatic redirect to `/login` on missing or invalid token
+- `apiFetch` utility — attaches Bearer token, 30 s timeout, auto-redirect on 401
 
 ---
 
 ## Tech Stack
 
-| Layer          | Technology                                    |
-|----------------|-----------------------------------------------|
-| Framework      | Next.js 15 (App Router)                       |
-| Language       | TypeScript                                    |
-| Styling        | Tailwind CSS 4, custom CSS animations         |
-| Database       | MongoDB Atlas + Mongoose                      |
-| Authentication | Custom JWT (`jsonwebtoken` + `jwt-decode`)    |
-| Charts         | Recharts, Chart.js, Highcharts, Tremor        |
-| Icons          | Lucide React                                  |
-| Animations     | Framer Motion, CSS keyframes                  |
-| HTTP Client    | Axios                                         |
-| Utilities      | date-fns, papaparse, bcryptjs, html-to-image  |
+| Layer          | Technology                                        |
+|----------------|---------------------------------------------------|
+| Framework      | Next.js 15 (App Router, `"use client"`)           |
+| Language       | TypeScript                                        |
+| Styling        | Tailwind CSS 4, Bricolage Grotesque (Google Font) |
+| Database       | MongoDB Atlas + Mongoose                          |
+| Authentication | Custom JWT (`jsonwebtoken` + `bcryptjs`)          |
+| Charts         | Highcharts, Chart.js                              |
+| Icons          | Lucide React                                      |
+| Animations     | Framer Motion (AnimatePresence, motion)           |
+| HTTP Client    | Axios (profile), custom `apiFetch` utility        |
+| Utilities      | date-fns, html-to-image                           |
 
 ---
 
@@ -83,37 +129,63 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 ```
 src/
 ├── app/
-│   ├── api/                  # API routes (auth, transactions, stats)
-│   │   ├── login/
-│   │   ├── signup/
-│   │   └── transactions/
-│   ├── dashboard/            # Main dashboard page
-│   ├── login/                # Login page
-│   ├── signup/               # Signup page
-│   ├── stats/                # Statistics page
-│   ├── split/                # Bill splitter
-│   │   └── summary/[encoded] # Shareable payment summary
-│   └── globals.css           # Global styles & animations
+│   ├── api/                    # API routes
+│   │   ├── auth/               # Login, signup
+│   │   ├── transactions/       # CRUD + import/delete-all
+│   │   ├── budget-goals/       # Per-category limits
+│   │   ├── recurring/          # Recurring transactions
+│   │   ├── debt-lent/          # Debt & lent entries
+│   │   ├── networth/           # Bank balance
+│   │   └── user/               # Profile, password update
+│   │
+│   ├── dashboard/              # Main dashboard
+│   ├── transactions/           # Full transaction list
+│   ├── transactions/[id]/      # Transaction detail page
+│   ├── calendar/               # Heat-map calendar
+│   ├── budget-goals/           # Spending limits by category
+│   ├── recurring/              # Recurring transactions
+│   ├── debt-lent/              # Debt & lent tracker
+│   ├── net-worth/              # Net worth tracker
+│   ├── expenses/               # Expense-only filtered view
+│   ├── inflow/                 # Income-only filtered view
+│   ├── charts/                 # Charts & analytics
+│   ├── advanced-charts/        # Extended chart views
+│   ├── stats/                  # Monthly statistics
+│   ├── split/                  # Bill splitter
+│   ├── event-budget/           # Event / travel budget
+│   ├── profile/                # User profile & data management
+│   ├── features/               # Features showcase page
+│   ├── login/                  # Login page
+│   ├── signup/                 # Signup page
+│   └── page.tsx                # Landing page
 │
-├── components/               # Reusable UI components
+├── components/                 # Reusable UI components
 │   ├── Header.tsx
 │   ├── Footer.tsx
+│   ├── BottomNav.tsx
 │   ├── Menu.tsx
-│   └── FloatingTransactionButton.tsx
+│   ├── AddTransactionForm.tsx
+│   ├── EditTransactionModal.tsx
+│   ├── ConfirmDialog.tsx
+│   ├── ToastContainer.tsx
+│   ├── CountUp.tsx             # Slot-machine number animation
+│   ├── DashboardInsights.tsx   # Velocity, health, streak, digest
+│   ├── FilteredTransactionsPage.tsx  # Shared expenses/inflow page
+│   ├── MonthlyReport.tsx
+│   ├── MonthEndReview.tsx
+│   └── SkeletonLoader.tsx
 │
-└── lib/                      # MongoDB connection, utilities
+├── hooks/
+│   └── useAuthGuard.ts         # Auth redirect hook
+│
+├── utils/
+│   └── apiFetch.ts             # Fetch wrapper with auth + timeout
+│
+└── lib/
+    ├── categoryConfig.ts       # CATEGORIES, CATEGORY_COLORS, CATEGORY_ICONS
+    ├── toast.ts                # Event-based toast dispatcher
+    └── dbConnect.ts            # MongoDB connection
 ```
-
----
-
-## Roadmap
-
-- [ ] Budget limit alerts & overspending notifications
-- [ ] Recurring income/expense entries
-- [ ] AI-based financial tips and anomaly detection
-- [ ] Shared budgets for households or teams
-- [ ] PWA support for offline and mobile-first use
-- [ ] Dark/light theme toggle
 
 ---
 

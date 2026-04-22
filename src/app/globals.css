@@ -1,4 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
 /* ─────────────────────────────────────────
@@ -34,24 +33,20 @@ body::-webkit-scrollbar-thumb {
    Font Variables
 ───────────────────────────────────────── */
 :root {
-  --font-heading: 'Outfit', sans-serif;
-  --font-data:    'Outfit', sans-serif;
-  --font-body:    'Outfit', sans-serif;
+  --font-heading: var(--font-bricolage), 'Bricolage Grotesque', sans-serif;
+  --font-data:    var(--font-bricolage), 'Bricolage Grotesque', sans-serif;
+  --font-body:    var(--font-bricolage), 'Bricolage Grotesque', sans-serif;
 }
 
 /* ─────────────────────────────────────────
    Font Assignments
 ───────────────────────────────────────── */
+*, *::before, *::after {
+  font-family: var(--font-body);
+}
+
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
-}
-
-p, span {
-  font-family: var(--font-body);
-}
-
-button, a {
-  font-family: var(--font-body);
 }
 
 .num,

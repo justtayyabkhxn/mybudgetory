@@ -1,333 +1,295 @@
 "use client";
 
-import {
-  Utensils,
-  Shirt,
-  Briefcase,
-  HeartPulse,
-  ReceiptText,
-  Clapperboard,
-  Plane,
-  BanknoteArrowUp,
-  Pencil,
-  CircleArrowLeft,
-  CookingPot,
-  ArrowRightLeft,
-} from "lucide-react";
-import { useRouter, useParams } from "next/navigation";
-import { AnimatePresence, motion } from "framer-motion";
-import Link from "next/link";
 import { useEffect, useState } from "react";
-import axios from "axios";
-import Menu from "@/components/Menu";
+import { useRouter, useParams } from "next/navigation";
+import { motion } from "framer-motion";
+import {
+  ArrowLeft,
+  Pencil,
+  Trash2,
+  CalendarDays,
+  Tag,
+  CreditCard,
+  Banknote,
+  MessageSquare,
+  TrendingUp,
+  TrendingDown,
+} from "lucide-react";
 import Header from "@/components/Header";
-import FloatingTransactionButton from "@/components/FloatingTransactionButton";
-
-const categoryIcons = {
-  Food: Utensils,
-  Outing: Briefcase,
-  Clothes: Shirt,
-  Medical: HeartPulse,
-  Bills: ReceiptText,
-  Entertainment: Clapperboard,
-  Travel: Plane,
-  Others: BanknoteArrowUp,
-};
+import Menu from "@/components/Menu";
+import ConfirmDialog from "@/components/ConfirmDialog";
+import EditTransactionModal from "@/components/EditTransactionModal";
+import { useAuthGuard } from "@/hooks/useAuthGuard";
+import { apiFetch } from "@/utils/apiFetch";
+import { toast } from "@/lib/toast";
+import { CATEGORY_COLORS, CATEGORY_ICONS } from "@/lib/categoryConfig";
 
 type Transaction = {
   _id: string;
   title: string;
   date: string;
-  category: keyof typeof categoryIcons;
-  paymentMode: string;
+  category: string;
+  paymentMode: "Cash" | "UPI";
   type: "income" | "expense";
   amount: number;
   comment?: string;
 };
 
-export default function TransactionDetailsClient() {
+function SkeletonDetail() {
+  return (
+    <div className="animate-pulse space-y-4">
+      <div className="h-10 w-48 bg-gray-800 rounded-xl mx-auto" />
+      <div className="h-6 w-32 bg-gray-800/60 rounded-lg mx-auto" />
+      <div className="mt-8 space-y-3">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="flex items-center gap-3 p-4 bg-gray-900/60 rounded-2xl border border-gray-800">
+            <div className="w-9 h-9 bg-gray-800 rounded-xl" />
+            <div className="space-y-2 flex-1">
+              <div className="h-3 w-20 bg-gray-800 rounded" />
+              <div className="h-4 w-32 bg-gray-700 rounded" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default function TransactionDetail() {
+  useAuthGuard();
+
   const { id } = useParams();
   const router = useRouter();
 
-  const [editingTxn, setEditingTxn] = useState<Transaction | null>(null);
-  const [transaction, setTransaction] = useState<Transaction | null>(null);
-  const [status, setStatus] = useState<"loading" | "error" | "success">(
-    "loading"
-  );
-  const [errorMessage, setErrorMessage] = useState<string>("");
-
-  const handleEdit = (txn: Transaction) => {
-    setEditingTxn({ ...txn });
-  };
-
-  const handleUpdate = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!editingTxn) return;
-    const token = localStorage.getItem("token");
-    if (!token) return;
-
-    try {
-      const response = await axios.patch(
-        `/api/transactions/${editingTxn._id}`,
-        editingTxn,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      if (response.data.success) {
-        setTransaction(response.data.transaction); // update the UI with new data
-        setEditingTxn(null);
-      } else {
-        alert("Failed to update transaction");
-      }
-    } catch (err) {
-      console.error("Update error:", err);
-      alert("Error updating transaction");
-    }
-  };
-
-  const handleDelete = async (id: string) => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
-    const confirm = window.confirm(
-      "Are you sure you want to delete this transaction?"
-    );
-    if (!confirm) return;
-
-    try {
-      const res = await fetch(`/api/transactions/${id}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      const data = await res.json();
-      if (data.success) {
-        router.push("/dashboard");
-      } else {
-        alert("Failed to delete transaction");
-      }
-    } catch (error) {
-      console.error("Delete error:", error);
-    }
-  };
+  const [tx, setTx] = useState<Transaction | null>(null);
+  const [status, setStatus] = useState<"loading" | "error" | "success">("loading");
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    const fetchTransaction = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        if (!token) {
+    if (!id) return;
+    apiFetch(`/api/transactions/${id}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.transaction) {
+          setTx(data.transaction);
+          setStatus("success");
+        } else {
           setStatus("error");
-          setErrorMessage("User not authenticated.");
-          return;
         }
-
-        const res = await axios.get(`/api/transactions/${id}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        setTransaction(res.data.transaction);
-        setStatus("success");
-      } catch (err) {
-        console.error(err);
-        setStatus("error");
-        setErrorMessage("Failed to fetch transaction.");
-      }
-    };
-
-    if (id) fetchTransaction();
+      })
+      .catch(() => setStatus("error"));
   }, [id]);
 
-  const isLoading = status === "loading";
-  const isError = status === "error";
-  const Icon =
-    categoryIcons[transaction?.category as keyof typeof categoryIcons] ||
-    BanknoteArrowUp;
+  const handleDelete = async () => {
+    if (!tx) return;
+    setDeleting(true);
+    try {
+      const res = await apiFetch(`/api/transactions/${tx._id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (data.success) {
+        toast("Transaction deleted", "success");
+        router.push("/transactions");
+      } else {
+        toast(data.error || "Failed to delete", "error");
+      }
+    } catch {
+      toast("Failed to delete transaction", "error");
+    } finally {
+      setDeleting(false);
+      setConfirmDelete(false);
+    }
+  };
 
-  const renderHeader = () => (
-    <Header/>
-  );
-
-  if (isLoading || isError || !transaction) {
-    return (
-      <div className="max-w-5xl mx-auto px-4">
-        {renderHeader()}
-        <p
-          className={`text-center text-xl font-bold mt-10 ${
-            isLoading ? "text-gray-700" : "text-red-500"
-          }`}
-        >
-          {isLoading
-            ? "Loading Transaction..."
-            : errorMessage || "Transaction not found."}
-        </p>
-      </div>
-    );
-  }
+  const isExpense = tx?.type === "expense";
+  const colors = tx ? (CATEGORY_COLORS[tx.category] || CATEGORY_COLORS["Others"]) : null;
+  const CatIcon = tx ? (CATEGORY_ICONS[tx.category] || CATEGORY_ICONS["Others"]) : null;
 
   return (
-    <div className="px-4 pb-10">
-      <div className="max-w-3xl mx-auto">{renderHeader()}</div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 text-white p-4 sm:p-8 pb-16">
+      <div className="max-w-lg mx-auto">
+        <Header />
 
-      <div className="flex justify-center gap-40 items-center mt-4 px-4 md:px-10">
-        <Link
-          href="/dashboard"
-          className="flex items-center gap-2 text-xl text-white font-bold hover:underline"
-        >
-          <CircleArrowLeft />
-          <span>Go Back</span>
-        </Link>
-        <Menu />
-      </div>
-
-      <div className="max-w-sm mx-auto mt-8 p-6 rounded-3xl bg-white/5 backdrop-blur-md border border-gray-900 shadow-xl space-y-6 transition-all">
-        <div className="flex items-center gap-2  text-white">
-          <ArrowRightLeft />
-          <h1 className="text-3xl font-extrabold text-center text-white tracking-tight">
-            Transaction Details
-          </h1>
-        </div>
-
-        <div className="flex items-center gap-4">
-          <div className="p-3 rounded-full bg-indigo-500/10">
-            <Icon className="w-7 h-7 text-indigo-400" />
-          </div>
-          <div>
-            <p className="text-xl font-medium text-white">
-              {transaction.title}
-            </p>
-            <p className="text-sm text-gray-400">
-              {new Date(transaction.date).toLocaleDateString()} •{" "}
-              {transaction.category} • {transaction.paymentMode}
-            </p>
-          </div>
-        </div>
-
-        <div className="text-gray-300 space-y-2">
-          <p>
-            <span className="text-white font-semibold">Amount:</span>{" "}
-            <span
-              className={`font-bold ${
-                transaction.type === "income"
-                  ? "text-green-400"
-                  : "text-red-400"
-              }`}
-            >
-              {transaction.type === "income" ? "+ ₹" : "- ₹"}
-              {transaction.amount}
-            </span>
-          </p>
-          {/* <p>
-            <span className="text-white font-semibold">Mode:</span>{" "}
-            {transaction.paymentMode}
-          </p> */}
-          {/* <p>
-            <span className="text-white font-semibold">Category:</span>{" "}
-            {transaction.category}
-          </p> */}
-          <p>
-            <span className="text-white font-semibold">Type:</span>{" "}
-            {transaction.type}
-          </p>
-          <p>
-            <span className="text-white font-semibold">Comment:</span>{" "}
-            {transaction.comment || "No Comment"}
-          </p>
-          {/* <p>
-            <span className="text-white font-semibold">Date:</span>{" "}
-            {transaction.date.split("T")[0]}
-          </p> */}
-        </div>
-
-        <div className="flex justify-around gap-4 mt-4">
+        {/* Nav row */}
+        <div className="flex items-center justify-between mt-4 mb-8">
           <button
-            onClick={(e) => {
-              e.preventDefault();
-              handleDelete(transaction._id);
-            }}
-            className="border-2 border-red-500 text-red-500 font-bold cursor-pointer px-4 py-2 rounded-xl hover:text-red-500 hover:border-red-600 transition"
+            onClick={() => router.back()}
+            className="flex items-center gap-2 text-sm font-bold text-gray-400 hover:text-white transition-colors cursor-pointer group"
           >
-            <div className="flex items-center gap-2">
-              <span>Delete</span>
-              <CookingPot size={16} />
-            </div>
+            <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
+            Back
           </button>
-          <button
-            onClick={() => handleEdit(transaction)}
-            className="border-2 border-green-500 cursor-pointer text-green-400 font-bold px-4 py-2 rounded-xl hover:text-green-600 hover:border-green-600 transition"
-          >
-            <div className="flex items-center gap-2">
-              <span>Edit</span>
-              <Pencil size={15} />
-            </div>
-          </button>
+          <Menu />
         </div>
 
-        <AnimatePresence>
-          {editingTxn && (
-            <motion.form
-              key="edit-form"
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.3 }}
-              onSubmit={handleUpdate}
-              className="bg-[#111]/90 border border-gray-900 p-4 rounded-xl space-y-4"
-            >
-              <h3 className="text-lg font-bold text-yellow-500">
-                Edit Transaction
-              </h3>
+        {/* Content */}
+        {status === "loading" && <SkeletonDetail />}
 
-              <input
-                type="text"
-                value={editingTxn.title}
-                onChange={(e) =>
-                  setEditingTxn({ ...editingTxn, title: e.target.value })
-                }
-                placeholder="Title"
-                className="w-full p-2 bg-gray-900 border border-gray-800 rounded text-white"
+        {status === "error" && (
+          <div className="text-center py-20">
+            <p className="text-red-400 font-bold text-lg mb-2">Transaction not found</p>
+            <p className="text-gray-500 text-sm">It may have been deleted or you don&apos;t have access.</p>
+            <button
+              onClick={() => router.push("/transactions")}
+              className="mt-6 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-sm font-bold transition-colors cursor-pointer"
+            >
+              Back to Transactions
+            </button>
+          </div>
+        )}
+
+        {status === "success" && tx && colors && CatIcon && (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+          >
+            {/* Hero amount card */}
+            <div className={`relative overflow-hidden rounded-3xl p-8 mb-6 text-center border ${
+              isExpense
+                ? "bg-gradient-to-br from-red-950/60 via-gray-900 to-gray-900 border-red-500/20"
+                : "bg-gradient-to-br from-emerald-950/60 via-gray-900 to-gray-900 border-emerald-500/20"
+            }`}>
+              {/* Background glow */}
+              <div className={`absolute inset-0 opacity-10 ${isExpense ? "bg-red-500" : "bg-emerald-500"}`}
+                style={{ filter: "blur(60px)", transform: "translate(-50%,-50%) scale(2)", top: "50%", left: "50%" }}
               />
 
-              <input
-                type="number"
-                value={editingTxn.amount}
-                onChange={(e) =>
-                  setEditingTxn({
-                    ...editingTxn,
-                    amount: parseFloat(e.target.value),
-                  })
-                }
-                placeholder="Amount"
-                className="w-full p-2 bg-gray-900 border border-gray-800 rounded text-white"
-              />
-
-              <div className="flex gap-3">
-                <button
-                  type="submit"
-                  className="bg-yellow-500 hover:bg-yellow-600 text-black font-bold px-4 py-2 rounded text-sm cursor-pointer"
-                >
-                  Update
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setEditingTxn(null)}
-                  className="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded text-sm font-bold cursor-pointer"
-                >
-                  Cancel
-                </button>
+              {/* Category icon */}
+              <div className={`${colors.bg} border ${colors.border} w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4`}>
+                <CatIcon className={`w-8 h-8 ${colors.text}`} />
               </div>
-            </motion.form>
-          )}
-        </AnimatePresence>
-        
+
+              {/* Title */}
+              <h1 className="text-2xl font-black text-white mb-1 tracking-tight">{tx.title}</h1>
+              <p className="text-sm text-gray-400 mb-5">{tx.category}</p>
+
+              {/* Amount */}
+              <div className={`text-5xl font-black tracking-tight ${isExpense ? "text-red-400" : "text-emerald-400"}`}>
+                {isExpense ? "−" : "+"}₹{tx.amount.toLocaleString()}
+              </div>
+
+              {/* Type badge */}
+              <div className={`inline-flex items-center gap-1.5 mt-4 px-3 py-1.5 rounded-full text-xs font-bold border ${
+                isExpense
+                  ? "bg-red-500/15 text-red-300 border-red-500/30"
+                  : "bg-emerald-500/15 text-emerald-300 border-emerald-500/30"
+              }`}>
+                {isExpense ? <TrendingDown size={12} /> : <TrendingUp size={12} />}
+                {isExpense ? "Expense" : "Income"}
+              </div>
+            </div>
+
+            {/* Detail rows */}
+            <div className="space-y-2 mb-6">
+              <DetailRow
+                icon={<CalendarDays size={15} className="text-indigo-400" />}
+                label="Date"
+                value={new Date(tx.date).toLocaleDateString("en-IN", {
+                  weekday: "long", day: "numeric", month: "long", year: "numeric",
+                })}
+              />
+              <DetailRow
+                icon={<Tag size={15} className="text-purple-400" />}
+                label="Category"
+                value={tx.category}
+                badge={{ text: tx.category, className: `${colors.bg} ${colors.text} border ${colors.border}` }}
+              />
+              <DetailRow
+                icon={
+                  tx.paymentMode === "UPI"
+                    ? <CreditCard size={15} className="text-blue-400" />
+                    : <Banknote size={15} className="text-yellow-400" />
+                }
+                label="Payment Mode"
+                value={tx.paymentMode}
+                badge={{
+                  text: tx.paymentMode,
+                  className: tx.paymentMode === "UPI"
+                    ? "bg-indigo-500/15 text-indigo-400 border border-indigo-500/30"
+                    : "bg-yellow-500/15 text-yellow-400 border border-yellow-500/30",
+                }}
+              />
+              {tx.comment && (
+                <DetailRow
+                  icon={<MessageSquare size={15} className="text-gray-400" />}
+                  label="Note"
+                  value={tx.comment}
+                />
+              )}
+            </div>
+
+            {/* Action buttons */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => setEditing(true)}
+                className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl font-bold text-sm bg-indigo-600/20 hover:bg-indigo-600/40 border border-indigo-500/30 text-indigo-300 hover:text-indigo-200 transition-all duration-200 cursor-pointer"
+              >
+                <Pencil size={15} />
+                Edit Transaction
+              </button>
+              <button
+                onClick={() => setConfirmDelete(true)}
+                disabled={deleting}
+                className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl font-bold text-sm bg-red-600/15 hover:bg-red-600/30 border border-red-500/30 text-red-400 hover:text-red-300 transition-all duration-200 cursor-pointer disabled:opacity-50"
+              >
+                <Trash2 size={15} />
+                Delete
+              </button>
+            </div>
+          </motion.div>
+        )}
       </div>
-      <FloatingTransactionButton/>
+
+      <ConfirmDialog
+        open={confirmDelete}
+        title="Delete Transaction"
+        message="This will permanently remove this transaction. This cannot be undone."
+        confirmLabel="Delete"
+        danger
+        onConfirm={handleDelete}
+        onCancel={() => setConfirmDelete(false)}
+      />
+
+      <EditTransactionModal
+        tx={editing ? tx : null}
+        onClose={() => setEditing(false)}
+        onSave={updated => {
+          setTx(updated);
+          setEditing(false);
+        }}
+      />
+    </div>
+  );
+}
+
+function DetailRow({
+  icon,
+  label,
+  value,
+  badge,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  badge?: { text: string; className: string };
+}) {
+  return (
+    <div className="flex items-center gap-3 px-4 py-3.5 bg-gray-900/60 border border-gray-800 rounded-2xl">
+      <div className="w-8 h-8 rounded-xl bg-white/5 flex items-center justify-center flex-shrink-0">
+        {icon}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-0.5">{label}</p>
+        {badge ? (
+          <span className={`inline-block text-xs font-bold px-2 py-0.5 rounded-lg ${badge.className}`}>
+            {badge.text}
+          </span>
+        ) : (
+          <p className="text-sm font-semibold text-gray-200 truncate">{value}</p>
+        )}
+      </div>
     </div>
   );
 }

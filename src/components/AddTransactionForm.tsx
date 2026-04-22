@@ -2,16 +2,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Utensils,
-  Shirt,
-  Briefcase,
-  HeartPulse,
-  ReceiptText,
-  Clapperboard,
-  Plane,
-  BanknoteArrowUp,
-  Route,
-  Umbrella,
   ArrowDownCircle,
   ArrowUpCircle,
   Calendar,
@@ -21,20 +11,8 @@ import {
   Check,
   Loader2,
 } from "lucide-react";
-import { CATEGORY_COLORS } from "@/lib/categoryConfig";
-
-const CATEGORIES = [
-  { name: "Food", icon: Utensils },
-  { name: "Outing", icon: Briefcase },
-  { name: "Clothes", icon: Shirt },
-  { name: "Travel", icon: Plane },
-  { name: "Vacation", icon: Umbrella },
-  { name: "Medical", icon: HeartPulse },
-  { name: "Entertainment", icon: Clapperboard },
-  { name: "Bills", icon: ReceiptText },
-  { name: "SMM", icon: Route },
-  { name: "Others", icon: BanknoteArrowUp },
-];
+import { CATEGORY_COLORS, CATEGORIES } from "@/lib/categoryConfig";
+import { toast } from "@/lib/toast";
 
 export function AddTransactionForm({ onAdd }: { onAdd: () => void }) {
   const [form, setForm] = useState({
@@ -78,6 +56,7 @@ export function AddTransactionForm({ onAdd }: { onAdd: () => void }) {
     }
     const token = localStorage.getItem("token");
     if (!token) {
+      toast("You must be logged in", "error");
       setError("You must be logged in");
       setLoading(false);
       return;
@@ -116,6 +95,7 @@ export function AddTransactionForm({ onAdd }: { onAdd: () => void }) {
       });
 
       setSuccess("Added!");
+      toast("Transaction added!", "success");
       setTimeout(() => setSuccess(""), 2500);
       setForm({
         title: "",
@@ -136,8 +116,6 @@ export function AddTransactionForm({ onAdd }: { onAdd: () => void }) {
   };
 
   const isExpense = form.type === "expense";
-  const selectedCategory =
-    CATEGORY_COLORS[form.category] || CATEGORY_COLORS["Others"];
 
   return (
     <motion.div
@@ -291,10 +269,7 @@ export function AddTransactionForm({ onAdd }: { onAdd: () => void }) {
                         }`}
                       >
                         <Icon size={12} />
-                        <span>
-
-                        {name}
-                        </span>
+                        <span>{name}</span>
                       </button>
                     );
                   })}
@@ -330,10 +305,7 @@ export function AddTransactionForm({ onAdd }: { onAdd: () => void }) {
               }`}
             >
               <MessageSquare size={14} />
-              <span>
-
-              Note
-              </span>
+              <span>Note</span>
             </button>
           </div>
 
