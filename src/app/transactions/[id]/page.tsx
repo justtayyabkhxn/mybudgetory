@@ -253,7 +253,7 @@ export default function TransactionDetail() {
       />
 
       <EditTransactionModal
-        tx={editing ? tx : null}
+        tx={editing && tx ? { ...tx, comment: tx.comment ?? "" } : null}
         onClose={() => setEditing(false)}
         onSave={updated => {
           setTx(updated);

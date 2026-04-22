@@ -953,7 +953,7 @@ export const getWeekOfMonthOptions = (data: {
           { linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 }, stops: [[0, "#a855f7"], [1, "#9333ea"]] },
         ][i % 4],
       })),
-    } as Highcharts.SeriesColumnOptions],
+    } as unknown as Highcharts.SeriesColumnOptions],
   });
 
 // ─── 11. NEW: Savings Rate Line Chart ────────────────────────────────────────
