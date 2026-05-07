@@ -20,7 +20,10 @@ import {
   Search, Receipt, ChevronLeft, ChevronRight,
   Download, Trash2, ArrowDownCircle, ArrowUpCircle,
   X, TrendingUp, TrendingDown, Wallet, ExternalLink, Pencil,
+  ArrowUpDown,
 } from "lucide-react";
+
+type SortOption = "date-desc" | "date-asc" | "amount-desc" | "amount-asc";
 
 const PAGE_SIZE = 20;
 
@@ -31,7 +34,7 @@ interface Transaction {
   category: string;
   type: "income" | "expense";
   date: string;
-  comment: string;
+  comment?: string;
   paymentMode: "Cash" | "UPI";
 }
 
@@ -46,6 +49,7 @@ export default function Transactions() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [editingTx, setEditingTx] = useState<Transaction | null>(null);
+  const [sortBy, setSortBy] = useState<SortOption>("date-desc");
 
   const fetchTransactions = () => {
     setLoading(true);
@@ -57,7 +61,7 @@ export default function Transactions() {
   };
 
   useEffect(() => { fetchTransactions(); }, []);
-  useEffect(() => { setPage(1); }, [searchQuery, typeFilter]);
+  useEffect(() => { setPage(1); }, [searchQuery, typeFilter, sortBy]);
 
   const handleDelete = async (id: string) => {
     setDeletingId(id);
@@ -100,13 +104,27 @@ export default function Transactions() {
     return matchesSearch && matchesType;
   });
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const sorted = [...filtered].sort((a, b) => {
+    if (sortBy === "date-desc") return new Date(b.date).getTime() - new Date(a.date).getTime();
+    if (sortBy === "date-asc")  return new Date(a.date).getTime() - new Date(b.date).getTime();
+    if (sortBy === "amount-desc") return b.amount - a.amount;
+    return a.amount - b.amount;
+  });
+
+  const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
+  const paginated = sorted.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   // Summary stats for filtered view
   const filteredIncome  = filtered.filter(t => t.type === "income").reduce((s, t) => s + t.amount, 0);
   const filteredExpense = filtered.filter(t => t.type === "expense").reduce((s, t) => s + t.amount, 0);
   const filteredNet     = filteredIncome - filteredExpense;
+
+  const SORT_LABELS: Record<SortOption, string> = {
+    "date-desc": "Newest",
+    "date-asc": "Oldest",
+    "amount-desc": "Highest",
+    "amount-asc": "Lowest",
+  };
 
   // Group paginated txs by date
   const grouped = paginated.reduce<Record<string, Transaction[]>>((acc, tx) => {
@@ -212,6 +230,20 @@ export default function Transactions() {
 
           {/* Action buttons */}
           <div className="flex gap-2 flex-shrink-0">
+            {/* Sort dropdown */}
+            <div className="relative">
+              <select
+                value={sortBy}
+                onChange={e => setSortBy(e.target.value as SortOption)}
+                className="appearance-none flex items-center gap-1.5 pl-8 pr-3 py-2.5 bg-white/5 hover:bg-white/10 border border-gray-700 text-gray-300 rounded-xl text-xs font-bold transition-colors cursor-pointer focus:outline-none focus:border-indigo-500/60"
+              >
+                <option value="date-desc">Newest</option>
+                <option value="date-asc">Oldest</option>
+                <option value="amount-desc">Highest</option>
+                <option value="amount-asc">Lowest</option>
+              </select>
+              <ArrowUpDown size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            </div>
             <Link href="/advanced-search">
               <button className="flex items-center gap-1.5 px-3 py-2.5 bg-white/5 hover:bg-white/10 border border-gray-700 text-gray-300 rounded-xl text-xs font-bold transition-colors cursor-pointer">
                 <ExternalLink size={13} />
@@ -324,20 +356,20 @@ export default function Transactions() {
                               </div>
                             </Link>
 
-                            {/* Edit button — visible on hover */}
+                            {/* Edit button — always visible on mobile, hover on desktop */}
                             <button
                               onClick={() => setEditingTx(tx)}
-                              className="flex-shrink-0 p-2 rounded-lg text-gray-700 hover:text-indigo-400 hover:bg-indigo-500/10 opacity-0 group-hover:opacity-100 transition-all duration-200 cursor-pointer"
+                              className="flex-shrink-0 p-2 rounded-lg text-gray-600 hover:text-indigo-400 hover:bg-indigo-500/10 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200 cursor-pointer"
                               aria-label="Edit transaction"
                             >
                               <Pencil size={14} />
                             </button>
 
-                            {/* Delete button — visible on hover */}
+                            {/* Delete button — always visible on mobile, hover on desktop */}
                             <button
                               onClick={() => setConfirmId(tx._id)}
                               disabled={deletingId === tx._id}
-                              className="flex-shrink-0 p-2 rounded-lg text-gray-700 hover:text-red-400 hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition-all duration-200 cursor-pointer disabled:opacity-50"
+                              className="flex-shrink-0 p-2 rounded-lg text-gray-600 hover:text-red-400 hover:bg-red-500/10 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200 cursor-pointer disabled:opacity-50"
                             >
                               <Trash2 size={14} />
                             </button>

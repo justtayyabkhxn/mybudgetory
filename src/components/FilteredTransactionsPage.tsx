@@ -27,7 +27,7 @@ interface Transaction {
   category: string;
   type: "income" | "expense";
   date: string;
-  comment: string;
+  comment?: string;
   paymentMode: "Cash" | "UPI";
 }
 

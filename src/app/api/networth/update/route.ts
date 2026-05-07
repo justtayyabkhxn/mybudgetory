@@ -21,17 +21,7 @@ export async function POST(req: NextRequest) {
 
     const updated = await NetWorth.findOneAndUpdate(
       { userId },
-      {
-        $set: { bankBalance: newAmount, lastUpdated: new Date() },
-        $push: {
-          transactions: {
-            amount: Math.abs(adjustment),
-            type: adjustment >= 0 ? "credit" : "debit",
-            paymentMode,
-            date: new Date(),
-          },
-        },
-      },
+      { $set: { bankBalance: newAmount, lastUpdated: new Date() } },
       { new: true, upsert: true }
     );
 

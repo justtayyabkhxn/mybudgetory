@@ -8,7 +8,7 @@ import Header from "@/components/Header";
 import FloatingTransactionButton from "@/components/FloatingTransactionButton";
 import BottomNav from "@/components/BottomNav";
 import CountUp from "@/components/CountUp";
-import { TrendingUp, TrendingDown, BarChartBig, Wallet, Sparkles, Flame } from "lucide-react";
+import { TrendingUp, TrendingDown, BarChartBig, Wallet, Sparkles, Flame, ChevronLeft, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 
 // ─── Spending Heatmap ─────────────────────────────────────────────────────────
@@ -181,6 +181,26 @@ const ChartsPage = () => {
   const [cashStats, setCashStats] = useState({ inflow: 0, expense: 0 });
   const [upiStats, setUpiStats] = useState({ inflow: 0, expense: 0 });
 
+  // Month selector
+  const today = new Date();
+  const [viewMonth, setViewMonth] = useState(today.getMonth());
+  const [viewYear, setViewYear]   = useState(today.getFullYear());
+  const viewDate = new Date(viewYear, viewMonth, 1);
+
+  const goToPrev = () => {
+    if (viewMonth === 0) { setViewMonth(11); setViewYear(y => y - 1); }
+    else setViewMonth(m => m - 1);
+  };
+  const goToNext = () => {
+    const nextMonth = viewMonth === 11 ? 0 : viewMonth + 1;
+    const nextYear  = viewMonth === 11 ? viewYear + 1 : viewYear;
+    // Don't go beyond current month
+    if (nextYear > today.getFullYear() || (nextYear === today.getFullYear() && nextMonth > today.getMonth())) return;
+    if (viewMonth === 11) { setViewMonth(0); setViewYear(y => y + 1); }
+    else setViewMonth(m => m + 1);
+  };
+  const isCurrentMonth = viewMonth === today.getMonth() && viewYear === today.getFullYear();
+
   const [dailyBarData, setDailyBarData] = useState<{
     categories: string[];
     inflow: number[];
@@ -208,108 +228,108 @@ const ChartsPage = () => {
     data: number[];
   }>({ categories: [], data: [] });
 
+  // Fetch all transactions once
   useEffect(() => {
     const fetchTransactions = async () => {
       try {
         const token = localStorage.getItem("token");
         if (!token) return;
-
         const res = await fetch("/api/transactions", {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
-        const txs: Transaction[] = data.transactions || [];
-
-        setAllTxs(txs);
-
-        const now = new Date();
-        const currentMonth = now.getMonth();
-        const currentYear = now.getFullYear();
-        const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-
-        const monthlyTxs = txs.filter((tx) => {
-          const d = new Date(tx.date);
-          return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
-        });
-
-        // Payment mode stats
-        let cashInflow = 0, cashExpense = 0, upiInflow = 0, upiExpense = 0;
-        monthlyTxs.forEach((tx) => {
-          if (tx.paymentMode === "Cash") {
-            if (tx.type === "income") cashInflow += tx.amount;
-            else cashExpense += tx.amount;
-          } else {
-            if (tx.type === "income") upiInflow += tx.amount;
-            else upiExpense += tx.amount;
-          }
-        });
-        setCashStats({ inflow: cashInflow, expense: cashExpense });
-        setUpiStats({ inflow: upiInflow, expense: upiExpense });
-
-        const inflowAmt = monthlyTxs.filter((t) => t.type === "income").reduce((s, t) => s + t.amount, 0);
-        const expenseAmt = monthlyTxs.filter((t) => t.type === "expense").reduce((s, t) => s + t.amount, 0);
-        setInflow(inflowAmt);
-        setExpense(expenseAmt);
-
-        // Daily bar
-        const inflowPerDay = Array(daysInMonth).fill(0);
-        const expensePerDay = Array(daysInMonth).fill(0);
-        monthlyTxs.forEach((tx) => {
-          const day = new Date(tx.date).getDate() - 1;
-          if (tx.type === "income") inflowPerDay[day] += tx.amount;
-          else expensePerDay[day] += tx.amount;
-        });
-        setDailyBarData({
-          categories: Array.from({ length: daysInMonth }, (_, i) => String(i + 1)),
-          inflow: inflowPerDay,
-          expense: expensePerDay,
-        });
-
-        // Monthly bar & savings
-        const months = Array.from({ length: 12 }, (_, i) =>
-          new Date(0, i).toLocaleString("default", { month: "short" })
-        );
-        const inflowPerMonth = Array(12).fill(0);
-        const expensePerMonth = Array(12).fill(0);
-        txs.forEach((tx) => {
-          const m = new Date(tx.date).getMonth();
-          if (tx.type === "income") inflowPerMonth[m] += tx.amount;
-          else expensePerMonth[m] += tx.amount;
-        });
-        setMonthlyBarData({ categories: months, inflow: inflowPerMonth, expense: expensePerMonth });
-        setMonthlySavingsData({ categories: months, data: inflowPerMonth.map((v, i) => v - expensePerMonth[i]) });
-
-        // Yearly category
-        const yearlyMap: Record<string, number> = {};
-        txs.forEach((tx) => {
-          if (tx.type === "expense" && new Date(tx.date).getFullYear() === currentYear) {
-            yearlyMap[tx.category] = (yearlyMap[tx.category] || 0) + tx.amount;
-          }
-        });
-        setYearlyCategoryExpenseData({ categories: Object.keys(yearlyMap), data: Object.values(yearlyMap) });
-
-        // Category monthly
-        const currentMonthName = now.toLocaleString("default", { month: "short" });
-        const catMap: Record<string, number> = {};
-        txs.forEach((tx) => {
-          if (tx.type === "expense" && new Date(tx.date).toLocaleString("default", { month: "short" }) === currentMonthName) {
-            catMap[tx.category] = (catMap[tx.category] || 0) + tx.amount;
-          }
-        });
-        setCategoryWiseMonthlyData({ categories: Object.keys(catMap), data: Object.values(catMap) });
+        setAllTxs(data.transactions || []);
       } catch (err) {
         console.error("Failed to fetch transactions", err);
       } finally {
         setLoading(false);
       }
     };
-
     fetchTransactions();
   }, []);
 
+  // Recompute derived data whenever transactions or selected month changes
+  useEffect(() => {
+    if (allTxs.length === 0 && !loading) return;
+    const txs = allTxs;
+    const currentMonth = viewMonth;
+    const currentYear  = viewYear;
+    const daysInMonth  = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+    const monthlyTxs = txs.filter((tx) => {
+      const d = new Date(tx.date);
+      return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+    });
+
+    // Payment mode stats
+    let cashInflow = 0, cashExpense = 0, upiInflow = 0, upiExpense = 0;
+    monthlyTxs.forEach((tx) => {
+      if (tx.paymentMode === "Cash") {
+        if (tx.type === "income") cashInflow += tx.amount;
+        else cashExpense += tx.amount;
+      } else {
+        if (tx.type === "income") upiInflow += tx.amount;
+        else upiExpense += tx.amount;
+      }
+    });
+    setCashStats({ inflow: cashInflow, expense: cashExpense });
+    setUpiStats({ inflow: upiInflow, expense: upiExpense });
+
+    const inflowAmt  = monthlyTxs.filter(t => t.type === "income").reduce((s, t) => s + t.amount, 0);
+    const expenseAmt = monthlyTxs.filter(t => t.type === "expense").reduce((s, t) => s + t.amount, 0);
+    setInflow(inflowAmt);
+    setExpense(expenseAmt);
+
+    // Daily bar
+    const inflowPerDay  = Array(daysInMonth).fill(0);
+    const expensePerDay = Array(daysInMonth).fill(0);
+    monthlyTxs.forEach((tx) => {
+      const day = new Date(tx.date).getDate() - 1;
+      if (tx.type === "income") inflowPerDay[day] += tx.amount;
+      else expensePerDay[day] += tx.amount;
+    });
+    setDailyBarData({
+      categories: Array.from({ length: daysInMonth }, (_, i) => String(i + 1)),
+      inflow: inflowPerDay,
+      expense: expensePerDay,
+    });
+
+    // Monthly bar & savings (full year of viewYear)
+    const months = Array.from({ length: 12 }, (_, i) =>
+      new Date(0, i).toLocaleString("default", { month: "short" })
+    );
+    const inflowPerMonth  = Array(12).fill(0);
+    const expensePerMonth = Array(12).fill(0);
+    txs.filter(tx => new Date(tx.date).getFullYear() === currentYear).forEach((tx) => {
+      const m = new Date(tx.date).getMonth();
+      if (tx.type === "income") inflowPerMonth[m] += tx.amount;
+      else expensePerMonth[m] += tx.amount;
+    });
+    setMonthlyBarData({ categories: months, inflow: inflowPerMonth, expense: expensePerMonth });
+    setMonthlySavingsData({ categories: months, data: inflowPerMonth.map((v, i) => v - expensePerMonth[i]) });
+
+    // Yearly category
+    const yearlyMap: Record<string, number> = {};
+    txs.forEach((tx) => {
+      if (tx.type === "expense" && new Date(tx.date).getFullYear() === currentYear) {
+        yearlyMap[tx.category] = (yearlyMap[tx.category] || 0) + tx.amount;
+      }
+    });
+    setYearlyCategoryExpenseData({ categories: Object.keys(yearlyMap), data: Object.values(yearlyMap) });
+
+    // Category for selected month
+    const catMap: Record<string, number> = {};
+    monthlyTxs.forEach((tx) => {
+      if (tx.type === "expense") {
+        catMap[tx.category] = (catMap[tx.category] || 0) + tx.amount;
+      }
+    });
+    setCategoryWiseMonthlyData({ categories: Object.keys(catMap), data: Object.values(catMap) });
+  }, [allTxs, viewMonth, viewYear, loading]);
+
   const savings = inflow - expense;
   const savingsRate = inflow > 0 ? Math.round((savings / inflow) * 100) : 0;
-  const monthName = new Date().toLocaleString("default", { month: "long" });
+  const monthName = viewDate.toLocaleString("default", { month: "long" });
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 text-white p-4 sm:p-5 pb-28">
@@ -377,11 +397,34 @@ const ChartsPage = () => {
           </motion.div>
         )}
 
-        {/* Month label */}
-        <div className="flex items-center gap-2 mb-4 text-gray-400">
-          <div className="h-px flex-1 bg-gray-800" />
-          <span className="text-xs font-bold uppercase tracking-widest px-3">{monthName} · All Charts</span>
-          <div className="h-px flex-1 bg-gray-800" />
+        {/* Month selector */}
+        <div className="flex items-center justify-between mb-6 bg-white/[0.03] border border-white/8 rounded-2xl px-4 py-3">
+          <button
+            onClick={goToPrev}
+            className="p-1.5 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors cursor-pointer"
+          >
+            <ChevronLeft size={18} />
+          </button>
+          <div className="text-center">
+            <p className="text-base font-black text-white tracking-tight">
+              {monthName} {viewYear}
+            </p>
+            {!isCurrentMonth && (
+              <button
+                onClick={() => { setViewMonth(today.getMonth()); setViewYear(today.getFullYear()); }}
+                className="text-[10px] text-indigo-400 font-bold hover:underline cursor-pointer mt-0.5"
+              >
+                Back to current
+              </button>
+            )}
+          </div>
+          <button
+            onClick={goToNext}
+            disabled={isCurrentMonth}
+            className="p-1.5 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+          >
+            <ChevronRight size={18} />
+          </button>
         </div>
 
         {/* Spending Heatmap */}
@@ -406,6 +449,7 @@ const ChartsPage = () => {
             cashAmount={cashStats.expense}
             upiAmount={upiStats.expense}
             transactions={allTxs}
+            viewDate={viewDate}
           />
         )}
       </div>

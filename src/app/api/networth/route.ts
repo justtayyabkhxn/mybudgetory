@@ -10,7 +10,15 @@ export async function GET(req: NextRequest) {
   try {
     await connectDB();
     const doc = await NetWorth.findOne({ userId });
-    return NextResponse.json({ bankBalance: doc?.bankBalance ?? 0 });
+    const history = (doc?.history ?? [])
+      .slice()
+      .sort((a: { date: Date }, b: { date: Date }) =>
+        new Date(a.date).getTime() - new Date(b.date).getTime()
+      );
+    return NextResponse.json({
+      bankBalance: doc?.bankBalance ?? 0,
+      history,
+    });
   } catch {
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
