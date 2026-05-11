@@ -21,11 +21,13 @@ import Footer from "@/components/Footer";
 import SlideUp from "@/components/SlideUp";
 import { motion } from "framer-motion";
 
+
 type Feature = {
   icon: JSX.Element;
   title: string;
   desc: string;
 };
+
 
 type Mode = {
   href: string;
