@@ -224,8 +224,8 @@ export function getDailyBarConfig(d: {
 // ─── 4. Cumulative Spending Line ──────────────────────────────────────────────
 export function getCumulativeConfig(d: {
   categories: string[];
-  cumulative: number[];
-  daily: number[];
+  cumulative: (number | null)[];
+  daily: (number | null)[];
 }): { data: ChartData<"line">; options: ChartOptions<"line"> } {
   return {
     data: {
@@ -242,6 +242,7 @@ export function getCumulativeConfig(d: {
           pointHoverRadius: 6,
           pointHoverBackgroundColor: "#fb923c",
           borderWidth: 2.5,
+          spanGaps: false,
         },
         {
           label: "Daily",
@@ -254,6 +255,7 @@ export function getCumulativeConfig(d: {
           pointHoverRadius: 6,
           pointHoverBackgroundColor: "#a5b4fc",
           borderWidth: 2,
+          spanGaps: false,
         },
       ],
     },
@@ -403,10 +405,10 @@ export function getMonthlySavingsConfig(d: {
 // ─── 7. Savings Rate Line ─────────────────────────────────────────────────────
 export function getSavingsRateConfig(d: {
   categories: string[];
-  rates: number[];
+  rates: (number | null)[];
 }): { data: ChartData<"line">; options: ChartOptions<"line"> } {
   const pointColors = d.rates.map((r) =>
-    r >= 20 ? "#4ade80" : r >= 0 ? "#fbbf24" : "#fb7185"
+    r === null ? "transparent" : r >= 20 ? "#4ade80" : r >= 0 ? "#fbbf24" : "#fb7185"
   );
   return {
     data: {
@@ -423,6 +425,7 @@ export function getSavingsRateConfig(d: {
         pointBackgroundColor: pointColors,
         pointBorderColor: "transparent",
         borderWidth: 2.5,
+        spanGaps: false,
       }],
     },
     options: {
@@ -449,6 +452,7 @@ export function getSavingsRateConfig(d: {
           border: { display: false },
         },
         y: {
+          min: 0,
           ticks: {
             color: "#94a3b8",
             font: { family: FONT, size: 11 },
@@ -966,6 +970,94 @@ export function getRolling30DayConfig(d: {
             font: { family: FONT, size: 10, weight: 600 },
             maxTicksLimit: 8,
           },
+          grid: { display: false },
+          border: { display: false },
+        },
+        y: {
+          ticks: { color: "#94a3b8", font: { family: FONT, size: 11 }, callback: fmtK },
+          grid: { color: "rgba(30,41,59,0.8)" },
+          border: { display: false },
+        },
+      },
+    },
+  };
+}
+
+// ─── 19. Income vs Expense Line (full year) ──────────────────────────────────
+export function getIncomeExpenseLineConfig(d: {
+  categories: string[];
+  inflow: (number | null)[];
+  expense: (number | null)[];
+}): { data: ChartData<"line">; options: ChartOptions<"line"> } {
+  return {
+    data: {
+      labels: d.categories,
+      datasets: [
+        {
+          label: "Income",
+          data: d.inflow,
+          borderColor: "#4ade80",
+          backgroundColor: areaGrad("#22c55e", 0.25),
+          fill: true,
+          tension: 0.4,
+          pointRadius: 0,
+          pointHoverRadius: 0,
+          borderWidth: 2.5,
+          spanGaps: false,
+        },
+        {
+          label: "Expenses",
+          data: d.expense,
+          borderColor: "#fb7185",
+          backgroundColor: areaGrad("#f43f5e", 0.2),
+          fill: true,
+          tension: 0.4,
+          pointRadius: 0,
+          pointHoverRadius: 0,
+          borderWidth: 2.5,
+          spanGaps: false,
+        },
+        {
+          label: "Savings",
+          data: d.inflow.map((v, i) =>
+            v === null || d.expense[i] === null ? null : v - (d.expense[i] as number)
+          ),
+          borderColor: "#a5b4fc",
+          backgroundColor: "transparent",
+          fill: false,
+          tension: 0.4,
+          pointRadius: 0,
+          pointHoverRadius: 0,
+          borderWidth: 2,
+          borderDash: [5, 4],
+          spanGaps: false,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 800 },
+      plugins: {
+        legend: { display: true, labels: LEG_LABELS },
+        tooltip: {
+          ...TT,
+          mode: "index",
+          intersect: false,
+          callbacks: {
+            label: (ctx) => `  ${ctx.dataset.label}: ${fmtK(ctx.raw as number)}`,
+            afterBody: (items) => {
+              const inc = items.find((i) => i.dataset.label === "Income")?.raw as number ?? 0;
+              const exp = items.find((i) => i.dataset.label === "Expenses")?.raw as number ?? 0;
+              const net = inc - exp;
+              return [`  Net: ${net >= 0 ? "+" : ""}${fmtK(net)}`];
+            },
+          },
+        },
+      },
+      scales: {
+        x: {
+          ticks: { color: "#94a3b8", font: { family: FONT, size: 11, weight: 600 } },
           grid: { display: false },
           border: { display: false },
         },

@@ -35,6 +35,7 @@ import {
   getWeekOfMonthConfig,
   getRolling30DayConfig,
   getAvgTxnSizeConfig,
+  getIncomeExpenseLineConfig,
 } from "@/utils/chartOptions";
 import SlideUp from "./SlideUp";
 
@@ -159,8 +160,12 @@ const Charts: React.FC<Props> = ({
     const day = new Date(tx.date).getDate() - 1;
     if (tx.type === "expense") dailyExpense[day] += tx.amount;
   });
-  const cumulativeExpense = dailyExpense.reduce<number[]>((acc, v, i) => {
-    acc.push((acc[i - 1] ?? 0) + v);
+  const isCurrentMonth = currentMonth === new Date().getMonth() && currentYear === new Date().getFullYear();
+  const todayIdx = isCurrentMonth ? new Date().getDate() - 1 : daysInMonth - 1;
+  const dailyExpenseNulled: (number | null)[] = dailyExpense.map((v, i) => i > todayIdx ? null : v);
+  const cumulativeExpense = dailyExpense.reduce<(number | null)[]>((acc, v, i) => {
+    if (i > todayIdx) { acc.push(null); return acc; }
+    acc.push(((acc[i - 1] ?? 0) as number) + v);
     return acc;
   }, []);
   const dayLabels = Array.from({ length: daysInMonth }, (_, i) => String(i + 1));
@@ -179,7 +184,11 @@ const Charts: React.FC<Props> = ({
   const months = Array.from({ length: 12 }, (_, i) =>
     new Date(0, i).toLocaleString("default", { month: "short" })
   );
+  const lastActiveMonthIdx = monthlyBarData.inflow.reduce(
+    (last, v, i) => (v > 0 || monthlyBarData.expense[i] > 0 ? i : last), -1
+  );
   const savingsRates = monthlyBarData.categories.map((_, i) => {
+    if (i > lastActiveMonthIdx) return null;
     const inc = monthlyBarData.inflow[i];
     const exp = monthlyBarData.expense[i];
     if (inc === 0) return 0;
@@ -331,7 +340,7 @@ const Charts: React.FC<Props> = ({
       {/* Cumulative Spending */}
       <ChartCard title="Cumulative Spending" subtitle="Running total of expenses this month" badge="New ✦" accent="orange" delay={0.15}>
         <div className="h-[280px] relative">
-          <Line {...getCumulativeConfig({ categories: dayLabels, cumulative: cumulativeExpense, daily: dailyExpense })} />
+          <Line {...getCumulativeConfig({ categories: dayLabels, cumulative: cumulativeExpense, daily: dailyExpenseNulled })} />
         </div>
       </ChartCard>
 
@@ -342,17 +351,49 @@ const Charts: React.FC<Props> = ({
         </div>
       </ChartCard>
 
+      {/* Cumulative Income vs Expense Line */}
+      {(() => {
+        const lastActiveIdx = monthlyBarData.inflow.reduce(
+          (last, v, i) => (v > 0 || monthlyBarData.expense[i] > 0 ? i : last), -1
+        );
+        let cumI = 0, cumE = 0;
+        const cumInflow: (number | null)[] = [];
+        const cumExpense: (number | null)[] = [];
+        monthlyBarData.inflow.forEach((v, i) => {
+          if (i > lastActiveIdx) {
+            cumInflow.push(null);
+            cumExpense.push(null);
+          } else {
+            cumI += v;
+            cumE += monthlyBarData.expense[i];
+            cumInflow.push(cumI);
+            cumExpense.push(cumE);
+          }
+        });
+        return (
+          <ChartCard title="Cumulative Income vs Expenses" subtitle="Running totals across all months this year" badge="Line" accent="green" delay={0.22}>
+            <div className="h-[300px] relative">
+              <Line {...getIncomeExpenseLineConfig({
+                categories: monthlyBarData.categories,
+                inflow: cumInflow,
+                expense: cumExpense,
+              })} />
+            </div>
+          </ChartCard>
+        );
+      })()}
+
+      {/* Savings Rate % — near cumulative chart */}
+      <ChartCard title="Savings Rate %" subtitle="% of income saved each month (no future months)" badge="Line" accent="purple" delay={0.24}>
+        <div className="h-[260px] relative">
+          <Line {...getSavingsRateConfig({ categories: monthlyBarData.categories, rates: savingsRates })} />
+        </div>
+      </ChartCard>
+
       {/* Monthly Savings */}
       <ChartCard title="Net Monthly Savings" subtitle="Inflow minus expenses per month" badge="Column" accent="green" delay={0.25}>
         <div className="h-[280px] relative">
           <Bar {...getMonthlySavingsConfig(monthlySavingsData)} />
-        </div>
-      </ChartCard>
-
-      {/* Savings Rate */}
-      <ChartCard title="Savings Rate %" subtitle="What % of income you saved each month" badge="New ✦" accent="purple" delay={0.3}>
-        <div className="h-[260px] relative">
-          <Line {...getSavingsRateConfig({ categories: months, rates: savingsRates })} />
         </div>
       </ChartCard>
 
