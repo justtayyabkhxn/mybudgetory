@@ -9,26 +9,25 @@ import {
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 
-/* ── tiny fake transactions shown in the preview card ── */
 const FAKE_TXN = [
-  { emoji: '🛒', label: 'Groceries',  amount: '-₹ 840',  color: 'text-rose-400'    },
-  { emoji: '💼', label: 'Salary',     amount: '+₹ 42,000', color: 'text-emerald-400' },
-  { emoji: '⚡', label: 'Electricity', amount: '-₹ 1,240', color: 'text-rose-400'    },
+  { emoji: '🛒', label: 'Groceries',   amount: '-₹ 840',    color: 'text-rose-400'    },
+  { emoji: '💼', label: 'Salary',      amount: '+₹ 42,000', color: 'text-emerald-400' },
+  { emoji: '⚡', label: 'Electricity', amount: '-₹ 1,240',  color: 'text-rose-400'    },
 ];
 
 const FEATURES = [
   { icon: TrendingUp, color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20', label: 'Real-time expense tracking'  },
   { icon: BarChart3,  color: 'text-blue-400',    bg: 'bg-blue-500/10 border-blue-500/20',       label: 'Visual spending analytics'  },
   { icon: Shield,     color: 'text-violet-400',  bg: 'bg-violet-500/10 border-violet-500/20',   label: 'Secure & private data'      },
-  { icon: Zap,        color: 'text-yellow-400',  bg: 'bg-yellow-500/10 border-yellow-500/20',   label: 'Instant bill splitting'     },
+  { icon: Zap,        color: 'text-amber-400',   bg: 'bg-amber-500/10 border-amber-500/20',     label: 'Instant bill splitting'     },
 ];
 
 export default function LoginPage() {
-  const [form, setForm]               = useState({ email: '', password: '' });
-  const [error, setError]             = useState('');
-  const [loading, setLoading]         = useState(false);
+  const [form, setForm]                 = useState({ email: '', password: '' });
+  const [error, setError]               = useState('');
+  const [loading, setLoading]           = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [focused, setFocused]         = useState<string | null>(null);
+  const [focused, setFocused]           = useState<string | null>(null);
   const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) =>
@@ -72,22 +71,16 @@ export default function LoginPage() {
   return (
     <div className="relative min-h-screen flex flex-col bg-[#030307] text-white overflow-hidden">
 
-      {/* ── Dot grid ── */}
+      {/* Dot grid */}
       <div className="pointer-events-none absolute inset-0 auth-dot-grid opacity-100" />
 
-      {/* ── Animated blobs ── */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="animate-blob      absolute -top-48 -left-48 w-[700px] h-[700px] rounded-full bg-indigo-600/20 blur-[160px]" />
-        <div className="animate-blob-d2   absolute top-1/3 -right-32 w-[500px] h-[500px] rounded-full bg-violet-600/15 blur-[130px]" />
-        <div className="animate-blob-d4   absolute -bottom-40 left-1/4 w-[450px] h-[450px] rounded-full bg-blue-700/12  blur-[120px]" />
-      </div>
 
       <Header />
 
       <main className="relative flex-1 flex items-center justify-center px-4 py-10 z-10">
         <div className="w-full max-w-5xl">
 
-          {/* ── Outer shell with gradient border ── */}
+          {/* Outer shell with gradient border */}
           <div
             className="flex rounded-[28px] overflow-hidden shadow-[0_40px_120px_rgba(0,0,0,0.8)]"
             style={{
@@ -96,41 +89,30 @@ export default function LoginPage() {
             }}
           >
 
-            {/* ════════════════════════════════
-                LEFT PANEL — branding
-            ════════════════════════════════ */}
-            <div className="hidden lg:flex flex-col w-[46%] relative overflow-hidden p-10"
+            {/* ── LEFT PANEL — branding ── */}
+            <div
+              className="hidden lg:flex flex-col w-[46%] relative overflow-hidden p-10"
               style={{ background: 'linear-gradient(145deg, rgba(99,102,241,0.12) 0%, rgba(139,92,246,0.06) 50%, rgba(3,3,7,0) 100%)' }}
             >
-              {/* Panel inner glow */}
-              <div className="pointer-events-none absolute -top-24 -left-24 w-80 h-80 rounded-full bg-indigo-500/25 blur-[100px]" />
-              <div className="pointer-events-none absolute bottom-0 right-0 w-64 h-64 rounded-full bg-violet-600/15 blur-[80px]" />
               {/* Vertical separator */}
               <div className="absolute top-8 bottom-8 right-0 w-px bg-gradient-to-b from-transparent via-white/[0.08] to-transparent" />
 
               <div className="relative flex flex-col h-full">
                 {/* Logo mark with spinning rings */}
                 <div className="relative w-16 h-16 mb-7">
-                  {/* Outer dashed ring */}
                   <div className="animate-spin-slow absolute inset-0 rounded-full"
                     style={{ border: '1px dashed rgba(99,102,241,0.35)' }} />
-                  {/* Inner ring */}
                   <div className="animate-spin-slow-r absolute inset-[5px] rounded-full"
                     style={{ border: '1px solid rgba(139,92,246,0.25)' }} />
-                  {/* Core */}
-                  <div className="absolute inset-[11px] rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-[0_0_28px_rgba(99,102,241,0.7)]">
+                  <div className="absolute inset-[11px] rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center">
                     <BarChart3 size={16} className="text-white" />
                   </div>
-                  {/* Halo */}
-                  <div className="absolute inset-0 rounded-full bg-indigo-500/20 blur-xl" />
                 </div>
 
-                {/* App name */}
                 <p className="text-xs font-semibold text-indigo-400 tracking-[0.2em] uppercase mb-3">
                   MyBudgetory
                 </p>
 
-                {/* Headline */}
                 <h2 className="text-gradient-indigo text-[2rem] font-extrabold leading-none mb-3">
                   Take control<br />of your finances.
                 </h2>
@@ -138,12 +120,12 @@ export default function LoginPage() {
                   Track spending, visualise trends, and split bills — all in one beautiful app.
                 </p>
 
-                {/* ── Floating dashboard preview card ── */}
+                {/* Floating dashboard preview */}
                 <div className="animate-float flex-1 flex items-center">
-                  <div className="w-full rounded-2xl border border-white/[0.09] backdrop-blur-xl p-4 shadow-[0_16px_50px_rgba(0,0,0,0.5)]"
+                  <div
+                    className="w-full rounded-2xl border border-white/[0.09] backdrop-blur-xl p-4 shadow-[0_16px_50px_rgba(0,0,0,0.5)]"
                     style={{ background: 'rgba(255,255,255,0.04)' }}
                   >
-                    {/* Mini header */}
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-[11px] font-medium text-gray-400">March 2026</span>
                       <span className="text-[10px] font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 rounded-full px-2 py-0.5">
@@ -151,11 +133,9 @@ export default function LoginPage() {
                       </span>
                     </div>
 
-                    {/* Net balance */}
                     <p className="text-[10px] text-gray-600 mb-0.5">Net Balance</p>
                     <p className="text-xl font-extrabold text-white mb-3">₹ 24,800</p>
 
-                    {/* Income / Expenses mini row */}
                     <div className="flex gap-2 mb-3">
                       <div className="flex-1 rounded-xl bg-emerald-500/[0.08] border border-emerald-500/15 p-2.5">
                         <div className="flex items-center gap-1 mb-1">
@@ -173,7 +153,6 @@ export default function LoginPage() {
                       </div>
                     </div>
 
-                    {/* Fake transactions */}
                     <div className="space-y-1.5">
                       {FAKE_TXN.map((t) => (
                         <div key={t.label} className="flex items-center justify-between">
@@ -188,7 +167,7 @@ export default function LoginPage() {
                   </div>
                 </div>
 
-                {/* Features */}
+                {/* Feature chips */}
                 <div className="mt-6 grid grid-cols-2 gap-2">
                   {FEATURES.map(({ icon: Icon, color, bg, label }) => (
                     <div key={label} className={`flex items-center gap-2 rounded-xl border ${bg} px-2.5 py-2`}>
@@ -200,10 +179,9 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* ════════════════════════════════
-                RIGHT PANEL — form
-            ════════════════════════════════ */}
-            <div className="flex-1 flex flex-col justify-center p-8 lg:p-12"
+            {/* ── RIGHT PANEL — form ── */}
+            <div
+              className="flex-1 flex flex-col justify-center p-8 lg:p-12"
               style={{ background: 'rgba(255,255,255,0.015)' }}
             >
               {/* Top shine */}
@@ -211,13 +189,14 @@ export default function LoginPage() {
 
               {/* Icon + heading */}
               <div className="animate-fade-up mb-8">
-                <div className="relative inline-flex items-center justify-center mb-5">
-                  <div className="absolute inset-0 rounded-full bg-indigo-500/30 blur-2xl scale-[2]" />
-                  <div className="relative flex items-center justify-center w-12 h-12 rounded-2xl border border-indigo-400/30 bg-gradient-to-br from-indigo-500/25 to-violet-600/25 shadow-[0_0_28px_rgba(99,102,241,0.4)]">
+                <div className="inline-flex items-center justify-center mb-5">
+                  <div className="flex items-center justify-center w-12 h-12 rounded-2xl border border-indigo-400/20 bg-indigo-500/[0.08]">
                     <LogIn size={19} className="text-indigo-300" />
                   </div>
                 </div>
-                <h1 className="text-2xl font-extrabold tracking-tight mb-1.5">Welcome back</h1>
+                <h1 className="text-2xl font-extrabold tracking-tight mb-1.5 text-white">
+                  Welcome back
+                </h1>
                 <p className="text-sm text-gray-500">Sign in to your account to continue</p>
               </div>
 
@@ -225,7 +204,9 @@ export default function LoginPage() {
 
                 {/* Email */}
                 <div className="animate-fade-up-d1">
-                  <label className="block text-xs font-medium text-gray-500 mb-1.5 ml-0.5">Email address</label>
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5 ml-0.5">
+                    Email address
+                  </label>
                   <div className={inputCls('email')}>
                     <Mail size={15} className={iconCls('email')} />
                     <input
@@ -242,7 +223,10 @@ export default function LoginPage() {
                 <div className="animate-fade-up-d2">
                   <div className="flex items-center justify-between mb-1.5 ml-0.5">
                     <label className="text-xs font-medium text-gray-500">Password</label>
-                    <Link href="/forgot-password" className="text-xs text-gray-600 hover:text-indigo-400 transition-colors duration-150 hover:underline underline-offset-2">
+                    <Link
+                      href="/forgot-password"
+                      className="text-xs text-gray-600 hover:text-indigo-400 transition-colors duration-150 hover:underline underline-offset-2"
+                    >
                       Forgot password?
                     </Link>
                   </div>
@@ -256,8 +240,11 @@ export default function LoginPage() {
                       required autoComplete="current-password"
                       className="flex-1 bg-transparent text-sm text-white placeholder:text-gray-600 outline-none"
                     />
-                    <button type="button" tabIndex={-1} onClick={() => setShowPassword(!showPassword)}
-                      className="shrink-0 text-gray-600 hover:text-gray-300 transition-colors duration-150 p-0.5 rounded">
+                    <button
+                      type="button" tabIndex={-1}
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="shrink-0 text-gray-600 hover:text-gray-300 transition-colors duration-150 p-0.5 rounded"
+                    >
                       {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
                     </button>
                   </div>
@@ -280,7 +267,6 @@ export default function LoginPage() {
                       boxShadow: '0 1px 0 rgba(255,255,255,0.18) inset, 0 6px 28px rgba(99,102,241,0.5), 0 1px 4px rgba(0,0,0,0.4)',
                     }}
                   >
-                    {/* Shimmer sweep */}
                     <span className="pointer-events-none absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-[800ms] bg-gradient-to-r from-transparent via-white/[0.12] to-transparent skew-x-12" />
                     {loading ? (
                       <>
@@ -306,7 +292,10 @@ export default function LoginPage() {
 
                 <p className="text-center text-sm text-gray-500">
                   Don&apos;t have an account?{' '}
-                  <Link href="/signup" className="text-indigo-400 hover:text-indigo-300 font-semibold transition-colors duration-150">
+                  <Link
+                    href="/signup"
+                    className="text-indigo-400 hover:text-indigo-300 font-semibold transition-colors duration-150"
+                  >
                     Create one free →
                   </Link>
                 </p>

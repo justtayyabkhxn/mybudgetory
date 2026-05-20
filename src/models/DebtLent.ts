@@ -5,6 +5,7 @@ export interface IDebtLent extends Document {
   type: "debt" | "lent";
   person: string;
   amount: number;
+  paidAmount: number;
   reason?: string;
   dateAdded: Date;
   dueDate?: Date;
@@ -19,6 +20,7 @@ const DebtLentSchema = new Schema<IDebtLent>(
     type: { type: String, enum: ["debt", "lent"], required: true },
     person: { type: String, required: true },
     amount: { type: Number, required: true },
+    paidAmount: { type: Number, default: 0 },
     reason: { type: String },
     dateAdded: { type: Date, default: Date.now },
     dueDate: { type: Date },

@@ -9,7 +9,6 @@ import {
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 
-/* ── Fake split bill preview shown in the right panel ── */
 const FAKE_SPLIT = [
   { name: 'Rahul',  initials: 'R', share: '₹ 840', paid: true  },
   { name: 'Priya',  initials: 'P', share: '₹ 840', paid: false },
@@ -18,17 +17,17 @@ const FAKE_SPLIT = [
 
 const PERKS = [
   'Free forever — no credit card needed',
-  'Import & export transactions as CSV',
+  'Import & export transactions as JSON',
   'Split bills & send WhatsApp reminders',
   'Monthly charts & spending insights',
 ];
 
 export default function SignupPage() {
-  const [form, setForm]               = useState({ name: '', email: '', password: '' });
-  const [error, setError]             = useState('');
-  const [loading, setLoading]         = useState(false);
+  const [form, setForm]                 = useState({ name: '', email: '', password: '' });
+  const [error, setError]               = useState('');
+  const [loading, setLoading]           = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [focused, setFocused]         = useState<string | null>(null);
+  const [focused, setFocused]           = useState<string | null>(null);
   const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) =>
@@ -71,22 +70,16 @@ export default function SignupPage() {
   return (
     <div className="relative min-h-screen flex flex-col bg-[#030307] text-white overflow-hidden">
 
-      {/* ── Dot grid ── */}
+      {/* Dot grid */}
       <div className="pointer-events-none absolute inset-0 auth-dot-grid" />
 
-      {/* ── Animated blobs ── */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="animate-blob      absolute -top-48 -right-48 w-[700px] h-[700px] rounded-full bg-violet-600/20 blur-[160px]" />
-        <div className="animate-blob-d2   absolute top-1/3 -left-32  w-[500px] h-[500px] rounded-full bg-indigo-600/15 blur-[130px]" />
-        <div className="animate-blob-d4   absolute -bottom-40 right-1/4 w-[450px] h-[450px] rounded-full bg-fuchsia-700/10 blur-[120px]" />
-      </div>
 
       <Header />
 
       <main className="relative flex-1 flex items-center justify-center px-4 py-10 z-10">
         <div className="w-full max-w-5xl">
 
-          {/* ── Outer shell with gradient border ── */}
+          {/* Outer shell with gradient border */}
           <div
             className="flex rounded-[28px] overflow-hidden shadow-[0_40px_120px_rgba(0,0,0,0.8)]"
             style={{
@@ -95,29 +88,33 @@ export default function SignupPage() {
             }}
           >
 
-            {/* ════════════════════════════════
-                LEFT PANEL — form
-            ════════════════════════════════ */}
-            <div className="flex-1 flex flex-col justify-center p-8 lg:p-12"
+            {/* ── LEFT PANEL — form ── */}
+            <div
+              className="flex-1 flex flex-col justify-center p-8 lg:p-12"
               style={{ background: 'rgba(255,255,255,0.015)' }}
             >
               {/* Icon + heading */}
               <div className="animate-fade-up mb-8">
-                <div className="relative inline-flex items-center justify-center mb-5">
-                  <div className="absolute inset-0 rounded-full bg-violet-500/30 blur-2xl scale-[2]" />
-                  <div className="relative flex items-center justify-center w-12 h-12 rounded-2xl border border-violet-400/30 bg-gradient-to-br from-violet-500/25 to-indigo-600/25 shadow-[0_0_28px_rgba(139,92,246,0.45)]">
+                <div className="inline-flex items-center justify-center mb-5">
+                  <div className="flex items-center justify-center w-12 h-12 rounded-2xl border border-violet-400/20 bg-violet-500/[0.08]">
                     <UserPlus size={19} className="text-violet-300" />
                   </div>
                 </div>
-                <h1 className="text-2xl font-extrabold tracking-tight mb-1.5">Create an account</h1>
-                <p className="text-sm text-gray-500">Start your financial journey — it&apos;s free</p>
+                <h1 className="text-2xl font-extrabold tracking-tight mb-1.5 text-white">
+                  Create an account
+                </h1>
+                <p className="text-sm text-gray-500">
+                  Start your financial journey — it&apos;s free
+                </p>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4">
 
                 {/* Name */}
                 <div className="animate-fade-up-d1">
-                  <label className="block text-xs font-medium text-gray-500 mb-1.5 ml-0.5">Full name</label>
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5 ml-0.5">
+                    Full name
+                  </label>
                   <div className={inputCls('name')}>
                     <User size={15} className={iconCls('name')} />
                     <input
@@ -132,7 +129,9 @@ export default function SignupPage() {
 
                 {/* Email */}
                 <div className="animate-fade-up-d2">
-                  <label className="block text-xs font-medium text-gray-500 mb-1.5 ml-0.5">Email address</label>
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5 ml-0.5">
+                    Email address
+                  </label>
                   <div className={inputCls('email')}>
                     <Mail size={15} className={iconCls('email')} />
                     <input
@@ -147,7 +146,9 @@ export default function SignupPage() {
 
                 {/* Password */}
                 <div className="animate-fade-up-d3">
-                  <label className="block text-xs font-medium text-gray-500 mb-1.5 ml-0.5">Password</label>
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5 ml-0.5">
+                    Password
+                  </label>
                   <div className={inputCls('password')}>
                     <Lock size={15} className={iconCls('password')} />
                     <input
@@ -158,8 +159,11 @@ export default function SignupPage() {
                       required autoComplete="new-password"
                       className="flex-1 bg-transparent text-sm text-white placeholder:text-gray-600 outline-none"
                     />
-                    <button type="button" tabIndex={-1} onClick={() => setShowPassword(!showPassword)}
-                      className="shrink-0 text-gray-600 hover:text-gray-300 transition-colors duration-150 p-0.5 rounded">
+                    <button
+                      type="button" tabIndex={-1}
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="shrink-0 text-gray-600 hover:text-gray-300 transition-colors duration-150 p-0.5 rounded"
+                    >
                       {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
                     </button>
                   </div>
@@ -198,7 +202,9 @@ export default function SignupPage() {
 
                   <p className="text-center text-[11px] text-gray-700 mt-3">
                     By signing up you agree to our{' '}
-                    <span className="text-gray-500 underline underline-offset-2 cursor-pointer hover:text-gray-400 transition-colors">Terms of Service</span>
+                    <span className="text-gray-500 underline underline-offset-2 cursor-pointer hover:text-gray-400 transition-colors">
+                      Terms of Service
+                    </span>
                   </p>
                 </div>
               </form>
@@ -211,21 +217,20 @@ export default function SignupPage() {
 
               <p className="text-center text-sm text-gray-500">
                 Already have an account?{' '}
-                <Link href="/login" className="text-violet-400 hover:text-violet-300 font-semibold transition-colors duration-150">
+                <Link
+                  href="/login"
+                  className="text-violet-400 hover:text-violet-300 font-semibold transition-colors duration-150"
+                >
                   Sign in →
                 </Link>
               </p>
             </div>
 
-            {/* ════════════════════════════════
-                RIGHT PANEL — branding
-            ════════════════════════════════ */}
-            <div className="hidden lg:flex flex-col w-[46%] relative overflow-hidden p-10"
+            {/* ── RIGHT PANEL — branding ── */}
+            <div
+              className="hidden lg:flex flex-col w-[46%] relative overflow-hidden p-10"
               style={{ background: 'linear-gradient(215deg, rgba(139,92,246,0.12) 0%, rgba(99,102,241,0.06) 50%, rgba(3,3,7,0) 100%)' }}
             >
-              {/* Panel glows */}
-              <div className="pointer-events-none absolute -top-24 -right-24 w-80 h-80 rounded-full bg-violet-500/20 blur-[100px]" />
-              <div className="pointer-events-none absolute bottom-0 left-0 w-56 h-56 rounded-full bg-indigo-600/12 blur-[70px]" />
               {/* Separator */}
               <div className="absolute top-8 bottom-8 left-0 w-px bg-gradient-to-b from-transparent via-white/[0.08] to-transparent" />
 
@@ -233,12 +238,13 @@ export default function SignupPage() {
                 {/* Logo ring + badge */}
                 <div className="flex items-center gap-3 mb-7">
                   <div className="relative w-10 h-10">
-                    <div className="animate-spin-slow absolute inset-0 rounded-full" style={{ border: '1px dashed rgba(139,92,246,0.4)' }} />
-                    <div className="animate-spin-slow-r absolute inset-[4px] rounded-full" style={{ border: '1px solid rgba(99,102,241,0.25)' }} />
-                    <div className="absolute inset-[9px] rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-[0_0_24px_rgba(139,92,246,0.7)]">
+                    <div className="animate-spin-slow absolute inset-0 rounded-full"
+                      style={{ border: '1px dashed rgba(139,92,246,0.4)' }} />
+                    <div className="animate-spin-slow-r absolute inset-[4px] rounded-full"
+                      style={{ border: '1px solid rgba(99,102,241,0.25)' }} />
+                    <div className="absolute inset-[9px] rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center">
                       <BarChart3 size={11} className="text-white" />
                     </div>
-                    <div className="absolute inset-0 rounded-full bg-violet-500/15 blur-lg" />
                   </div>
                   <div>
                     <p className="text-xs font-bold text-white/70">MyBudgetory</p>
@@ -249,7 +255,6 @@ export default function SignupPage() {
                   </div>
                 </div>
 
-                {/* Headline */}
                 <h2 className="text-gradient-violet text-[1.85rem] font-extrabold leading-none mb-3">
                   Everything you<br />need in one app.
                 </h2>
@@ -267,9 +272,10 @@ export default function SignupPage() {
                   ))}
                 </div>
 
-                {/* ── Floating Bill Split preview ── */}
+                {/* Floating Bill Split preview */}
                 <div className="animate-float-d2 flex-1 flex items-end">
-                  <div className="w-full rounded-2xl border border-white/[0.09] backdrop-blur-xl p-4 shadow-[0_16px_50px_rgba(0,0,0,0.5)]"
+                  <div
+                    className="w-full rounded-2xl border border-white/[0.09] backdrop-blur-xl p-4 shadow-[0_16px_50px_rgba(0,0,0,0.5)]"
                     style={{ background: 'rgba(255,255,255,0.04)' }}
                   >
                     <div className="flex items-center gap-2 mb-3">
@@ -282,16 +288,27 @@ export default function SignupPage() {
 
                     <div className="space-y-2">
                       {FAKE_SPLIT.map((p) => (
-                        <div key={p.name} className={`flex items-center justify-between rounded-xl px-3 py-2 ${p.paid ? 'bg-emerald-500/[0.07] border border-emerald-500/15' : 'bg-white/[0.03] border border-white/[0.06]'}`}>
+                        <div
+                          key={p.name}
+                          className={`flex items-center justify-between rounded-xl px-3 py-2 ${
+                            p.paid
+                              ? 'bg-emerald-500/[0.07] border border-emerald-500/15'
+                              : 'bg-white/[0.03] border border-white/[0.06]'
+                          }`}
+                        >
                           <div className="flex items-center gap-2">
-                            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${p.paid ? 'bg-emerald-500/20 text-emerald-300' : 'bg-violet-500/20 text-violet-300'}`}>
+                            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                              p.paid ? 'bg-emerald-500/20 text-emerald-300' : 'bg-violet-500/20 text-violet-300'
+                            }`}>
                               {p.initials}
                             </div>
                             <span className="text-xs text-gray-300">{p.name}</span>
                           </div>
                           <div className="flex items-center gap-2">
                             <span className="text-xs font-semibold text-gray-400">{p.share}</span>
-                            <span className={`text-[9px] font-semibold rounded-full px-1.5 py-0.5 ${p.paid ? 'bg-emerald-500/20 text-emerald-400' : 'bg-gray-700/60 text-gray-500'}`}>
+                            <span className={`text-[9px] font-semibold rounded-full px-1.5 py-0.5 ${
+                              p.paid ? 'bg-emerald-500/20 text-emerald-400' : 'bg-gray-700/60 text-gray-500'
+                            }`}>
                               {p.paid ? 'Paid' : 'Due'}
                             </span>
                           </div>
@@ -301,7 +318,9 @@ export default function SignupPage() {
 
                     <div className="flex items-center gap-2 mt-3 pt-3 border-t border-white/[0.05]">
                       <TrendingUp size={11} className="text-emerald-400" />
-                      <span className="text-[10px] text-gray-600">1 of 3 paid · ₹ 840 collected</span>
+                      <span className="text-[10px] text-gray-600">
+                        1 of 3 paid · ₹ 840 collected
+                      </span>
                     </div>
                   </div>
                 </div>

@@ -66,7 +66,9 @@ export default function SummaryPage() {
   const members=total/share;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 text-white p-6 sm:p-10">
+    <div className="min-h-screen bg-[#0a0a0f] text-white p-6 sm:p-10">
+      <div className="fixed inset-0 pointer-events-none auth-dot-grid opacity-[0.14]" />
+      <div className="fixed top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-violet-500/30 to-transparent pointer-events-none z-50" />
       <Header />
       <div className="max-w-xl mx-auto bg-[#111]/80 rounded-xl p-6 shadow-xl">
         <div className="flex items-center gap-2 mb-6">

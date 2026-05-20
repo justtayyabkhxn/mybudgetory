@@ -379,15 +379,12 @@ export default function Profile() {
   const initials = user ? getInitials(user.name) : "?";
 
   return (
-    <main className="min-h-screen bg-[#080810] text-white pb-28">
-      {/* Background blobs */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-indigo-600/8 rounded-full blur-3xl" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40vw] h-[40vw] bg-purple-600/8 rounded-full blur-3xl" />
-      </div>
+    <main className="min-h-screen bg-[#0a0a0f] text-white pb-28">
+      <div className="fixed inset-0 pointer-events-none auth-dot-grid opacity-[0.14]" />
+      <div className="fixed top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-violet-500/30 to-transparent pointer-events-none z-50" />
 
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-[#080810]/80 backdrop-blur-xl border-b border-white/6">
+      <div className="sticky top-0 z-40 bg-[#0a0a0f]/80 backdrop-blur-xl border-b border-white/[0.06]">
         <div className="max-w-2xl mx-auto px-4 py-3">
           <p className="text-xs text-gray-500 font-semibold uppercase tracking-widest">
             MyBudgetory

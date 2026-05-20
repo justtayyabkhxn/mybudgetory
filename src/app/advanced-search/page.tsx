@@ -130,7 +130,9 @@ export default function AdvancedSearchPage() {
   const inputClass = "w-full bg-gray-900/80 border border-gray-700 text-white placeholder-gray-600 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-indigo-500/70 focus:ring-2 focus:ring-indigo-500/10 transition-all duration-200";
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 text-white pb-28">
+    <div className="min-h-screen bg-[#0a0a0f] text-white pb-28">
+      <div className="fixed inset-0 pointer-events-none auth-dot-grid opacity-[0.14]" />
+      <div className="fixed top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-violet-500/30 to-transparent pointer-events-none z-50" />
       <div className="max-w-5xl mx-auto p-4 sm:p-8">
         <Header />
 

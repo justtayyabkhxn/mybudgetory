@@ -27,6 +27,7 @@ import MonthlyReport from "@/components/MonthlyReport";
 import BottomNav from "@/components/BottomNav";
 import { CATEGORY_COLORS, CATEGORY_ICONS } from "@/lib/categoryConfig";
 import DashboardInsights from "@/components/DashboardInsights";
+import AIAdviceBanner from "@/components/AIAdviceBanner";
 import MonthEndReview from "@/components/MonthEndReview";
 import { useAuthGuard } from "@/hooks/useAuthGuard";
 import { apiFetch } from "@/utils/apiFetch";
@@ -130,7 +131,9 @@ export default function Dashboard() {
     inflow > 0 ? Math.round(((inflow - expense) / inflow) * 100) : 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 text-white p-4 sm:p-8 pb-24">
+    <div className="min-h-screen bg-[#0a0a0f] text-white p-4 sm:p-8 pb-24">
+      <div className="fixed inset-0 pointer-events-none auth-dot-grid opacity-[0.14]" />
+      <div className="fixed top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-violet-500/30 to-transparent pointer-events-none z-50" />
       <div className={menuOpen ? "overflow-hidden h-screen" : ""}>
         <div className="max-w-5xl mx-auto">
           {/* Header */}
@@ -308,7 +311,7 @@ export default function Dashboard() {
           <AddTransactionForm onAdd={fetchTransactions} />
 
           {/* Recent Transactions */}
-          <div className="bg-gradient-to-br from-gray-900 via-black to-gray-800 rounded-xl p-6 shadow-lg mt-6">
+          <div className="bg-[#111118] border border-white/[0.07] rounded-xl p-6 mt-6">
             <div className="flex items-center gap-2 mb-4">
               <RefreshCcwDot color="#ec4899" />
               <h2 className="text-xl font-semibold">Recent Transactions</h2>
@@ -397,6 +400,9 @@ export default function Dashboard() {
               </div>
             )}
           </div>
+
+          {/* ── AI Advice: Monday (weekly) + days 1-3 of month (monthly) ── */}
+          <AIAdviceBanner txs={txs} loading={loading} />
 
           {/* ── Insights: Velocity, Race, Health, Streak, Digest, What If ── */}
           <DashboardInsights txs={txs} inflow={inflow} expense={expense} loading={loading} />

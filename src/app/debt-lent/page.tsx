@@ -15,6 +15,8 @@ import {
   TrendingDown,
   TrendingUp,
   Clock,
+  CreditCard,
+  MessageCircle,
 } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -29,6 +31,7 @@ interface Entry {
   _id: string;
   person: string;
   amount: number;
+  paidAmount: number;
   reason?: string;
   type: "debt" | "lent";
   dateAdded: string;
@@ -155,17 +158,40 @@ export default function DebtLentPage() {
   const { totalLent, totalDebt, pendingCount } = useMemo(() => {
     const pending = entries.filter(e => e.status === "pending");
     return {
-      totalLent: pending.filter(e => e.type === "lent").reduce((s, e) => s + e.amount, 0),
-      totalDebt: pending.filter(e => e.type === "debt").reduce((s, e) => s + e.amount, 0),
+      totalLent: pending.filter(e => e.type === "lent").reduce((s, e) => s + (e.amount - (e.paidAmount || 0)), 0),
+      totalDebt: pending.filter(e => e.type === "debt").reduce((s, e) => s + (e.amount - (e.paidAmount || 0)), 0),
       pendingCount: pending.length,
     };
   }, [entries]);
+
+  const handlePayment = async (id: string, amount: number) => {
+    try {
+      const res = await apiFetch("/api/debt-lent/pay", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, amount }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setEntries(prev => prev.map(e =>
+          e._id === id ? { ...e, paidAmount: data.paidAmount, status: data.status } : e
+        ));
+        toast(data.status === "cleared" ? "Fully paid — marked as cleared!" : `₹${amount} payment logged`, "success");
+      } else {
+        toast(data.error || "Failed to log payment", "error");
+      }
+    } catch {
+      toast("Network error", "error");
+    }
+  };
 
   const pendingEntries = entries.filter(e => e.status === "pending");
   const clearedEntries = entries.filter(e => e.status === "cleared");
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 text-white p-4 sm:p-8 pb-28">
+    <div className="min-h-screen bg-[#0a0a0f] text-white p-4 sm:p-8 pb-28">
+      <div className="fixed inset-0 pointer-events-none auth-dot-grid opacity-[0.14]" />
+      <div className="fixed top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-violet-500/30 to-transparent pointer-events-none z-50" />
       <div className="max-w-3xl mx-auto">
         <Header />
 
@@ -354,6 +380,7 @@ export default function DebtLentPage() {
                       idx={idx}
                       onClear={() => setClearId(entry._id)}
                       onDelete={() => setDeleteId(entry._id)}
+                      onPayment={(amt) => handlePayment(entry._id, amt)}
                     />
                   ))}
                 </div>
@@ -412,76 +439,199 @@ function EntryCard({
   idx,
   onClear,
   onDelete,
+  onPayment,
 }: {
   entry: Entry;
   idx: number;
   onClear?: () => void;
   onDelete: () => void;
+  onPayment?: (amount: number) => void;
 }) {
+  const [showPayForm, setShowPayForm] = useState(false);
+  const [payInput, setPayInput] = useState("");
+  const [paying, setPaying] = useState(false);
+
   const isLent = entry.type === "lent";
   const isOverdue = entry.dueDate && entry.status === "pending" && new Date(entry.dueDate) < new Date();
+  const paid = entry.paidAmount || 0;
+  const remaining = entry.amount - paid;
+  const hasPartialPayment = paid > 0 && entry.status === "pending";
+  const progressPct = Math.round((paid / entry.amount) * 100);
+
+  const handlePay = async () => {
+    const amt = Number(payInput);
+    if (!amt || amt <= 0 || amt > remaining) return;
+    setPaying(true);
+    await onPayment?.(amt);
+    setPayInput("");
+    setShowPayForm(false);
+    setPaying(false);
+  };
+
+  const buildWhatsAppMessage = () => {
+    const amt = `₹${remaining.toLocaleString()}`;
+    const reason = entry.reason ? ` for *${entry.reason}*` : "";
+    const msg = isLent
+      ? `Hi *${entry.person}*! 👋\n\nThis is a reminder from *MyBudgetory*.\n\nYou owe me *${amt}*${reason}. Kindly settle it at your earliest convenience. 🙏\n\n_— Automated reminder from MyBudgetory_`
+      : `Hi *${entry.person}*! 👋\n\nSending this via *MyBudgetory*.\n\nI owe you *${amt}*${reason}. I'll settle it soon! 🙏\n\n_— Automated message from MyBudgetory_`;
+    return `https://wa.me/?text=${encodeURIComponent(msg)}`;
+  };
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25, delay: idx * 0.04 }}
-      className={`flex items-center gap-4 p-4 rounded-2xl border transition-all ${
-        isLent
-          ? "bg-emerald-500/5 border-emerald-500/20"
-          : "bg-red-500/5 border-red-500/20"
+      className={`rounded-2xl border transition-all ${
+        isLent ? "bg-emerald-500/5 border-emerald-500/20" : "bg-red-500/5 border-red-500/20"
       }`}
     >
-      {/* Avatar */}
-      <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 font-black text-sm ${
-        isLent ? "bg-emerald-500/20 text-emerald-300" : "bg-red-500/20 text-red-300"
-      }`}>
-        {entry.person.charAt(0).toUpperCase()}
-      </div>
+      <div className="flex items-center gap-4 p-4">
+        {/* Avatar */}
+        <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 font-black text-sm ${
+          isLent ? "bg-emerald-500/20 text-emerald-300" : "bg-red-500/20 text-red-300"
+        }`}>
+          {entry.person.charAt(0).toUpperCase()}
+        </div>
 
-      {/* Info */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 flex-wrap">
-          <p className="font-bold text-gray-100 text-sm">
-            {isLent ? "You lent" : "You owe"}{" "}
-            <span className={isLent ? "text-emerald-300" : "text-red-300"}>{entry.person}</span>
+        {/* Info */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <p className="font-bold text-gray-100 text-sm">
+              {isLent ? "You lent" : "You owe"}{" "}
+              <span className={isLent ? "text-emerald-300" : "text-red-300"}>{entry.person}</span>
+            </p>
+            {entry.status === "cleared" && (
+              <span className="text-[10px] font-bold px-1.5 py-0.5 bg-gray-700 text-gray-400 rounded-md">Cleared</span>
+            )}
+            {isOverdue && (
+              <span className="text-[10px] font-bold px-1.5 py-0.5 bg-red-500/20 text-red-400 rounded-md">Overdue</span>
+            )}
+          </div>
+          <p className="text-xs text-gray-500 mt-0.5">
+            {new Date(entry.dateAdded).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+            {entry.dueDate && ` • Due: ${new Date(entry.dueDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}`}
           </p>
-          {entry.status === "cleared" && (
-            <span className="text-[10px] font-bold px-1.5 py-0.5 bg-gray-700 text-gray-400 rounded-md">Cleared</span>
-          )}
-          {isOverdue && (
-            <span className="text-[10px] font-bold px-1.5 py-0.5 bg-red-500/20 text-red-400 rounded-md">Overdue</span>
+          {entry.reason && <p className="text-xs text-gray-500 mt-0.5 truncate">{entry.reason}</p>}
+
+          {/* Partial payment progress */}
+          {hasPartialPayment && (
+            <div className="mt-2">
+              <div className="flex items-center justify-between text-[11px] mb-1">
+                <span className="text-gray-500">Paid: <span className="text-emerald-400 font-semibold">₹{paid.toLocaleString()}</span></span>
+                <span className="text-gray-500">Remaining: <span className={`font-semibold ${isLent ? "text-emerald-300" : "text-red-300"}`}>₹{remaining.toLocaleString()}</span></span>
+              </div>
+              <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-emerald-500/70 transition-all duration-500"
+                  style={{ width: `${progressPct}%` }}
+                />
+              </div>
+              <p className="text-[10px] text-gray-600 mt-0.5">{progressPct}% settled</p>
+            </div>
           )}
         </div>
-        <p className="text-xs text-gray-500 mt-0.5">
-          {new Date(entry.dateAdded).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
-          {entry.dueDate && ` • Due: ${new Date(entry.dueDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}`}
-        </p>
-        {entry.reason && <p className="text-xs text-gray-500 mt-0.5 truncate">{entry.reason}</p>}
+
+        {/* Amount + actions */}
+        <div className="flex items-center gap-1.5 flex-shrink-0">
+          <div className="text-right mr-1">
+            <span className={`font-black text-base ${isLent ? "text-emerald-400" : "text-red-400"}`}>
+              ₹{entry.amount.toLocaleString()}
+            </span>
+            {hasPartialPayment && (
+              <p className={`text-[11px] font-semibold ${isLent ? "text-emerald-500" : "text-red-500"}`}>
+                ₹{remaining.toLocaleString()} left
+              </p>
+            )}
+          </div>
+
+          {entry.status === "pending" && (
+            <>
+              {/* Log partial payment */}
+              <button
+                onClick={() => setShowPayForm(v => !v)}
+                className="p-1.5 rounded-lg text-gray-600 hover:text-amber-400 hover:bg-amber-500/10 transition-all cursor-pointer"
+                title="Log payment"
+              >
+                <CreditCard size={15} />
+              </button>
+
+              {/* WhatsApp */}
+              <a
+                href={buildWhatsAppMessage()}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-1.5 rounded-lg text-gray-600 hover:text-green-400 hover:bg-green-500/10 transition-all"
+                title="Send WhatsApp reminder"
+              >
+                <MessageCircle size={15} />
+              </a>
+
+              {onClear && (
+                <button
+                  onClick={onClear}
+                  className="p-1.5 rounded-lg text-gray-600 hover:text-emerald-400 hover:bg-emerald-500/10 transition-all cursor-pointer"
+                  title="Mark as cleared"
+                >
+                  <CheckCircle2 size={15} />
+                </button>
+              )}
+            </>
+          )}
+          <button
+            onClick={onDelete}
+            className="p-1.5 rounded-lg text-gray-600 hover:text-red-400 hover:bg-red-500/10 transition-all cursor-pointer"
+            title="Delete"
+          >
+            <Trash2 size={15} />
+          </button>
+        </div>
       </div>
 
-      {/* Amount + actions */}
-      <div className="flex items-center gap-2 flex-shrink-0">
-        <span className={`font-black text-base ${isLent ? "text-emerald-400" : "text-red-400"}`}>
-          ₹{entry.amount.toLocaleString()}
-        </span>
-        {entry.status === "pending" && onClear && (
-          <button
-            onClick={onClear}
-            className="p-1.5 rounded-lg text-gray-600 hover:text-emerald-400 hover:bg-emerald-500/10 transition-all cursor-pointer"
-            title="Mark as cleared"
+      {/* Log payment inline form */}
+      <AnimatePresence>
+        {showPayForm && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="overflow-hidden"
           >
-            <CheckCircle2 size={15} />
-          </button>
+            <div className={`mx-4 mb-4 p-3 rounded-xl border ${isLent ? "bg-emerald-500/5 border-emerald-500/15" : "bg-red-500/5 border-red-500/15"}`}>
+              <p className="text-xs font-semibold text-gray-400 mb-2">
+                Log payment — max ₹{remaining.toLocaleString()}
+              </p>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Banknote size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-500" />
+                  <input
+                    type="number"
+                    min="1"
+                    max={remaining}
+                    value={payInput}
+                    onChange={e => setPayInput(e.target.value)}
+                    placeholder={`Amount (max ₹${remaining.toLocaleString()})`}
+                    className="w-full bg-gray-800/60 border border-gray-700 text-white placeholder-gray-600 rounded-lg pl-8 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                  />
+                </div>
+                <button
+                  onClick={handlePay}
+                  disabled={paying || !payInput || Number(payInput) <= 0 || Number(payInput) > remaining}
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-lg text-sm font-bold transition-colors cursor-pointer"
+                >
+                  {paying ? "..." : "Log"}
+                </button>
+                <button
+                  onClick={() => { setShowPayForm(false); setPayInput(""); }}
+                  className="px-3 py-2 bg-gray-800 hover:bg-gray-700 text-gray-400 rounded-lg text-sm transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </motion.div>
         )}
-        <button
-          onClick={onDelete}
-          className="p-1.5 rounded-lg text-gray-600 hover:text-red-400 hover:bg-red-500/10 transition-all cursor-pointer"
-          title="Delete"
-        >
-          <Trash2 size={15} />
-        </button>
-      </div>
+      </AnimatePresence>
     </motion.div>
   );
 }

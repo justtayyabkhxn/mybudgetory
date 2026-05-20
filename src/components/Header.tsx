@@ -13,23 +13,23 @@ export default function Header() {
     >
       <Link href="/">
         <motion.span
-          whileHover={{ scale: 1.1, rotate: 1 }}
+          whileHover={{ scale: 1.05, rotate: 0.5 }}
           whileTap={{ scale: 0.95 }}
-          className="text-4xl md:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent transition-all duration-700"
+          className="text-4xl md:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-violet-400 via-purple-400 to-indigo-400 bg-clip-text text-transparent transition-all duration-300"
         >
           MyBudgetory
         </motion.span>
       </Link>
 
       <motion.p
-        className="text-lg text-gray-500 dark:text-gray-300 font-bold tracking-tight mt-2 flex items-center gap-1 mb-3"
+        className="text-sm text-gray-500 font-semibold tracking-tight mt-1 mb-3 flex items-center gap-2"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.5, duration: 1 }}
       >
-        <CreditCard color="#4f46e5" /> {/* Indigo */}
+        <CreditCard size={14} className="text-violet-500" />
         Your Budget.
-        <ScrollText color="#ec4899" /> {/* Pink */}
+        <ScrollText size={14} className="text-indigo-500" />
         Your Story.
       </motion.p>
     </motion.div>
