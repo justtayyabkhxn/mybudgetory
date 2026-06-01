@@ -10,9 +10,11 @@ import {
   Banknote,
   Check,
   Loader2,
+  WifiOff,
 } from "lucide-react";
 import { CATEGORY_COLORS, CATEGORIES } from "@/lib/categoryConfig";
 import { toast } from "@/lib/toast";
+import { getQueue, enqueue } from "@/lib/offlineQueue";
 
 export function AddTransactionForm({ onAdd }: { onAdd: () => void }) {
   const [form, setForm] = useState({
@@ -29,6 +31,26 @@ export function AddTransactionForm({ onAdd }: { onAdd: () => void }) {
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
   const [showComment, setShowComment] = useState(false);
+  const [isOffline, setIsOffline] = useState(false);
+  const [pendingCount, setPendingCount] = useState(0);
+
+  useEffect(() => {
+    setIsOffline(!navigator.onLine);
+    setPendingCount(getQueue().length);
+
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+    const handleQueueChange = () => setPendingCount(getQueue().length);
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    window.addEventListener("offlinequeue:change", handleQueueChange);
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+      window.removeEventListener("offlinequeue:change", handleQueueChange);
+    };
+  }, []);
 
   useEffect(() => {
     if (form.type === "income") {
@@ -62,6 +84,28 @@ export function AddTransactionForm({ onAdd }: { onAdd: () => void }) {
       return;
     }
 
+    // If offline, queue locally
+    if (!navigator.onLine) {
+      enqueue(form);
+      setPendingCount(getQueue().length);
+      toast("You're offline — transaction saved locally", "success");
+      setSuccess("Saved offline!");
+      setTimeout(() => setSuccess(""), 2500);
+      setForm({
+        title: "",
+        amount: "",
+        category: form.type === "income" ? "Others" : "Food",
+        type: form.type,
+        date: new Date().toISOString().split("T")[0],
+        comment: "",
+        paymentMode: form.paymentMode,
+      });
+      setShowComment(false);
+      setLoading(false);
+      return;
+    }
+
+    // Online — submit directly
     try {
       const res = await fetch("/api/transactions", {
         method: "POST",
@@ -134,6 +178,26 @@ export function AddTransactionForm({ onAdd }: { onAdd: () => void }) {
       />
 
       <div className="p-4 sm:p-6">
+        {/* Offline / pending badge */}
+        <AnimatePresence>
+          {(isOffline || pendingCount > 0) && (
+            <motion.div
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.2 }}
+              className="flex items-center gap-2 mb-4 px-3 py-2 rounded-xl border border-yellow-500/30 bg-yellow-500/10 text-yellow-400 text-xs font-semibold"
+            >
+              <WifiOff size={13} />
+              {isOffline
+                ? pendingCount > 0
+                  ? `Offline — ${pendingCount} transaction${pendingCount > 1 ? "s" : ""} queued`
+                  : "You're offline — transactions will be saved locally"
+                : `${pendingCount} offline transaction${pendingCount > 1 ? "s" : ""} pending sync`}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Type + Payment toggles */}
         <div className="flex flex-wrap items-center gap-2 mb-6">
           {/* Type toggle */}

@@ -187,10 +187,6 @@ function AdviceCard({
   const [visible, setVisible] = useState(true);
 
   useEffect(() => {
-    if (localStorage.getItem(dismissKey)) {
-      setVisible(false);
-      return;
-    }
     const cached = localStorage.getItem(cacheKey);
     if (cached) {
       setAdvice(cached);
@@ -198,7 +194,7 @@ function AdviceCard({
     }
     fetchAdvice();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cacheKey, dismissKey]);
+  }, [cacheKey]);
 
   function fetchAdvice() {
     setFetching(true);
@@ -221,7 +217,6 @@ function AdviceCard({
   }
 
   function dismiss() {
-    localStorage.setItem(dismissKey, "1");
     setVisible(false);
   }
 

@@ -195,7 +195,23 @@ const Charts: React.FC<Props> = ({
     return Math.round(((inc - exp) / inc) * 100);
   });
 
-  // Last 12 months labels
+  // All months from earliest transaction to current month
+  const earliestTx = transactions.length
+    ? transactions.reduce((earliest, t) =>
+        new Date(t.date) < new Date(earliest.date) ? t : earliest
+      )
+    : null;
+  const earliestDate = earliestTx ? new Date(earliestTx.date) : new Date(currentYear, currentMonth, 1);
+  const earliestYear = earliestDate.getFullYear();
+  const earliestMon = earliestDate.getMonth();
+  const totalMonths =
+    (currentYear - earliestYear) * 12 + (currentMonth - earliestMon) + 1;
+  const allMonthsLabels = Array.from({ length: totalMonths }, (_, i) => {
+    const d = new Date(earliestYear, earliestMon + i, 1);
+    return d.toLocaleString("default", { month: "short", year: "2-digit" });
+  });
+
+  // Last 12 months labels (used by other charts)
   const last12Months = Array.from({ length: 12 }, (_, i) => {
     const d = new Date(currentYear, currentMonth - 11 + i, 1);
     return d.toLocaleString("default", { month: "short", year: "2-digit" });
@@ -214,8 +230,8 @@ const Charts: React.FC<Props> = ({
   const categoryTrendSeries = allExpenseCats.map((cat, idx) => ({
     name: cat,
     color: CAT_HEX_LOCAL[cat] || fallbackColors[idx % 8],
-    data: Array.from({ length: 12 }, (_, i) => {
-      const d = new Date(currentYear, currentMonth - 11 + i, 1);
+    data: Array.from({ length: totalMonths }, (_, i) => {
+      const d = new Date(earliestYear, earliestMon + i, 1);
       const m = d.getMonth(), y = d.getFullYear();
       return transactions
         .filter((t) => t.type === "expense" && t.category === cat &&
@@ -247,8 +263,8 @@ const Charts: React.FC<Props> = ({
   const incomeSourcesSeries = allIncomeSources.map((src, idx) => ({
     name: src,
     color: incomeColors[idx % incomeColors.length],
-    data: Array.from({ length: 12 }, (_, i) => {
-      const d = new Date(currentYear, currentMonth - 11 + i, 1);
+    data: Array.from({ length: totalMonths }, (_, i) => {
+      const d = new Date(earliestYear, earliestMon + i, 1);
       const m = d.getMonth(), y = d.getFullYear();
       return transactions
         .filter((t) => t.type === "income" && incomeSourceKey(t) === src &&
@@ -258,13 +274,13 @@ const Charts: React.FC<Props> = ({
   }));
 
   // Cash vs UPI trend
-  const cashTrend = Array.from({ length: 12 }, (_, i) => {
-    const d = new Date(currentYear, currentMonth - 11 + i, 1);
+  const cashTrend = Array.from({ length: totalMonths }, (_, i) => {
+    const d = new Date(earliestYear, earliestMon + i, 1);
     const m = d.getMonth(), y = d.getFullYear();
     return transactions.filter((t) => t.type === "expense" && t.paymentMode === "Cash" && new Date(t.date).getMonth() === m && new Date(t.date).getFullYear() === y).reduce((s, t) => s + t.amount, 0);
   });
-  const upiTrend = Array.from({ length: 12 }, (_, i) => {
-    const d = new Date(currentYear, currentMonth - 11 + i, 1);
+  const upiTrend = Array.from({ length: totalMonths }, (_, i) => {
+    const d = new Date(earliestYear, earliestMon + i, 1);
     const m = d.getMonth(), y = d.getFullYear();
     return transactions.filter((t) => t.type === "expense" && t.paymentMode === "UPI" && new Date(t.date).getMonth() === m && new Date(t.date).getFullYear() === y).reduce((s, t) => s + t.amount, 0);
   });
@@ -300,14 +316,14 @@ const Charts: React.FC<Props> = ({
   }
 
   // Average transaction size
-  const avgExpensePerMonth = Array.from({ length: 12 }, (_, i) => {
-    const d = new Date(currentYear, currentMonth - 11 + i, 1);
+  const avgExpensePerMonth = Array.from({ length: totalMonths }, (_, i) => {
+    const d = new Date(earliestYear, earliestMon + i, 1);
     const m = d.getMonth(), y = d.getFullYear();
     const txns = transactions.filter((t) => t.type === "expense" && new Date(t.date).getMonth() === m && new Date(t.date).getFullYear() === y);
     return txns.length > 0 ? Math.round(txns.reduce((s, t) => s + t.amount, 0) / txns.length) : 0;
   });
-  const avgIncomePerMonth = Array.from({ length: 12 }, (_, i) => {
-    const d = new Date(currentYear, currentMonth - 11 + i, 1);
+  const avgIncomePerMonth = Array.from({ length: totalMonths }, (_, i) => {
+    const d = new Date(earliestYear, earliestMon + i, 1);
     const m = d.getMonth(), y = d.getFullYear();
     const txns = transactions.filter((t) => t.type === "income" && new Date(t.date).getMonth() === m && new Date(t.date).getFullYear() === y);
     return txns.length > 0 ? Math.round(txns.reduce((s, t) => s + t.amount, 0) / txns.length) : 0;
@@ -418,6 +434,52 @@ const Charts: React.FC<Props> = ({
         </ChartCard>
       </div>
 
+      {/* Income Sources Donut — current month */}
+      {(() => {
+        const incomeMap: Record<string, number> = {};
+        monthlyTxs
+          .filter((t) => t.type === "income")
+          .forEach((t) => {
+            const key = t.title?.trim() || "Income";
+            incomeMap[key] = (incomeMap[key] || 0) + t.amount;
+          });
+        const labels = Object.keys(incomeMap);
+        const values = Object.values(incomeMap);
+        if (labels.length === 0) return null;
+        return (
+          <ChartCard title="Income Sources" subtitle="Where this month's income came from" badge="Donut" accent="green" delay={0.47}>
+            <div className="h-[280px] relative">
+              <Doughnut
+                data={{
+                  labels,
+                  datasets: [{
+                    data: values,
+                    backgroundColor: incomeColors.map((c) => c + "cc"),
+                    borderColor: incomeColors,
+                    borderWidth: 1.5,
+                  }],
+                }}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: {
+                    legend: {
+                      position: "bottom",
+                      labels: { color: "#9ca3af", font: { size: 11 }, padding: 12 },
+                    },
+                    tooltip: {
+                      callbacks: {
+                        label: (ctx) => ` ₹${Number(ctx.raw).toLocaleString()}`,
+                      },
+                    },
+                  },
+                }}
+              />
+            </div>
+          </ChartCard>
+        );
+      })()}
+
       {/* Yearly Category */}
       <ChartCard title="Yearly Category Spending" subtitle="Total per category for this year" badge="Year" accent="yellow" delay={0.5}>
         <div className="h-[300px] relative">
@@ -426,9 +488,9 @@ const Charts: React.FC<Props> = ({
       </ChartCard>
 
       {/* Category Trend Lines */}
-      <ChartCard title="Category Spending Trends" subtitle="Each category's expense over the last 12 months" badge="New ✦" accent="purple" delay={0.55}>
+      <ChartCard title="Category Spending Trends" subtitle="Each category's expense since the beginning" badge="New ✦" accent="purple" delay={0.55}>
         <div className="h-[320px] relative">
-          <Line {...getCategoryTrendConfig({ months: last12Months, series: categoryTrendSeries })} />
+          <Line {...getCategoryTrendConfig({ months: allMonthsLabels, series: categoryTrendSeries })} />
         </div>
       </ChartCard>
 
@@ -442,14 +504,14 @@ const Charts: React.FC<Props> = ({
       {/* Income Sources */}
       <ChartCard title="Income Sources Over Time" subtitle="Stacked income by category across months" badge="New ✦" accent="green" delay={0.65}>
         <div className="h-[300px] relative">
-          <Bar {...getIncomeSourcesConfig({ months: last12Months, series: incomeSourcesSeries })} />
+          <Bar {...getIncomeSourcesConfig({ months: allMonthsLabels, series: incomeSourcesSeries })} />
         </div>
       </ChartCard>
 
       {/* Cash vs UPI Monthly Trend */}
       <ChartCard title="Cash vs UPI Monthly Trend" subtitle="How you pay — stacked by month" badge="New ✦" accent="yellow" delay={0.7}>
         <div className="h-[280px] relative">
-          <Bar {...getCashUpiTrendConfig({ months: last12Months, cash: cashTrend, upi: upiTrend })} />
+          <Bar {...getCashUpiTrendConfig({ months: allMonthsLabels, cash: cashTrend, upi: upiTrend })} />
         </div>
       </ChartCard>
 
@@ -470,7 +532,7 @@ const Charts: React.FC<Props> = ({
       {/* Average Transaction Size */}
       <ChartCard title="Avg Transaction Size" subtitle="Are your individual transactions getting bigger?" badge="New ✦" accent="cyan" delay={0.85}>
         <div className="h-[280px] relative">
-          <Line {...getAvgTxnSizeConfig({ months: last12Months, avgExpense: avgExpensePerMonth, avgIncome: avgIncomePerMonth })} />
+          <Line {...getAvgTxnSizeConfig({ months: allMonthsLabels, avgExpense: avgExpensePerMonth, avgIncome: avgIncomePerMonth })} />
         </div>
       </ChartCard>
 

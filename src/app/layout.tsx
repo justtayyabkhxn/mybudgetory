@@ -2,6 +2,7 @@
 import './globals.css'; // if you have global styles
 import { Bricolage_Grotesque } from "next/font/google";
 import ToastContainer from "@/components/ToastContainer";
+import OfflineSyncProvider from "@/components/OfflineSyncProvider";
 
 const bricolage = Bricolage_Grotesque({
   subsets: ["latin"],
@@ -21,6 +22,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         {children}
         <ToastContainer />
+        <OfflineSyncProvider />
       </body>
     </html>
   );

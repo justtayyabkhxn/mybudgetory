@@ -90,6 +90,14 @@ export default function RecurringPage() {
 
   useEffect(() => { fetchRecurring(); }, []);
 
+  function advanceNextDate(current: string, frequency: "daily" | "weekly" | "monthly"): string {
+    const d = new Date(current);
+    if (frequency === "daily") d.setDate(d.getDate() + 1);
+    else if (frequency === "weekly") d.setDate(d.getDate() + 7);
+    else d.setMonth(d.getMonth() + 1);
+    return d.toISOString().split("T")[0];
+  }
+
   const handleLogNow = async (item: RecurringTransaction) => {
     try {
       const res = await apiFetch("/api/transactions", {
@@ -106,6 +114,13 @@ export default function RecurringPage() {
         }),
       });
       if (res.ok) {
+        const nextDate = advanceNextDate(item.nextDate, item.frequency);
+        await apiFetch("/api/recurring", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: item._id, nextDate }),
+        });
+        setItems(prev => prev.map(i => i._id === item._id ? { ...i, nextDate } : i));
         toast(`"${item.title}" logged successfully!`, "success");
       } else {
         toast("Failed to log transaction", "error");

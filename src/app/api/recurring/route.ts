@@ -66,16 +66,20 @@ export async function PATCH(req: Request) {
   const userId = getUserId(req.headers.get("authorization") || "");
   if (!userId) return unauthorized();
 
-  const { id, isActive } = await req.json();
-  if (!id || isActive === undefined) {
+  const { id, isActive, nextDate } = await req.json();
+  if (!id || (isActive === undefined && !nextDate)) {
     return Response.json({ error: "Missing required fields" }, { status: 400 });
   }
+
+  const update: Record<string, unknown> = {};
+  if (isActive !== undefined) update.isActive = isActive;
+  if (nextDate) update.nextDate = new Date(nextDate);
 
   await connectDB();
   try {
     const updated = await RecurringTransaction.findOneAndUpdate(
       { _id: id, userId },
-      { isActive },
+      update,
       { new: true }
     );
     if (!updated) return Response.json({ error: "Not found" }, { status: 404 });

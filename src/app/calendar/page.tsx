@@ -366,7 +366,7 @@ export default function CalendarPage() {
                       )}
                     </div>
 
-                    {/* Expense amount */}
+                    {/* Expense / income amount */}
                     <div className="w-full">
                       {expense > 0 && (
                         <p className={`text-[9px] font-black tabular-nums mb-1 ${
@@ -376,6 +376,11 @@ export default function CalendarPage() {
                           "text-emerald-400"
                         }`}>
                           ₹{expense >= 1000 ? `${(expense / 1000).toFixed(1)}k` : expense}
+                        </p>
+                      )}
+                      {expense === 0 && income > 0 && (
+                        <p className="text-[9px] font-black tabular-nums mb-1 text-emerald-400">
+                          +₹{income >= 1000 ? `${(income / 1000).toFixed(1)}k` : income}
                         </p>
                       )}
                       {/* Spend bar */}
