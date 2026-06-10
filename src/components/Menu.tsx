@@ -2,10 +2,23 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  BadgeIndianRupee, BanknoteArrowDown, CalendarDays,
-  ChartCandlestick, ChartNoAxesCombined, CircleUserRound,
-  Divide, FileDigit, LogOut, Menu, PiggyBank,
-  RefreshCcw, Target, TextSearch, Wallet, WalletMinimal, X,
+  BadgeIndianRupee,
+  BanknoteArrowDown,
+  CalendarDays,
+  ChartCandlestick,
+  ChartNoAxesCombined,
+  CircleUserRound,
+  Divide,
+  FileDigit,
+  LogOut,
+  Menu,
+  PiggyBank,
+  RefreshCcw,
+  Target,
+  TextSearch,
+  Wallet,
+  WalletMinimal,
+  X,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -26,53 +39,111 @@ const sections: Section[] = [
   {
     title: "Finance",
     items: [
-      { href: "/dashboard",    icon: <FileDigit size={15} />,          label: "Dashboard" },
-      { href: "/transactions", icon: <BadgeIndianRupee size={15} />,   label: "Transactions" },
-      { href: "/expenses",     icon: <BanknoteArrowDown size={15} />,  label: "Expenses" },
-      { href: "/inflow",       icon: <Wallet size={15} />,             label: "Income" },
-      { href: "/net-worth",    icon: <PiggyBank size={15} />,          label: "Net Worth" },
-      { href: "/debt-lent",    icon: <WalletMinimal size={15} />,      label: "Debt Tracker" },
+      { href: "/dashboard", icon: <FileDigit size={15} />, label: "Dashboard" },
+      {
+        href: "/screen-share",
+        icon: <FileDigit size={15} />,
+        label: "ScreenShare",
+      },
+      {
+        href: "/transactions",
+        icon: <BadgeIndianRupee size={15} />,
+        label: "Transactions",
+      },
+      {
+        href: "/expenses",
+        icon: <BanknoteArrowDown size={15} />,
+        label: "Expenses",
+      },
+      { href: "/inflow", icon: <Wallet size={15} />, label: "Income" },
+      { href: "/net-worth", icon: <PiggyBank size={15} />, label: "Net Worth" },
+      {
+        href: "/debt-lent",
+        icon: <WalletMinimal size={15} />,
+        label: "Debt Tracker",
+      },
     ],
   },
   {
     title: "Analytics",
     items: [
-      { href: "/charts",          icon: <ChartCandlestick size={15} />,     label: "Charts" },
-      { href: "/stats",           icon: <ChartNoAxesCombined size={15} />,  label: "Stats" },
-      { href: "/calendar",        icon: <CalendarDays size={15} />,         label: "Calendar" },
-      { href: "/advanced-search", icon: <TextSearch size={15} />,           label: "Advanced Search" },
+      {
+        href: "/charts",
+        icon: <ChartCandlestick size={15} />,
+        label: "Charts",
+      },
+      {
+        href: "/stats",
+        icon: <ChartNoAxesCombined size={15} />,
+        label: "Stats",
+      },
+      {
+        href: "/calendar",
+        icon: <CalendarDays size={15} />,
+        label: "Calendar",
+      },
+      {
+        href: "/advanced-search",
+        icon: <TextSearch size={15} />,
+        label: "Advanced Search",
+      },
     ],
   },
   {
     title: "Tools",
     items: [
-      { href: "/budget-goals", icon: <Target size={15} />,      label: "Budget Goals" },
-      { href: "/recurring",    icon: <RefreshCcw size={15} />,  label: "Recurring" },
-      { href: "/split",        icon: <Divide size={15} />,      label: "Split Bills" },
+      {
+        href: "/budget-goals",
+        icon: <Target size={15} />,
+        label: "Budget Goals",
+      },
+      {
+        href: "/recurring",
+        icon: <RefreshCcw size={15} />,
+        label: "Recurring",
+      },
+      { href: "/split", icon: <Divide size={15} />, label: "Split Bills" },
     ],
   },
   {
     title: "Account",
     items: [
-      { href: "/profile", icon: <CircleUserRound size={15} />, label: "Profile" },
+      {
+        href: "/profile",
+        icon: <CircleUserRound size={15} />,
+        label: "Profile",
+      },
     ],
   },
 ];
 
 // ─── Per-section accent colours ───────────────────────────────────────────────
-const sectionColors: Record<string, { text: string; dot: string; bg: string }> = {
-  Finance:   { text: "text-indigo-400",  dot: "bg-indigo-500",  bg: "bg-indigo-500/10" },
-  Analytics: { text: "text-purple-400",  dot: "bg-purple-500",  bg: "bg-purple-500/10" },
-  Tools:     { text: "text-orange-400",  dot: "bg-orange-500",  bg: "bg-orange-500/10" },
-  Account:   { text: "text-sky-400",     dot: "bg-sky-500",     bg: "bg-sky-500/10" },
-};
+const sectionColors: Record<string, { text: string; dot: string; bg: string }> =
+  {
+    Finance: {
+      text: "text-indigo-400",
+      dot: "bg-indigo-500",
+      bg: "bg-indigo-500/10",
+    },
+    Analytics: {
+      text: "text-purple-400",
+      dot: "bg-purple-500",
+      bg: "bg-purple-500/10",
+    },
+    Tools: {
+      text: "text-orange-400",
+      dot: "bg-orange-500",
+      bg: "bg-orange-500/10",
+    },
+    Account: { text: "text-sky-400", dot: "bg-sky-500", bg: "bg-sky-500/10" },
+  };
 
 // ─── Hover colours by icon accent ────────────────────────────────────────────
 const itemHoverColors: Record<string, string> = {
-  Finance:   "hover:bg-indigo-500/10 hover:text-indigo-300",
+  Finance: "hover:bg-indigo-500/10 hover:text-indigo-300",
   Analytics: "hover:bg-purple-500/10 hover:text-purple-300",
-  Tools:     "hover:bg-orange-500/10 hover:text-orange-300",
-  Account:   "hover:bg-sky-500/10    hover:text-sky-300",
+  Tools: "hover:bg-orange-500/10 hover:text-orange-300",
+  Account: "hover:bg-sky-500/10    hover:text-sky-300",
 };
 
 export default function MenuButton() {
@@ -81,7 +152,9 @@ export default function MenuButton() {
 
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
-    return () => { document.body.style.overflow = ""; };
+    return () => {
+      document.body.style.overflow = "";
+    };
   }, [open]);
 
   const handleLogout = async () => {
@@ -98,7 +171,7 @@ export default function MenuButton() {
     <div className="relative z-50">
       {/* ── Trigger button ──────────────────────────────────────────────────── */}
       <motion.button
-        onClick={() => setOpen(v => !v)}
+        onClick={() => setOpen((v) => !v)}
         whileTap={{ scale: 0.92 }}
         whileHover={{ scale: 1.04 }}
         className="flex items-center justify-center w-10 h-10 rounded-full text-white cursor-pointer
@@ -147,7 +220,9 @@ export default function MenuButton() {
                 <p className="text-base font-black bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent tracking-tight">
                   MyBudgetory
                 </p>
-                <p className="text-[11px] text-gray-600 font-semibold mt-0.5">Your Budget. Your Story.</p>
+                <p className="text-[11px] text-gray-600 font-semibold mt-0.5">
+                  Your Budget. Your Story.
+                </p>
               </div>
               <button
                 onClick={() => setOpen(false)}
@@ -171,7 +246,9 @@ export default function MenuButton() {
                     {/* Section header */}
                     <div className="flex items-center gap-2 mb-2 px-1">
                       <div className={`w-1.5 h-1.5 rounded-full ${sc.dot}`} />
-                      <span className={`text-[10px] font-black uppercase tracking-[0.12em] ${sc.text}`}>
+                      <span
+                        className={`text-[10px] font-black uppercase tracking-[0.12em] ${sc.text}`}
+                      >
                         {section.title}
                       </span>
                     </div>
@@ -198,12 +275,16 @@ export default function MenuButton() {
                                   : `text-gray-400 ${hover}`
                               }`}
                             >
-                              <span className={isActive ? sc.text : "text-gray-500"}>
+                              <span
+                                className={isActive ? sc.text : "text-gray-500"}
+                              >
                                 {item.icon}
                               </span>
                               {item.label}
                               {isActive && (
-                                <span className={`ml-auto w-1.5 h-1.5 rounded-full ${sc.dot}`} />
+                                <span
+                                  className={`ml-auto w-1.5 h-1.5 rounded-full ${sc.dot}`}
+                                />
                               )}
                             </Link>
                           </motion.div>
@@ -224,10 +305,7 @@ export default function MenuButton() {
                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-all duration-150 cursor-pointer border border-transparent hover:border-red-500/20"
               >
                 <LogOut size={15} />
-                <span>
-
-                Sign Out
-                </span>
+                <span>Sign Out</span>
               </motion.button>
             </div>
           </motion.aside>
