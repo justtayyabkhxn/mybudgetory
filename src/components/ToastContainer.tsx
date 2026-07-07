@@ -18,15 +18,21 @@ const ICONS = {
 };
 
 const STYLES = {
-  success: "bg-emerald-900/90 border-emerald-500/40 text-emerald-200",
-  error: "bg-red-900/90 border-red-500/40 text-red-200",
-  info: "bg-gray-800/90 border-gray-600/40 text-gray-200",
+  success: "bg-emerald-950/90 border-emerald-500/40 text-emerald-200 shadow-[0_8px_32px_rgba(16,185,129,0.15)]",
+  error: "bg-red-950/90 border-red-500/40 text-red-200 shadow-[0_8px_32px_rgba(239,68,68,0.15)]",
+  info: "bg-gray-900/90 border-gray-600/40 text-gray-200 shadow-[0_8px_32px_rgba(0,0,0,0.4)]",
 };
 
 const ICON_STYLES = {
   success: "text-emerald-400",
   error: "text-red-400",
   info: "text-gray-400",
+};
+
+const BAR_STYLES = {
+  success: "bg-emerald-400/70",
+  error: "bg-red-400/70",
+  info: "bg-gray-400/60",
 };
 
 export default function ToastContainer() {
@@ -52,11 +58,12 @@ export default function ToastContainer() {
           return (
             <motion.div
               key={t.id}
+              layout
               initial={{ opacity: 0, y: -12, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -8, scale: 0.95 }}
               transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-              className={`flex items-start gap-3 px-4 py-3 rounded-xl border backdrop-blur-md shadow-2xl pointer-events-auto ${STYLES[t.type]}`}
+              className={`relative overflow-hidden flex items-start gap-3 px-4 py-3 rounded-xl border backdrop-blur-md pointer-events-auto ${STYLES[t.type]}`}
             >
               <Icon size={17} className={`flex-shrink-0 mt-0.5 ${ICON_STYLES[t.type]}`} />
               <p className="flex-1 text-sm font-semibold leading-snug">{t.message}</p>
@@ -67,6 +74,9 @@ export default function ToastContainer() {
               >
                 <X size={14} />
               </button>
+              <span
+                className={`toast-progress absolute bottom-0 left-0 h-0.5 rounded-full ${BAR_STYLES[t.type]}`}
+              />
             </motion.div>
           );
         })}

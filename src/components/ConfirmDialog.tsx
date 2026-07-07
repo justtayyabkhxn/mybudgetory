@@ -48,13 +48,13 @@ export default function ConfirmDialog({
           />
           <motion.div
             className="fixed inset-0 z-[190] flex items-center justify-center p-4"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+            initial={{ opacity: 0, scale: 0.92, y: 8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 4 }}
+            transition={{ type: "spring", stiffness: 340, damping: 26 }}
           >
             <div
-              className="bg-gray-900 border border-gray-700 rounded-2xl p-6 max-w-sm w-full shadow-2xl"
+              className="bg-[#0e0e1c]/95 backdrop-blur-xl border border-white/10 rounded-2xl p-6 max-w-sm w-full shadow-[0_24px_64px_rgba(0,0,0,0.6)]"
               onClick={e => e.stopPropagation()}
             >
               <div className="flex items-start gap-3 mb-4">

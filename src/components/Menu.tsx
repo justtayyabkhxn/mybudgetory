@@ -41,11 +41,6 @@ const sections: Section[] = [
     items: [
       { href: "/dashboard", icon: <FileDigit size={15} />, label: "Dashboard" },
       {
-        href: "/screen-share",
-        icon: <FileDigit size={15} />,
-        label: "ScreenShare",
-      },
-      {
         href: "/transactions",
         icon: <BadgeIndianRupee size={15} />,
         label: "Transactions",

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import {
   PiggyBank,
@@ -14,17 +14,24 @@ import {
   Sparkles,
   Target,
   Bot,
+  Trophy,
+  Zap,
+  Activity,
+  ArrowUpRight,
+  Table2,
+  LineChart,
 } from "lucide-react";
 import {
   Chart as ChartJS,
   LineElement,
   PointElement,
+  BarElement,
   LinearScale,
   CategoryScale,
   Filler,
   Tooltip,
 } from "chart.js";
-import { Line } from "react-chartjs-2";
+import { Line, Bar } from "react-chartjs-2";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import FloatingTransactionButton from "@/components/FloatingTransactionButton";
@@ -34,7 +41,104 @@ import { useAuthGuard } from "@/hooks/useAuthGuard";
 import { apiFetch } from "@/utils/apiFetch";
 import { toast } from "@/lib/toast";
 
-ChartJS.register(LineElement, PointElement, LinearScale, CategoryScale, Filler, Tooltip);
+ChartJS.register(LineElement, PointElement, BarElement, LinearScale, CategoryScale, Filler, Tooltip);
+
+/* ── chart theme ─────────────────────────────────────────── */
+
+const CHART = {
+  up: "#34d399",
+  upDim: "rgba(52,211,153,0.8)",
+  down: "#f87171",
+  downDim: "rgba(248,113,113,0.8)",
+  proj: "rgba(148,163,184,0.55)",
+  grid: "rgba(148,163,184,0.07)",
+  gridZero: "rgba(148,163,184,0.25)",
+  tick: "#64748b",
+  surface: "#0e1117",
+  tooltipBg: "#0f172a",
+};
+
+// Soft drop shadow under the balance line stroke (dataset 0 only) — neutral so it
+// works under both green (rising) and red (falling) segments
+const lineGlowPlugin = {
+  id: "nwGlow",
+  beforeDatasetDraw(chart: ChartJS, args: { index: number }) {
+    if (args.index !== 0) return;
+    chart.ctx.save();
+    chart.ctx.shadowColor = "rgba(0,0,0,0.45)";
+    chart.ctx.shadowBlur = 6;
+    chart.ctx.shadowOffsetY = 4;
+  },
+  afterDatasetDraw(chart: ChartJS, args: { index: number }) {
+    if (args.index !== 0) return;
+    chart.ctx.restore();
+  },
+};
+
+// Selective direct label on the extreme — marks the peak balance in view
+const peakLabelPlugin = {
+  id: "nwPeak",
+  afterDatasetsDraw(chart: ChartJS) {
+    const data = chart.data.datasets[0]?.data as (number | null)[] | undefined;
+    if (!data || data.filter(v => v !== null).length < 3) return;
+    let maxIdx = -1;
+    let maxVal = -Infinity;
+    data.forEach((v, i) => {
+      if (v !== null && v > maxVal) { maxVal = v; maxIdx = i; }
+    });
+    const pt = chart.getDatasetMeta(0).data[maxIdx];
+    if (!pt) return;
+    const { ctx, chartArea } = chart;
+    const label = `peak ${formatAmount(maxVal)}`;
+    ctx.save();
+    ctx.font = `600 10px ${ChartJS.defaults.font.family}`;
+    const w = ctx.measureText(label).width;
+    const x = Math.max(chartArea.left + 4, Math.min(pt.x - w / 2, chartArea.right - w - 4));
+    const y = Math.max(chartArea.top + 10, pt.y - 12);
+    ctx.fillStyle = "rgba(148,163,184,0.9)";
+    ctx.fillText(label, x, y);
+    ctx.beginPath();
+    ctx.arc(pt.x, pt.y, 3, 0, Math.PI * 2);
+    ctx.fillStyle = "#94a3b8";
+    ctx.fill();
+    ctx.strokeStyle = CHART.surface;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.restore();
+  },
+};
+
+// Vertical hairline that tracks the hovered X — passed per-chart, not registered globally
+const crosshairPlugin = {
+  id: "nwCrosshair",
+  afterDatasetsDraw(chart: ChartJS) {
+    const active = chart.tooltip?.getActiveElements();
+    if (!active?.length) return;
+    const { top, bottom } = chart.chartArea;
+    const ctx = chart.ctx;
+    ctx.save();
+    ctx.strokeStyle = "rgba(148,163,184,0.3)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(active[0].element.x, top);
+    ctx.lineTo(active[0].element.x, bottom);
+    ctx.stroke();
+    ctx.restore();
+  },
+};
+
+const baseTooltip = {
+  backgroundColor: CHART.tooltipBg,
+  borderColor: "rgba(148,163,184,0.2)",
+  borderWidth: 1,
+  cornerRadius: 10,
+  padding: 12,
+  titleColor: "#94a3b8",
+  titleFont: { size: 11, weight: "bold" as const },
+  bodyColor: "#f1f5f9",
+  bodyFont: { size: 13, weight: "bold" as const },
+  displayColors: false,
+};
 
 /* ── helpers ─────────────────────────────────────────────── */
 
@@ -43,6 +147,14 @@ const MILESTONES = [
   400000, 500000, 750000, 1000000, 1500000, 2000000, 2500000,
   5000000, 7500000, 10000000, 20000000, 50000000, 100000000,
 ];
+
+const RANGES = [
+  { key: "3m", label: "3M", months: 3, projSteps: [1, 2, 3] },
+  { key: "6m", label: "6M", months: 6, projSteps: [2, 4, 6] },
+  { key: "1y", label: "1Y", months: 12, projSteps: [3, 6, 12] },
+  { key: "all", label: "All", months: null, projSteps: [3, 6, 12] },
+] as const;
+type RangeKey = (typeof RANGES)[number]["key"];
 
 function nwCacheKey() {
   const d = new Date();
@@ -80,11 +192,17 @@ function getAvgMonthlyDelta(monthlyData: ReturnType<typeof getMonthlyData>) {
   return Math.round(deltas.reduce((a, b) => a + b, 0) / deltas.length);
 }
 
+function fmtINR(n: number) {
+  return n.toLocaleString("en-IN");
+}
+
 function formatAmount(amount: number) {
-  if (amount >= 10000000) return `₹${(amount / 10000000).toFixed(amount % 10000000 === 0 ? 0 : 1)}Cr`;
-  if (amount >= 100000) return `₹${(amount / 100000).toFixed(amount % 100000 === 0 ? 0 : 1)}L`;
-  if (amount >= 1000) return `₹${Math.round(amount / 1000)}K`;
-  return `₹${amount.toLocaleString()}`;
+  const sign = amount < 0 ? "-" : "";
+  const abs = Math.abs(amount);
+  if (abs >= 10000000) return `${sign}₹${(abs / 10000000).toFixed(abs % 10000000 === 0 ? 0 : 1)}Cr`;
+  if (abs >= 100000) return `${sign}₹${(abs / 100000).toFixed(abs % 100000 === 0 ? 0 : 1)}L`;
+  if (abs >= 1000) return `${sign}₹${Math.round(abs / 1000)}K`;
+  return `${sign}₹${fmtINR(abs)}`;
 }
 
 function healthColor(score: number) {
@@ -95,9 +213,15 @@ function healthColor(score: number) {
   return { text: "text-red-400", bg: "bg-red-500/15", border: "border-red-500/25", ring: "#f87171" };
 }
 
-function SkeletonBar() {
-  return <div className="animate-pulse h-24 bg-gray-800/60 rounded-2xl" />;
+function SkeletonBar({ className = "h-24" }: { className?: string }) {
+  return <div className={`animate-pulse bg-gray-800/60 rounded-2xl ${className}`} />;
 }
+
+const cardMotion = (delay: number) => ({
+  initial: { opacity: 0, y: 16 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.4, delay, ease: [0.22, 1, 0.36, 1] as const },
+});
 
 /* ── page ─────────────────────────────────────────────────── */
 
@@ -111,11 +235,20 @@ export default function NetWorthPage() {
   const [newBalance, setNewBalance] = useState("");
   const [saving, setSaving] = useState(false);
 
+  const [range, setRange] = useState<RangeKey>("all");
+  const [showProjection, setShowProjection] = useState(true);
+  const [tableView, setTableView] = useState(false);
+
   const [aiAdvice, setAiAdvice] = useState<string | null>(null);
   const [healthScore, setHealthScore] = useState<number | null>(null);
   const [healthReason, setHealthReason] = useState<string | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState(false);
+
+  // Charts inherit the site font (Bricolage Grotesque) instead of Chart.js's Helvetica default
+  useEffect(() => {
+    ChartJS.defaults.font.family = getComputedStyle(document.body).fontFamily;
+  }, []);
 
   // Load cached AI insights on mount
   useEffect(() => {
@@ -171,6 +304,7 @@ export default function NetWorthPage() {
         setEditMode(false);
         setNewBalance("");
         toast("Balance updated", "success");
+        refreshAll();
       } else {
         toast(data.error || "Failed to update", "error");
       }
@@ -213,11 +347,43 @@ export default function NetWorthPage() {
     }
   };
 
+  /* ── derived data ─────────────────────────────────────── */
+
+  const monthlyData = useMemo(() => getMonthlyData(history, bankBalance), [history, bankBalance]);
+  const avgDelta = useMemo(() => getAvgMonthlyDelta(monthlyData), [monthlyData]);
+
+  const rangeDef = RANGES.find(r => r.key === range)!;
+  const visibleHistory = useMemo(() => {
+    if (rangeDef.months === null) return history;
+    const now = new Date();
+    const cutoff = new Date(now.getFullYear(), now.getMonth() - rangeDef.months, now.getDate());
+    const filtered = history.filter(h => new Date(h.date) >= cutoff);
+    return filtered.length >= 2 ? filtered : history;
+  }, [history, rangeDef.months]);
+
+  const allTimeHigh = useMemo(
+    () => Math.max(bankBalance, ...history.map(h => h.balance)),
+    [history, bankBalance]
+  );
+  const totalGrowth = history.length > 0 ? bankBalance - history[0].balance : 0;
+  const bestMonth = useMemo(() => {
+    const withDelta = monthlyData.filter(m => m.delta !== null);
+    if (!withDelta.length) return null;
+    return withDelta.reduce((best, m) => (m.delta! > best.delta! ? m : best));
+  }, [monthlyData]);
+  const lastMonthly = monthlyData.length > 1 ? monthlyData[monthlyData.length - 1] : null;
+  const lastMonthlyPct = lastMonthly?.delta != null && monthlyData[monthlyData.length - 2].balance !== 0
+    ? (lastMonthly.delta / Math.abs(monthlyData[monthlyData.length - 2].balance)) * 100
+    : null;
+
+  const milestonesReached = MILESTONES.filter(m => m <= bankBalance).length;
+  const nextMilestone = MILESTONES.find(m => m > bankBalance) ?? null;
+
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-white p-4 sm:p-8 pb-28">
       <div className="fixed inset-0 pointer-events-none auth-dot-grid opacity-[0.14]" />
       <div className="fixed top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-violet-500/30 to-transparent pointer-events-none z-50" />
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         <Header />
 
         {/* Page header */}
@@ -244,9 +410,7 @@ export default function NetWorthPage() {
               <SkeletonBar />
             ) : (
               <motion.div
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                {...cardMotion(0)}
                 className="bg-gradient-to-br from-amber-950/40 via-gray-900 to-gray-900 border border-amber-500/20 rounded-2xl p-6"
               >
                 <div className="flex items-start justify-between">
@@ -284,7 +448,7 @@ export default function NetWorthPage() {
                       </div>
                     ) : (
                       <p className="text-3xl font-black text-amber-300 mt-2">
-                        ₹{bankBalance.toLocaleString()}
+                        ₹{fmtINR(bankBalance)}
                       </p>
                     )}
                   </div>
@@ -306,9 +470,7 @@ export default function NetWorthPage() {
               <SkeletonBar />
             ) : (
               <motion.div
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
+                {...cardMotion(0.08)}
                 className="bg-gray-900/60 border border-gray-800 rounded-2xl p-6"
               >
                 <div className="flex items-center gap-2 mb-1">
@@ -327,9 +489,7 @@ export default function NetWorthPage() {
               <SkeletonBar />
             ) : (
               <motion.div
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.16, ease: [0.22, 1, 0.36, 1] }}
+                {...cardMotion(0.16)}
                 className="bg-gradient-to-br from-emerald-950/40 via-gray-900 to-gray-900 border border-emerald-500/20 rounded-2xl p-6"
               >
                 <div className="flex items-center gap-2 mb-1">
@@ -339,74 +499,70 @@ export default function NetWorthPage() {
                   <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Total Net Worth</p>
                 </div>
                 <p className="text-3xl font-black text-emerald-300 mt-2">
-                  ₹{bankBalance.toLocaleString()}
+                  ₹{fmtINR(bankBalance)}
                 </p>
-                <p className="text-xs text-gray-600 mt-1">Bank balance + assets</p>
+                {lastMonthly?.delta != null && lastMonthlyPct !== null ? (
+                  <p className="text-xs mt-1">
+                    <span className={`font-bold ${lastMonthly.delta >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+                      {lastMonthly.delta >= 0 ? "▲" : "▼"} {Math.abs(lastMonthlyPct).toFixed(1)}%
+                    </span>
+                    <span className="text-gray-600 ml-1.5">this month</span>
+                  </p>
+                ) : (
+                  <p className="text-xs text-gray-600 mt-1">Bank balance + assets</p>
+                )}
               </motion.div>
             )}
           </div>
 
-          {/* Month-over-Month Change Card */}
-          {!loading && (() => {
-            const byMonth: Record<string, number> = {};
-            history.forEach(h => {
-              const d = new Date(h.date);
-              const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-              byMonth[key] = h.balance;
-            });
-            const now = new Date();
-            const currentKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-            byMonth[currentKey] = bankBalance;
-            const sortedMonths = Object.keys(byMonth).sort();
-            if (sortedMonths.length < 2) return null;
-            const recent = sortedMonths.slice(-3);
-            const rows = recent.map((key, i) => {
-              const bal = byMonth[key];
-              const prevBal = i > 0 ? byMonth[recent[i - 1]] : null;
-              const delta = prevBal !== null ? bal - prevBal : null;
-              const pct = prevBal !== null && prevBal !== 0 ? ((delta! / Math.abs(prevBal)) * 100).toFixed(1) : null;
-              const [yr, mo] = key.split("-");
-              const label = new Date(Number(yr), Number(mo) - 1, 1).toLocaleDateString("en-IN", { month: "short", year: "2-digit" });
-              return { label, bal, delta, pct };
-            });
-            return (
-              <motion.div
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                className="bg-gray-900/60 border border-gray-800 rounded-2xl p-5"
-              >
-                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">Month-over-Month</p>
-                <div className="grid grid-cols-3 gap-3">
-                  {rows.map((row, i) => {
-                    const isUp = row.delta === null || row.delta >= 0;
-                    return (
-                      <div key={i} className="flex flex-col gap-1">
-                        <p className="text-[11px] text-gray-500 font-semibold">{row.label}</p>
-                        <p className="text-base font-black text-white">₹{row.bal.toLocaleString()}</p>
-                        {row.delta !== null ? (
-                          <span className={`text-[11px] font-bold ${isUp ? "text-emerald-400" : "text-red-400"}`}>
-                            {isUp ? "▲" : "▼"} {row.pct}%
-                            <span className="font-normal text-gray-600 ml-1">
-                              ({isUp ? "+" : ""}₹{row.delta.toLocaleString()})
-                            </span>
-                          </span>
-                        ) : (
-                          <span className="text-[11px] text-gray-700">— first entry</span>
-                        )}
-                      </div>
-                    );
-                  })}
+          {/* Quick stats strip */}
+          {loading ? (
+            <SkeletonBar className="h-20" />
+          ) : history.length > 0 && (
+            <motion.div
+              {...cardMotion(0.2)}
+              className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-gray-800 border border-gray-800 rounded-2xl overflow-hidden"
+            >
+              {[
+                {
+                  icon: <Trophy size={13} className="text-amber-400" />,
+                  label: "All-time high",
+                  value: formatAmount(allTimeHigh),
+                  sub: allTimeHigh <= bankBalance ? "Right now 🎉" : `${formatAmount(allTimeHigh - bankBalance)} above today`,
+                },
+                {
+                  icon: <ArrowUpRight size={13} className={totalGrowth >= 0 ? "text-emerald-400" : "text-red-400"} />,
+                  label: "Total growth",
+                  value: `${totalGrowth >= 0 ? "+" : ""}${formatAmount(totalGrowth)}`,
+                  sub: "since first snapshot",
+                },
+                {
+                  icon: <Zap size={13} className="text-violet-400" />,
+                  label: "Best month",
+                  value: bestMonth?.delta != null ? `+${formatAmount(Math.max(0, bestMonth.delta))}` : "—",
+                  sub: bestMonth?.delta != null ? bestMonth.month : "needs 2+ months",
+                },
+                {
+                  icon: <Activity size={13} className="text-blue-400" />,
+                  label: "Avg / month",
+                  value: `${avgDelta >= 0 ? "+" : ""}${formatAmount(avgDelta)}`,
+                  sub: "monthly pace",
+                },
+              ].map((s, i) => (
+                <div key={i} className="bg-gray-900/95 px-4 py-3.5">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    {s.icon}
+                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">{s.label}</p>
+                  </div>
+                  <p className="text-lg font-black text-white leading-tight">{s.value}</p>
+                  <p className="text-[10px] text-gray-600 mt-0.5">{s.sub}</p>
                 </div>
-              </motion.div>
-            );
-          })()}
+              ))}
+            </motion.div>
+          )}
 
           {/* Health Score + Milestone row */}
           {!loading && (() => {
-            const monthlyData = getMonthlyData(history, bankBalance);
-            const avgDelta = getAvgMonthlyDelta(monthlyData);
-            const nextMilestone = MILESTONES.find(m => m > bankBalance) ?? null;
             const remaining = nextMilestone !== null ? nextMilestone - bankBalance : 0;
             const monthsToMilestone = avgDelta > 0 && nextMilestone !== null
               ? Math.ceil(remaining / avgDelta)
@@ -417,9 +573,7 @@ export default function NetWorthPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Health Score */}
                 <motion.div
-                  initial={{ opacity: 0, y: 16 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: 0.24, ease: [0.22, 1, 0.36, 1] }}
+                  {...cardMotion(0.24)}
                   className="bg-gray-900/60 border border-gray-800 rounded-2xl p-5"
                 >
                   <div className="flex items-center gap-2 mb-3">
@@ -430,8 +584,18 @@ export default function NetWorthPage() {
                   </div>
                   {healthScore !== null && colors ? (
                     <div className="flex items-center gap-4">
-                      <div className={`w-16 h-16 rounded-full border-2 ${colors.border} ${colors.bg} flex items-center justify-center flex-shrink-0`}>
-                        <span className={`text-2xl font-black ${colors.text}`}>{healthScore}</span>
+                      <div className="relative w-16 h-16 flex-shrink-0">
+                        <svg viewBox="0 0 64 64" className="w-16 h-16 -rotate-90">
+                          <circle cx="32" cy="32" r="28" fill="none" stroke="rgba(148,163,184,0.15)" strokeWidth="4" />
+                          <circle
+                            cx="32" cy="32" r="28" fill="none"
+                            stroke={colors.ring} strokeWidth="4" strokeLinecap="round"
+                            strokeDasharray={`${(healthScore / 100) * 2 * Math.PI * 28} ${2 * Math.PI * 28}`}
+                          />
+                        </svg>
+                        <span className={`absolute inset-0 flex items-center justify-center text-xl font-black ${colors.text}`}>
+                          {healthScore}
+                        </span>
                       </div>
                       <div>
                         <p className={`text-sm font-bold ${colors.text}`}>
@@ -448,9 +612,7 @@ export default function NetWorthPage() {
 
                 {/* Next Milestone */}
                 <motion.div
-                  initial={{ opacity: 0, y: 16 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: 0.28, ease: [0.22, 1, 0.36, 1] }}
+                  {...cardMotion(0.28)}
                   className="bg-gray-900/60 border border-gray-800 rounded-2xl p-5"
                 >
                   <div className="flex items-center gap-2 mb-3">
@@ -458,6 +620,11 @@ export default function NetWorthPage() {
                       <Target size={14} className="text-amber-400" />
                     </div>
                     <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Next Milestone</p>
+                    {milestonesReached > 0 && (
+                      <span className="ml-auto text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400/80 border border-amber-500/20">
+                        {milestonesReached} reached
+                      </span>
+                    )}
                   </div>
                   {nextMilestone !== null ? (
                     <>
@@ -469,7 +636,7 @@ export default function NetWorthPage() {
                         />
                       </div>
                       <p className="text-[11px] text-gray-500 mt-1.5">
-                        ₹{remaining.toLocaleString()} away
+                        ₹{fmtINR(remaining)} away
                         {monthsToMilestone !== null && (
                           <span className="text-amber-400 font-semibold ml-1">
                             · ~{monthsToMilestone} month{monthsToMilestone !== 1 ? "s" : ""} at current pace
@@ -488,189 +655,381 @@ export default function NetWorthPage() {
             );
           })()}
 
-          {/* Balance History Chart with Projection */}
-          {!loading && history.length > 0 && (() => {
-            const monthlyData = getMonthlyData(history, bankBalance);
-            const avgDelta = getAvgMonthlyDelta(monthlyData);
+          {/* Chart controls + Balance History */}
+          {loading ? (
+            <SkeletonBar className="h-72" />
+          ) : history.length > 0 && (() => {
+            const first = visibleHistory[0].balance;
+            const last = visibleHistory[visibleHistory.length - 1].balance;
+            const rangeChange = last - first;
+            const rangeChangePct = first !== 0 ? ((rangeChange / Math.abs(first)) * 100).toFixed(1) : null;
+            const isUp = rangeChange >= 0;
 
-            const last = history[history.length - 1].balance;
-            const prev = history.length > 1 ? history[history.length - 2].balance : null;
-            const change = prev !== null ? last - prev : 0;
-            const changePct = prev !== null && prev !== 0 ? ((change / Math.abs(prev)) * 100).toFixed(1) : null;
-            const isUp = prev === null || change >= 0;
-
-            // Build projection labels (+3mo, +6mo, +12mo from today)
             const now = new Date();
             const projLabel = (addMonths: number) => {
               const d = new Date(now.getFullYear(), now.getMonth() + addMonths, 1);
               return d.toLocaleDateString("en-IN", { month: "short", year: "2-digit" });
             };
-            const proj3 = bankBalance + avgDelta * 3;
-            const proj6 = bankBalance + avgDelta * 6;
-            const proj12 = bankBalance + avgDelta * 12;
+            const projActive = showProjection && avgDelta !== 0 && history.length > 1;
+            const projPoints = projActive
+              ? rangeDef.projSteps.map(s => ({ label: projLabel(s), value: bankBalance + avgDelta * s, months: s }))
+              : [];
 
-            const historyLabels = history.map(h => {
-              const d = new Date(h.date);
-              return d.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
-            });
-            const allLabels = [...historyLabels, projLabel(3), projLabel(6), projLabel(12)];
-            const realData: (number | null)[] = [...history.map(h => h.balance), null, null, null];
+            // Short ranges show day+month; long ranges show month+year
+            const historyLabels = visibleHistory.map(h =>
+              new Date(h.date).toLocaleDateString(
+                "en-IN",
+                rangeDef.months !== null && rangeDef.months <= 6
+                  ? { day: "numeric", month: "short" }
+                  : { month: "short", year: "2-digit" }
+              )
+            );
+            const allLabels = [...historyLabels, ...projPoints.map(p => p.label)];
+            const lastRealIdx = visibleHistory.length - 1;
+            const realData: (number | null)[] = [
+              ...visibleHistory.map(h => h.balance),
+              ...projPoints.map(() => null),
+            ];
             const projData: (number | null)[] = [
-              ...Array(history.length - 1).fill(null),
+              ...Array(lastRealIdx).fill(null),
               bankBalance,
-              proj3,
-              proj6,
-              proj12,
+              ...projPoints.map(p => p.value),
             ];
 
             return (
-              <motion.div
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.32, ease: [0.22, 1, 0.36, 1] }}
-                className="rounded-2xl overflow-hidden"
-                style={{ background: "linear-gradient(135deg, #0f1f17 0%, #0a0f1a 60%, #0d1a2a 100%)" }}
-              >
-                <div className="px-6 pt-6 pb-4 flex items-start justify-between">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <TrendingUp size={14} className="text-emerald-400" />
-                      <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Balance History</p>
-                    </div>
-                    <p className="text-2xl font-black text-white">₹{last.toLocaleString()}</p>
+              <motion.div {...cardMotion(0.32)} className="space-y-4">
+                {/* Filter row — scopes the charts below */}
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <div className="flex gap-0.5 bg-gray-900/80 border border-gray-800 rounded-xl p-1">
+                    {RANGES.map(r => (
+                      <button
+                        key={r.key}
+                        onClick={() => setRange(r.key)}
+                        className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                          range === r.key
+                            ? "bg-gray-700 text-white shadow-sm"
+                            : "text-gray-500 hover:text-gray-300"
+                        }`}
+                      >
+                        {r.label}
+                      </button>
+                    ))}
                   </div>
-                  <div className="flex flex-col items-end gap-1">
-                    {changePct && (
-                      <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${isUp ? "bg-emerald-500/15 text-emerald-400" : "bg-red-500/15 text-red-400"}`}>
-                        {isUp ? "▲" : "▼"} {Math.abs(Number(changePct))}%
-                      </span>
-                    )}
-                    {avgDelta !== 0 && (
-                      <span className="text-[10px] text-gray-600">
-                        avg {avgDelta >= 0 ? "+" : ""}₹{avgDelta.toLocaleString()}/mo
-                      </span>
-                    )}
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setShowProjection(v => !v)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[11px] font-semibold transition-all cursor-pointer ${
+                        showProjection
+                          ? "bg-gray-800/80 border-gray-700 text-gray-300"
+                          : "bg-transparent border-gray-800 text-gray-600 hover:text-gray-400"
+                      }`}
+                    >
+                      <span className="w-3.5 border-t-2 border-dashed border-slate-500" />
+                      Projection
+                    </button>
+                    <button
+                      onClick={() => setTableView(v => !v)}
+                      className="p-1.5 rounded-xl border border-gray-800 bg-gray-900/80 text-gray-500 hover:text-gray-300 transition-all cursor-pointer"
+                      title={tableView ? "Show chart" : "Show table"}
+                    >
+                      {tableView ? <LineChart size={14} /> : <Table2 size={14} />}
+                    </button>
                   </div>
                 </div>
 
-                <div className="h-[220px] px-2 pb-4">
-                  <Line
-                    data={{
-                      labels: allLabels,
-                      datasets: [
-                        {
-                          label: "Balance",
-                          data: realData,
-                          borderColor: isUp ? "#34d399" : "#f87171",
-                          backgroundColor: (ctx: any) => {
-                            const { ctx: c, chartArea } = ctx.chart;
-                            if (!chartArea) return "transparent";
-                            const g = c.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-                            if (isUp) {
-                              g.addColorStop(0, "rgba(52,211,153,0.35)");
-                              g.addColorStop(0.6, "rgba(52,211,153,0.08)");
-                              g.addColorStop(1, "rgba(52,211,153,0)");
-                            } else {
-                              g.addColorStop(0, "rgba(248,113,113,0.35)");
-                              g.addColorStop(0.6, "rgba(248,113,113,0.08)");
-                              g.addColorStop(1, "rgba(248,113,113,0)");
-                            }
-                            return g;
-                          },
-                          fill: true,
-                          tension: 0.45,
-                          pointRadius: 4,
-                          pointHoverRadius: 7,
-                          pointBackgroundColor: isUp ? "#34d399" : "#f87171",
-                          pointBorderColor: isUp ? "#065f46" : "#7f1d1d",
-                          pointBorderWidth: 2,
-                          borderWidth: 2.5,
-                          spanGaps: false,
-                        },
-                        {
-                          label: "Projected",
-                          data: projData,
-                          borderColor: "rgba(148,163,184,0.5)",
-                          backgroundColor: "transparent",
-                          fill: false,
-                          tension: 0.3,
-                          borderDash: [5, 4],
-                          borderWidth: 1.5,
-                          pointRadius: (ctx: any) => (ctx.dataIndex === history.length - 1 ? 0 : 4),
-                          pointHoverRadius: 6,
-                          pointBackgroundColor: "rgba(148,163,184,0.6)",
-                          pointBorderColor: "rgba(148,163,184,0.3)",
-                          pointBorderWidth: 1,
-                          spanGaps: false,
-                        },
-                      ],
-                    }}
-                    options={{
-                      responsive: true,
-                      maintainAspectRatio: false,
-                      interaction: { mode: "index", intersect: false },
-                      plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                          backgroundColor: "#0f172a",
-                          borderColor: isUp ? "rgba(52,211,153,0.3)" : "rgba(248,113,113,0.3)",
-                          borderWidth: 1,
-                          cornerRadius: 10,
-                          padding: 12,
-                          titleColor: "#64748b",
-                          titleFont: { size: 11, weight: "bold" as const },
-                          bodyColor: "#f1f5f9",
-                          bodyFont: { size: 13, weight: "bold" as const },
-                          callbacks: {
-                            label: (item) => {
-                              if (item.raw === null) return "";
-                              const prefix = item.datasetIndex === 1 ? " Projected " : " Balance ";
-                              return `${prefix}₹${Number(item.raw).toLocaleString()}`;
+                {/* Balance History card */}
+                <div className="bg-gray-900/60 border border-gray-800 rounded-2xl overflow-hidden">
+                  <div className="px-6 pt-5 pb-3 flex items-start justify-between">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <TrendingUp size={14} className="text-emerald-400" />
+                        <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Balance History</p>
+                      </div>
+                      <p className="text-2xl font-black text-white">₹{fmtINR(bankBalance)}</p>
+                    </div>
+                    <div className="flex flex-col items-end gap-1">
+                      {rangeChangePct !== null && visibleHistory.length > 1 && (
+                        <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${isUp ? "bg-emerald-500/15 text-emerald-400" : "bg-red-500/15 text-red-400"}`}>
+                          {isUp ? "▲" : "▼"} {Math.abs(Number(rangeChangePct))}%
+                          <span className="font-semibold opacity-70 ml-1">
+                            ({isUp ? "+" : "-"}₹{fmtINR(Math.abs(rangeChange))})
+                          </span>
+                        </span>
+                      )}
+                      <span className="text-[10px] text-gray-600">
+                        {rangeDef.months === null ? "all time" : `last ${rangeDef.label.toLowerCase()}`}
+                        {avgDelta !== 0 && <> · avg {avgDelta >= 0 ? "+" : ""}₹{fmtINR(avgDelta)}/mo</>}
+                      </span>
+                    </div>
+                  </div>
+
+                  {tableView ? (
+                    <div className="px-6 pb-5 max-h-[280px] overflow-y-auto">
+                      <table className="w-full text-sm">
+                        <thead className="sticky top-0 bg-[#12141c]">
+                          <tr className="text-left text-[10px] text-gray-500 uppercase tracking-wider">
+                            <th className="py-2 font-bold">Date</th>
+                            <th className="py-2 font-bold text-right">Balance</th>
+                            <th className="py-2 font-bold text-right">Change</th>
+                          </tr>
+                        </thead>
+                        <tbody className="tabular-nums">
+                          {visibleHistory.map((h, i) => {
+                            const prevBal = i > 0 ? visibleHistory[i - 1].balance : null;
+                            const d = prevBal !== null ? h.balance - prevBal : null;
+                            return { h, d };
+                          }).reverse().map(({ h, d }, i) => (
+                            <tr key={i} className="border-t border-gray-800/60">
+                              <td className="py-2 text-gray-400 text-xs">
+                                {new Date(h.date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                              </td>
+                              <td className="py-2 text-right font-semibold text-gray-200">₹{fmtINR(h.balance)}</td>
+                              <td className={`py-2 text-right text-xs font-bold ${d === null ? "text-gray-700" : d >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+                                {d === null ? "—" : `${d >= 0 ? "▲ +" : "▼ -"}₹${fmtINR(Math.abs(d))}`}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div className="h-[300px] px-3 pb-4">
+                      <Line
+                        plugins={[lineGlowPlugin, peakLabelPlugin, crosshairPlugin]}
+                        data={{
+                          labels: allLabels,
+                          datasets: [
+                            {
+                              label: "Balance",
+                              data: realData,
+                              borderColor: isUp ? CHART.up : CHART.down,
+                              // Direction-colored line: each segment green when rising, red when falling
+                              segment: {
+                                borderColor: (ctx) => (ctx.p1.parsed.y >= ctx.p0.parsed.y ? CHART.up : CHART.down),
+                              },
+                              // Fill stays one quiet wash in the overall trend color — per-segment
+                              // fills read as noisy blocks
+                              backgroundColor: (ctx) => {
+                                const { ctx: c, chartArea } = ctx.chart;
+                                if (!chartArea) return "transparent";
+                                const [r, g, b] = isUp ? [52, 211, 153] : [248, 113, 113];
+                                const grad = c.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+                                grad.addColorStop(0, `rgba(${r},${g},${b},0.18)`);
+                                grad.addColorStop(0.65, `rgba(${r},${g},${b},0.04)`);
+                                grad.addColorStop(1, `rgba(${r},${g},${b},0)`);
+                                return grad;
+                              },
+                              fill: true,
+                              cubicInterpolationMode: "monotone" as const,
+                              borderWidth: 2,
+                              borderJoinStyle: "round" as const,
+                              borderCapStyle: "round" as const,
+                              pointRadius: (ctx) => (ctx.dataIndex === lastRealIdx ? 4 : 0),
+                              pointHoverRadius: 5,
+                              pointBackgroundColor: (ctx) => {
+                                if (ctx.dataIndex !== lastRealIdx || lastRealIdx === 0) return CHART.up;
+                                const prevBal = visibleHistory[lastRealIdx - 1].balance;
+                                return visibleHistory[lastRealIdx].balance >= prevBal ? CHART.up : CHART.down;
+                              },
+                              pointBorderColor: CHART.surface,
+                              pointBorderWidth: 2,
+                              pointHitRadius: 24,
+                              spanGaps: false,
+                            },
+                            ...(projActive ? [{
+                              label: "Projected",
+                              data: projData,
+                              borderColor: CHART.proj,
+                              backgroundColor: "transparent",
+                              fill: false,
+                              cubicInterpolationMode: "monotone" as const,
+                              borderDash: [4, 4],
+                              borderWidth: 1.5,
+                              pointRadius: (ctx: { dataIndex: number }) => (ctx.dataIndex <= lastRealIdx ? 0 : 3),
+                              pointHoverRadius: 5,
+                              pointBackgroundColor: CHART.proj,
+                              pointBorderColor: CHART.surface,
+                              pointBorderWidth: 2,
+                              pointHitRadius: 24,
+                              spanGaps: false,
+                            }] : []),
+                          ],
+                        }}
+                        options={{
+                          responsive: true,
+                          maintainAspectRatio: false,
+                          animation: false,
+                          interaction: { mode: "index", intersect: false },
+                          plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                              ...baseTooltip,
+                              filter: (item) => item.raw !== null,
+                              callbacks: {
+                                label: (item) => {
+                                  const prefix = item.datasetIndex === 1 ? " Projected " : " Balance ";
+                                  return `${prefix}₹${fmtINR(Number(item.raw))}`;
+                                },
+                              },
                             },
                           },
-                        },
-                      },
-                      scales: {
-                        x: {
-                          ticks: { color: "#64748b", font: { size: 10 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 8 },
-                          grid: { display: false },
-                          border: { display: false },
-                        },
-                        y: {
-                          position: "left",
-                          ticks: { color: "#64748b", font: { size: 10 }, maxTicksLimit: 4, callback: (v) => `₹${Number(v).toLocaleString()}` },
-                          grid: { color: "rgba(255,255,255,0.06)" },
-                          border: { display: false },
-                        },
-                      },
-                    }}
-                  />
+                          scales: {
+                            x: {
+                              ticks: { color: CHART.tick, font: { size: 11 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 9, padding: 6 },
+                              grid: { display: false },
+                              border: { display: false },
+                            },
+                            y: {
+                              position: "left",
+                              grace: "12%",
+                              ticks: { color: CHART.tick, font: { size: 11 }, maxTicksLimit: 6, padding: 6, callback: (v) => formatAmount(Number(v)) },
+                              grid: { color: CHART.grid },
+                              border: { display: false },
+                            },
+                          },
+                        }}
+                      />
+                    </div>
+                  )}
+
+                  {/* Projection footer */}
+                  {!tableView && projActive && (
+                    <div className="px-6 pb-4 flex items-center gap-4 flex-wrap">
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-4 h-px border-t-2 border-dashed border-gray-500" />
+                        <span className="text-[10px] text-gray-600">Projected at {avgDelta >= 0 ? "+" : ""}₹{fmtINR(avgDelta)}/mo</span>
+                      </div>
+                      <div className="flex items-center gap-3 ml-auto text-[10px] text-gray-600">
+                        {projPoints.map(p => (
+                          <span key={p.months}>
+                            +{p.months}mo: <span className="text-gray-400 font-semibold">₹{fmtINR(Math.max(0, Math.round(p.value)))}</span>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
-                {/* Projection legend */}
-                {avgDelta !== 0 && (
-                  <div className="px-6 pb-4 flex items-center gap-4">
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-4 h-px border-t-2 border-dashed border-gray-500" />
-                      <span className="text-[10px] text-gray-600">Projected (avg {avgDelta >= 0 ? "+" : ""}₹{avgDelta.toLocaleString()}/mo)</span>
+                {/* Monthly Change card */}
+                {(() => {
+                  const bars = monthlyData.filter(m => m.delta !== null).slice(-12);
+                  if (bars.length < 2) return null;
+                  const recent = monthlyData.slice(-3);
+                  return (
+                    <div className="bg-gray-900/60 border border-gray-800 rounded-2xl overflow-hidden">
+                      <div className="px-6 pt-5 pb-3 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Activity size={14} className="text-blue-400" />
+                          <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Monthly Change</p>
+                        </div>
+                        <div className="flex items-center gap-3 text-[10px] text-gray-600">
+                          <span className="flex items-center gap-1">
+                            <span className="w-2 h-2 rounded-[2px] bg-emerald-400/80" /> gained
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <span className="w-2 h-2 rounded-[2px] bg-red-400/80" /> spent down
+                          </span>
+                        </div>
+                      </div>
+                      <div className="h-[170px] px-3">
+                        <Bar
+                          data={{
+                            labels: bars.map(b => b.month),
+                            datasets: [{
+                              label: "Change",
+                              data: bars.map(b => b.delta),
+                              backgroundColor: bars.map(b => (b.delta! >= 0 ? CHART.upDim : CHART.downDim)),
+                              hoverBackgroundColor: bars.map(b => (b.delta! >= 0 ? CHART.up : CHART.down)),
+                              borderRadius: 4,
+                              borderSkipped: "start" as const,
+                              maxBarThickness: 20,
+                            }],
+                          }}
+                          options={{
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            animation: false,
+                            interaction: { mode: "index", intersect: false },
+                            plugins: {
+                              legend: { display: false },
+                              tooltip: {
+                                ...baseTooltip,
+                                callbacks: {
+                                  label: (item) => {
+                                    const v = Number(item.raw);
+                                    return ` ${v >= 0 ? "+" : "-"}₹${fmtINR(Math.abs(v))}`;
+                                  },
+                                },
+                              },
+                            },
+                            scales: {
+                              x: {
+                                ticks: { color: CHART.tick, font: { size: 11 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 12 },
+                                grid: { display: false },
+                                border: { display: false },
+                              },
+                              y: {
+                                grace: "10%",
+                                ticks: { color: CHART.tick, font: { size: 11 }, maxTicksLimit: 4, padding: 6, callback: (v) => formatAmount(Number(v)) },
+                                grid: { color: (ctx) => (ctx.tick.value === 0 ? CHART.gridZero : CHART.grid) },
+                                border: { display: false },
+                              },
+                            },
+                          }}
+                        />
+                      </div>
+                      {/* Last 3 months summary */}
+                      <div className="px-6 py-4 mt-1 border-t border-gray-800/60 grid grid-cols-3 gap-3">
+                        {recent.map((row, i) => {
+                          const rowUp = row.delta === null || row.delta >= 0;
+                          const prevBalance = monthlyData[monthlyData.length - recent.length + i - 1]?.balance;
+                          const pct = row.delta !== null && prevBalance
+                            ? ((row.delta / Math.abs(prevBalance)) * 100).toFixed(1)
+                            : null;
+                          return (
+                            <div key={i} className="flex flex-col gap-0.5">
+                              <p className="text-[11px] text-gray-500 font-semibold">{row.month}</p>
+                              <p className="text-sm font-black text-white tabular-nums">₹{fmtINR(row.balance)}</p>
+                              {row.delta !== null ? (
+                                <span className={`text-[11px] font-bold ${rowUp ? "text-emerald-400" : "text-red-400"}`}>
+                                  {rowUp ? "▲" : "▼"} {pct !== null ? `${Math.abs(Number(pct))}%` : ""}
+                                  <span className="font-normal text-gray-600 ml-1">
+                                    ({rowUp ? "+" : "-"}₹{fmtINR(Math.abs(row.delta))})
+                                  </span>
+                                </span>
+                              ) : (
+                                <span className="text-[11px] text-gray-700">— first entry</span>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-3 ml-auto text-[10px] text-gray-600">
-                      <span>+3mo: <span className="text-gray-400 font-semibold">₹{Math.max(0, proj3).toLocaleString()}</span></span>
-                      <span>+6mo: <span className="text-gray-400 font-semibold">₹{Math.max(0, proj6).toLocaleString()}</span></span>
-                      <span>+12mo: <span className="text-gray-400 font-semibold">₹{Math.max(0, proj12).toLocaleString()}</span></span>
-                    </div>
-                  </div>
-                )}
+                  );
+                })()}
               </motion.div>
             );
           })()}
 
+          {/* Empty state when no history yet */}
+          {!loading && history.length === 0 && (
+            <motion.div
+              {...cardMotion(0.32)}
+              className="bg-gray-900/60 border border-gray-800 border-dashed rounded-2xl p-10 text-center"
+            >
+              <TrendingUp size={28} className="text-gray-700 mx-auto mb-3" />
+              <p className="text-sm font-bold text-gray-400">No history yet</p>
+              <p className="text-xs text-gray-600 mt-1 max-w-sm mx-auto">
+                Set your bank balance above and Budgetory will start tracking snapshots —
+                your growth chart appears once there are a couple of data points.
+              </p>
+            </motion.div>
+          )}
+
           {/* AI Net Worth Advisor */}
           {!loading && (
             <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.36, ease: [0.22, 1, 0.36, 1] }}
+              {...cardMotion(0.36)}
               className="rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-500/8 via-gray-900/60 to-gray-900/80 p-5"
             >
               <div className="flex items-center gap-2.5 mb-3">

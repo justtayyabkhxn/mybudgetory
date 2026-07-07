@@ -236,6 +236,29 @@ export default function Dashboard() {
               </div>
             </div>
 
+            {/* Spend vs income bar */}
+            {!loading && inflow > 0 && (
+              <div className="mb-5">
+                <div className="h-2 rounded-full bg-white/[0.06] overflow-hidden">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${Math.min(100, Math.round((expense / inflow) * 100))}%` }}
+                    transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1], delay: 0.3 }}
+                    className={`h-full rounded-full ${
+                      expense / inflow > 0.9
+                        ? "bg-gradient-to-r from-red-500 to-rose-400"
+                        : expense / inflow > 0.65
+                        ? "bg-gradient-to-r from-amber-500 to-orange-400"
+                        : "bg-gradient-to-r from-emerald-500 to-green-400"
+                    }`}
+                  />
+                </div>
+                <p className="text-[11px] text-gray-500 font-semibold mt-1.5">
+                  {Math.min(100, Math.round((expense / inflow) * 100))}% of this month&apos;s income spent
+                </p>
+              </div>
+            )}
+
             {/* Divider */}
             <div className="border-t border-gray-700/50 mb-4" />
 
@@ -370,7 +393,7 @@ export default function Dashboard() {
                               e.preventDefault();
                               setEditingTx(tx);
                             }}
-                            className="p-2 rounded-lg text-gray-700 hover:text-indigo-400 hover:bg-indigo-500/10 opacity-0 group-hover:opacity-100 transition-all duration-200 cursor-pointer"
+                            className="p-2 rounded-lg text-gray-600 hover:text-indigo-400 hover:bg-indigo-500/10 opacity-60 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200 cursor-pointer"
                             aria-label="Edit transaction"
                           >
                             <Pencil size={13} />
@@ -381,7 +404,7 @@ export default function Dashboard() {
                               e.preventDefault();
                               setConfirmDeleteId(tx._id);
                             }}
-                            className="p-2 rounded-lg text-gray-700 hover:text-red-400 hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition-all duration-200 cursor-pointer"
+                            className="p-2 rounded-lg text-gray-600 hover:text-red-400 hover:bg-red-500/10 opacity-60 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200 cursor-pointer"
                             aria-label="Delete transaction"
                           >
                             <Trash2 size={13} />
