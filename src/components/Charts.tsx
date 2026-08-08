@@ -1,7 +1,8 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
+import { Maximize2, Minimize2, RotateCcw } from "lucide-react";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -43,6 +44,24 @@ ChartJS.register(
   CategoryScale, LinearScale, BarElement, PointElement,
   LineElement, ArcElement, Title, Tooltip, Legend, Filler
 );
+
+/**
+ * chartjs-plugin-zoom reads `window` at module scope, so it can't be imported
+ * statically — client components are still rendered on the server.
+ */
+function useZoomPlugin() {
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    let active = true;
+    import("chartjs-plugin-zoom").then(mod => {
+      if (!active) return;
+      ChartJS.register(mod.default);
+      setReady(true);
+    });
+    return () => { active = false; };
+  }, []);
+  return ready;
+}
 
 type Transaction = {
   _id: string;
@@ -105,28 +124,108 @@ function ChartCard({
     yellow: "bg-yellow-500/15 text-yellow-400 border-yellow-500/30",
   };
 
-  return (
-    <SlideUp>
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay }}
-        className={`rounded-2xl bg-gradient-to-br ${accentMap[accent]} via-gray-900/60 to-gray-900/80 backdrop-blur-sm p-5 shadow-xl hover:shadow-2xl transition-shadow duration-300`}
-      >
-        <div className="flex items-start justify-between mb-4">
-          <div>
-            <h2 className="text-base font-black text-gray-100 tracking-tight">{title}</h2>
-            {subtitle && <p className="text-xs text-gray-500 mt-0.5">{subtitle}</p>}
-          </div>
-          {badge && (
+  const [fullscreen, setFullscreen] = useState(false);
+
+  // Lock the page behind the overlay and let Escape close it
+  useEffect(() => {
+    if (!fullscreen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setFullscreen(false); };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [fullscreen]);
+
+  const card = (
+    <motion.div
+      initial={fullscreen ? false : { opacity: 0, y: 20 }}
+      animate={fullscreen ? undefined : { opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay }}
+      className={
+        fullscreen
+          ? "fixed inset-0 z-50 bg-[#0a0a0f] p-5 flex flex-col"
+          : `rounded-2xl bg-gradient-to-br ${accentMap[accent]} via-gray-900/60 to-gray-900/80 backdrop-blur-sm p-5 shadow-xl hover:shadow-2xl transition-shadow duration-300`
+      }
+    >
+      <div className="flex items-start justify-between mb-4">
+        <div>
+          <h2 className="text-base font-black text-gray-100 tracking-tight">{title}</h2>
+          {subtitle && <p className="text-xs text-gray-500 mt-0.5">{subtitle}</p>}
+        </div>
+        <div className="flex items-center gap-2">
+          {badge && !fullscreen && (
             <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${badgeMap[accent]}`}>
               {badge}
             </span>
           )}
+          <button
+            onClick={() => setFullscreen(v => !v)}
+            className="p-1.5 rounded-lg border border-white/10 bg-white/[0.04] text-gray-500 hover:text-gray-200 transition-colors cursor-pointer"
+            title={fullscreen ? "Exit full screen (Esc)" : "Full screen"}
+          >
+            {fullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+          </button>
         </div>
+      </div>
+      {/* Callers give the chart a fixed pixel height. In fullscreen the chart
+          container is always the last child, so only that one grows — any
+          controls above it keep their natural height. */}
+      <div
+        className={
+          fullscreen
+            ? "flex-1 min-h-0 flex flex-col [&>div:last-child]:flex-1 [&>div:last-child]:min-h-0 [&>div:last-child]:h-auto!"
+            : ""
+        }
+      >
         {children}
-      </motion.div>
-    </SlideUp>
+      </div>
+    </motion.div>
+  );
+
+  // SlideUp's scroll reveal would fight a fixed overlay
+  return fullscreen ? card : <SlideUp>{card}</SlideUp>;
+}
+
+// ─── Tab group ────────────────────────────────────────────────────────────────
+/** Renders one chart at a time behind a pill switcher. */
+function ChartTabs({
+  label,
+  tabs,
+}: {
+  label: string;
+  tabs: { key: string; label: string; node: React.ReactNode }[];
+}) {
+  const [active, setActive] = useState(tabs[0]?.key ?? "");
+  const current = tabs.find(t => t.key === active) ?? tabs[0];
+  if (!current) return null;
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-[10px] font-bold text-gray-600 uppercase tracking-widest mr-1">
+          {label}
+        </span>
+        <div className="flex gap-0.5 bg-gray-900/80 border border-gray-800 rounded-xl p-1 overflow-x-auto max-w-full">
+          {tabs.map(t => (
+            <button
+              key={t.key}
+              onClick={() => setActive(t.key)}
+              className={`px-3 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap transition-all cursor-pointer ${
+                current.key === t.key
+                  ? "bg-gray-700 text-white shadow-sm"
+                  : "text-gray-500 hover:text-gray-300"
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+      </div>
+      {current.node}
+    </div>
   );
 }
 
@@ -144,6 +243,11 @@ const Charts: React.FC<Props> = ({
   transactions = [],
   viewDate,
 }) => {
+  // Drag-to-zoom on the cumulative line. No "is zoomed" state on purpose — a
+  // re-render mid-zoom rebuilds the options and reverts the zoom that just happened.
+  const zoomReady = useZoomPlugin();
+  const cumChartRef = useRef<ChartJS<"line", (number | null)[], string> | null>(null);
+
   const now = viewDate ?? new Date();
   const currentMonth = now.getMonth();
   const currentYear = now.getFullYear();
@@ -353,13 +457,6 @@ const Charts: React.FC<Props> = ({
         </div>
       </ChartCard>
 
-      {/* Cumulative Spending */}
-      <ChartCard title="Cumulative Spending" subtitle="Running total of expenses this month" badge="New ✦" accent="orange" delay={0.15}>
-        <div className="h-[280px] relative">
-          <Line {...getCumulativeConfig({ categories: dayLabels, cumulative: cumulativeExpense, daily: dailyExpenseNulled })} />
-        </div>
-      </ChartCard>
-
       {/* Monthly Overview */}
       <ChartCard title="Monthly Overview" subtitle="Income & expenses per month this year" badge="Column" accent="indigo" delay={0.2}>
         <div className="h-[300px] relative">
@@ -386,32 +483,102 @@ const Charts: React.FC<Props> = ({
             cumExpense.push(cumE);
           }
         });
-        return (
-          <ChartCard title="Cumulative Income vs Expenses" subtitle="Running totals across all months this year" badge="Line" accent="green" delay={0.22}>
+        const cfg = getIncomeExpenseLineConfig({
+          categories: monthlyBarData.categories,
+          inflow: cumInflow,
+          expense: cumExpense,
+        });
+        const yearCard = (
+          <ChartCard title="Cumulative Income vs Expenses" subtitle="Running totals across all months this year" badge="Line" accent="green">
+            {zoomReady && (
+              <div className="flex items-center justify-end gap-3 mb-1">
+                <span className="text-[10px] text-gray-600">drag to zoom · shift+drag to pan</span>
+                <button
+                  onClick={() => cumChartRef.current?.resetZoom()}
+                  className="flex items-center gap-1 text-[10px] font-bold text-gray-500 hover:text-green-400 transition-colors cursor-pointer"
+                >
+                  <RotateCcw size={11} /> Reset
+                </button>
+              </div>
+            )}
             <div className="h-[300px] relative">
-              <Line {...getIncomeExpenseLineConfig({
-                categories: monthlyBarData.categories,
-                inflow: cumInflow,
-                expense: cumExpense,
-              })} />
+              <Line
+                ref={cumChartRef}
+                data={cfg.data}
+                options={{
+                  ...cfg.options,
+                  plugins: {
+                    ...cfg.options.plugins,
+                    zoom: {
+                      // Wheel zoom stays off so scrolling the page still scrolls the page
+                      zoom: {
+                        drag: {
+                          enabled: zoomReady,
+                          backgroundColor: "rgba(74,222,128,0.12)",
+                          borderColor: "rgba(74,222,128,0.55)",
+                          borderWidth: 1,
+                        },
+                        wheel: { enabled: false },
+                        mode: "x",
+                      },
+                      pan: { enabled: zoomReady, mode: "x", modifierKey: "shift" },
+                      limits: { x: { minRange: 2 } },
+                    },
+                  },
+                }}
+              />
             </div>
           </ChartCard>
         );
+        return (
+          <ChartTabs
+            label="Cumulative"
+            tabs={[
+              { key: "year", label: "Income vs Expenses", node: yearCard },
+              {
+                key: "month",
+                label: "Spending This Month",
+                node: (
+                  <ChartCard title="Cumulative Spending" subtitle="Running total of expenses this month" badge="New ✦" accent="orange">
+                    <div className="h-[280px] relative">
+                      <Line {...getCumulativeConfig({ categories: dayLabels, cumulative: cumulativeExpense, daily: dailyExpenseNulled })} />
+                    </div>
+                  </ChartCard>
+                ),
+              },
+            ]}
+          />
+        );
       })()}
 
-      {/* Savings Rate % — near cumulative chart */}
-      <ChartCard title="Savings Rate %" subtitle="% of income saved each month (no future months)" badge="Line" accent="purple" delay={0.24}>
-        <div className="h-[260px] relative">
-          <Line {...getSavingsRateConfig({ categories: monthlyBarData.categories, rates: savingsRates })} />
-        </div>
-      </ChartCard>
-
-      {/* Monthly Savings */}
-      <ChartCard title="Net Monthly Savings" subtitle="Inflow minus expenses per month" badge="Column" accent="green" delay={0.25}>
-        <div className="h-[280px] relative">
-          <Bar {...getMonthlySavingsConfig(monthlySavingsData)} />
-        </div>
-      </ChartCard>
+      {/* Savings — rate and amount are two views of the same thing */}
+      <ChartTabs
+        label="Savings"
+        tabs={[
+          {
+            key: "rate",
+            label: "Rate %",
+            node: (
+              <ChartCard title="Savings Rate %" subtitle="% of income saved each month (no future months)" badge="Line" accent="purple">
+                <div className="h-[260px] relative">
+                  <Line {...getSavingsRateConfig({ categories: monthlyBarData.categories, rates: savingsRates })} />
+                </div>
+              </ChartCard>
+            ),
+          },
+          {
+            key: "amount",
+            label: "Net Amount",
+            node: (
+              <ChartCard title="Net Monthly Savings" subtitle="Inflow minus expenses per month" badge="Column" accent="green">
+                <div className="h-[280px] relative">
+                  <Bar {...getMonthlySavingsConfig(monthlySavingsData)} />
+                </div>
+              </ChartCard>
+            ),
+          },
+        ]}
+      />
 
       {/* Day of Week */}
       <ChartCard title="Day-of-Week Spending" subtitle="Which days do you spend & earn the most?" badge="New ✦" accent="cyan" delay={0.35}>
@@ -420,19 +587,67 @@ const Charts: React.FC<Props> = ({
         </div>
       </ChartCard>
 
-      {/* Category Monthly Bar + Donut */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-        <ChartCard title="Category Breakdown" subtitle="Expenses by category this month" badge="Bar" accent="red" delay={0.4}>
-          <div className="h-[300px] relative">
-            <Bar {...getCategoryMonthlyBarConfig(categoryWiseMonthlyData)} />
-          </div>
-        </ChartCard>
-        <ChartCard title="Category Share" subtitle="Proportional view of spending" badge="Donut" accent="orange" delay={0.45}>
-          <div className="h-[300px] relative">
-            <Doughnut {...getCategoryMonthlyDonutConfig(categoryWiseMonthlyData)} />
-          </div>
-        </ChartCard>
-      </div>
+      {/* Category charts — one tab group instead of four cards spread down the page */}
+      <ChartTabs
+        label="Categories"
+        tabs={[
+          {
+            key: "month",
+            label: "This Month",
+            node: (
+              <ChartCard title="Category Breakdown" subtitle="Expenses by category this month" badge="Bar" accent="red">
+                <div className="h-[300px] relative">
+                  <Bar {...getCategoryMonthlyBarConfig(categoryWiseMonthlyData)} />
+                </div>
+              </ChartCard>
+            ),
+          },
+          {
+            key: "share",
+            label: "Share",
+            node: (
+              <ChartCard title="Category Share" subtitle="Proportional view of spending" badge="Donut" accent="orange">
+                <div className="h-[300px] relative">
+                  <Doughnut {...getCategoryMonthlyDonutConfig(categoryWiseMonthlyData)} />
+                </div>
+              </ChartCard>
+            ),
+          },
+          {
+            key: "year",
+            label: "This Year",
+            node: (
+              <ChartCard title="Yearly Category Spending" subtitle="Total per category for this year" badge="Year" accent="yellow">
+                <div className="h-[300px] relative">
+                  <Bar {...getCategoryYearlyBarConfig(categoryWiseYearlyData)} />
+                </div>
+              </ChartCard>
+            ),
+          },
+          {
+            key: "trends",
+            label: "Trends",
+            node: (
+              <ChartCard title="Category Spending Trends" subtitle="Each category's expense since the beginning" badge="New ✦" accent="purple">
+                <div className="h-[320px] relative">
+                  <Line {...getCategoryTrendConfig({ months: allMonthsLabels, series: categoryTrendSeries })} />
+                </div>
+              </ChartCard>
+            ),
+          },
+          {
+            key: "mom",
+            label: "vs Last Month",
+            node: (
+              <ChartCard title="This Month vs Last Month" subtitle="Side-by-side category comparison" badge="New ✦" accent="indigo">
+                <div className="h-[300px] relative">
+                  <Bar {...getMonthOverMonthConfig({ categories: momCats, thisMonth: momThis, lastMonth: momLast, thisMonthLabel, lastMonthLabel })} />
+                </div>
+              </ChartCard>
+            ),
+          },
+        ]}
+      />
 
       {/* Income Sources Donut — current month */}
       {(() => {
@@ -480,26 +695,6 @@ const Charts: React.FC<Props> = ({
         );
       })()}
 
-      {/* Yearly Category */}
-      <ChartCard title="Yearly Category Spending" subtitle="Total per category for this year" badge="Year" accent="yellow" delay={0.5}>
-        <div className="h-[300px] relative">
-          <Bar {...getCategoryYearlyBarConfig(categoryWiseYearlyData)} />
-        </div>
-      </ChartCard>
-
-      {/* Category Trend Lines */}
-      <ChartCard title="Category Spending Trends" subtitle="Each category's expense since the beginning" badge="New ✦" accent="purple" delay={0.55}>
-        <div className="h-[320px] relative">
-          <Line {...getCategoryTrendConfig({ months: allMonthsLabels, series: categoryTrendSeries })} />
-        </div>
-      </ChartCard>
-
-      {/* Month-over-Month */}
-      <ChartCard title="This Month vs Last Month" subtitle="Side-by-side category comparison" badge="New ✦" accent="indigo" delay={0.6}>
-        <div className="h-[300px] relative">
-          <Bar {...getMonthOverMonthConfig({ categories: momCats, thisMonth: momThis, lastMonth: momLast, thisMonthLabel, lastMonthLabel })} />
-        </div>
-      </ChartCard>
 
       {/* Income Sources */}
       <ChartCard title="Income Sources Over Time" subtitle="Stacked income by category across months" badge="New ✦" accent="green" delay={0.65}>

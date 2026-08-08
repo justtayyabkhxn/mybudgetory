@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import {
   PiggyBank,
@@ -20,6 +20,9 @@ import {
   ArrowUpRight,
   Table2,
   LineChart,
+  RotateCcw,
+  Maximize2,
+  Minimize2,
 } from "lucide-react";
 import {
   Chart as ChartJS,
@@ -138,21 +141,25 @@ const baseTooltip = {
   bodyColor: "#f1f5f9",
   bodyFont: { size: 13, weight: "bold" as const },
   displayColors: false,
+  // Glide between points instead of teleporting
+  animation: { duration: 160, easing: "easeOutQuart" as const },
+  caretPadding: 8,
 };
 
 /* ── helpers ─────────────────────────────────────────────── */
 
 const MILESTONES = [
-  25000, 50000, 75000, 100000, 150000, 200000, 250000, 300000,
+  25000, 50000, 75000, 100000,125000, 150000, 200000, 250000, 300000,
   400000, 500000, 750000, 1000000, 1500000, 2000000, 2500000,
   5000000, 7500000, 10000000, 20000000, 50000000, 100000000,
 ];
 
 const RANGES = [
-  { key: "3m", label: "3M", months: 3, projSteps: [1, 2, 3] },
-  { key: "6m", label: "6M", months: 6, projSteps: [2, 4, 6] },
-  { key: "1y", label: "1Y", months: 12, projSteps: [3, 6, 12] },
-  { key: "all", label: "All", months: null, projSteps: [3, 6, 12] },
+  { key: "3m", label: "3M", months: 3, ytd: false, projSteps: [1, 2, 3] },
+  { key: "6m", label: "6M", months: 6, ytd: false, projSteps: [2, 4, 6] },
+  { key: "ytd", label: "YTD", months: null, ytd: true, projSteps: [3, 6, 12] },
+  { key: "1y", label: "1Y", months: 12, ytd: false, projSteps: [3, 6, 12] },
+  { key: "all", label: "All", months: null, ytd: false, projSteps: [3, 6, 12] },
 ] as const;
 type RangeKey = (typeof RANGES)[number]["key"];
 
@@ -229,7 +236,7 @@ export default function NetWorthPage() {
   useAuthGuard();
 
   const [bankBalance, setBankBalance] = useState<number>(0);
-  const [history, setHistory] = useState<{ date: string; balance: number }[]>([]);
+  const [history, setHistory] = useState<{ date: string; balance: number; estimated?: boolean }[]>([]);
   const [loading, setLoading] = useState(true);
   const [editMode, setEditMode] = useState(false);
   const [newBalance, setNewBalance] = useState("");
@@ -238,6 +245,46 @@ export default function NetWorthPage() {
   const [range, setRange] = useState<RangeKey>("all");
   const [showProjection, setShowProjection] = useState(true);
   const [tableView, setTableView] = useState(false);
+
+  // Drag-to-zoom on the balance chart. Deliberately no "is zoomed" state — a
+  // re-render mid-zoom rebuilds the chart options and reverts the zoom that just
+  // happened, so the reset control is always shown instead.
+  const chartRef = useRef<ChartJS<"line", (number | null)[], string> | null>(null);
+  const [zoomReady, setZoomReady] = useState(false);
+  const [fullscreen, setFullscreen] = useState(false);
+  const [chartUpdating, setChartUpdating] = useState(false);
+
+  // chartjs-plugin-zoom touches `window` on import, so it can't be pulled in at
+  // module scope — client components are still rendered on the server.
+  useEffect(() => {
+    let active = true;
+    import("chartjs-plugin-zoom").then(mod => {
+      if (!active) return;
+      ChartJS.register(mod.default);
+      setZoomReady(true);
+    });
+    return () => { active = false; };
+  }, []);
+
+  const resetZoom = () => chartRef.current?.resetZoom();
+
+  // A new range (or switching view) redraws different data — drop any zoom
+  useEffect(() => {
+    chartRef.current?.resetZoom();
+  }, [range, tableView, fullscreen]);
+
+  // Fullscreen: lock page scroll behind the overlay and allow Escape to exit
+  useEffect(() => {
+    if (!fullscreen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setFullscreen(false); };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [fullscreen]);
 
   const [aiAdvice, setAiAdvice] = useState<string | null>(null);
   const [healthScore, setHealthScore] = useState<number | null>(null);
@@ -271,15 +318,38 @@ export default function NetWorthPage() {
     setHistory(data.history || []);
   };
 
+  // Read-only. The balance itself already moves with every transaction; the
+  // history is only ever written by an explicit "Update chart".
   const refreshAll = async () => {
     setLoading(true);
     try {
-      await apiFetch("/api/networth/snapshot", { method: "POST" }).catch(() => {});
       await fetchNetWorth();
     } catch {
       toast("Failed to load net worth", "error");
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Records today's balance and fills any missing days. Explicit, because it
+  // writes interpolated points — it shouldn't happen just by visiting the page.
+  const updateChart = async () => {
+    if (chartUpdating) return;
+    setChartUpdating(true);
+    try {
+      const res = await apiFetch("/api/networth/snapshot", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed");
+      await fetchNetWorth();
+      const filled = data.filled ?? 0;
+      toast(
+        filled > 0 ? `Chart updated · ${filled} day${filled === 1 ? "" : "s"} added` : "Chart already up to date",
+        "success",
+      );
+    } catch {
+      toast("Could not update chart", "error");
+    } finally {
+      setChartUpdating(false);
     }
   };
 
@@ -354,12 +424,18 @@ export default function NetWorthPage() {
 
   const rangeDef = RANGES.find(r => r.key === range)!;
   const visibleHistory = useMemo(() => {
-    if (rangeDef.months === null) return history;
     const now = new Date();
-    const cutoff = new Date(now.getFullYear(), now.getMonth() - rangeDef.months, now.getDate());
+    let cutoff: Date;
+    if (rangeDef.ytd) {
+      cutoff = new Date(now.getFullYear(), 0, 1);
+    } else if (rangeDef.months === null) {
+      return history;
+    } else {
+      cutoff = new Date(now.getFullYear(), now.getMonth() - rangeDef.months, now.getDate());
+    }
     const filtered = history.filter(h => new Date(h.date) >= cutoff);
     return filtered.length >= 2 ? filtered : history;
-  }, [history, rangeDef.months]);
+  }, [history, rangeDef.months, rangeDef.ytd]);
 
   const allTimeHigh = useMemo(
     () => Math.max(bankBalance, ...history.map(h => h.balance)),
@@ -676,10 +752,11 @@ export default function NetWorthPage() {
               : [];
 
             // Short ranges show day+month; long ranges show month+year
+            const useDayLabels = rangeDef.ytd || (rangeDef.months !== null && rangeDef.months <= 6);
             const historyLabels = visibleHistory.map(h =>
               new Date(h.date).toLocaleDateString(
                 "en-IN",
-                rangeDef.months !== null && rangeDef.months <= 6
+                useDayLabels
                   ? { day: "numeric", month: "short" }
                   : { month: "short", year: "2-digit" }
               )
@@ -717,6 +794,15 @@ export default function NetWorthPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <button
+                      onClick={updateChart}
+                      disabled={chartUpdating}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-[11px] font-semibold text-emerald-400 hover:bg-emerald-500/20 transition-all cursor-pointer disabled:opacity-40"
+                      title="Record today's balance and fill any missing days"
+                    >
+                      <RefreshCw size={12} className={chartUpdating ? "animate-spin" : ""} />
+                      {chartUpdating ? "Updating…" : "Update chart"}
+                    </button>
+                    <button
                       onClick={() => setShowProjection(v => !v)}
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[11px] font-semibold transition-all cursor-pointer ${
                         showProjection
@@ -734,11 +820,26 @@ export default function NetWorthPage() {
                     >
                       {tableView ? <LineChart size={14} /> : <Table2 size={14} />}
                     </button>
+                    {!tableView && (
+                      <button
+                        onClick={() => setFullscreen(v => !v)}
+                        className="p-1.5 rounded-xl border border-gray-800 bg-gray-900/80 text-gray-500 hover:text-gray-300 transition-all cursor-pointer"
+                        title={fullscreen ? "Exit full screen" : "Full screen"}
+                      >
+                        {fullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+                      </button>
+                    )}
                   </div>
                 </div>
 
-                {/* Balance History card */}
-                <div className="bg-gray-900/60 border border-gray-800 rounded-2xl overflow-hidden">
+                {/* Balance History card — becomes a full-viewport overlay in fullscreen */}
+                <div
+                  className={
+                    fullscreen
+                      ? "fixed inset-0 z-50 bg-[#0e1117] border-0 rounded-none overflow-y-auto flex flex-col"
+                      : "bg-gray-900/60 border border-gray-800 rounded-2xl overflow-hidden"
+                  }
+                >
                   <div className="px-6 pt-5 pb-3 flex items-start justify-between">
                     <div>
                       <div className="flex items-center gap-2 mb-1">
@@ -757,9 +858,19 @@ export default function NetWorthPage() {
                         </span>
                       )}
                       <span className="text-[10px] text-gray-600">
-                        {rangeDef.months === null ? "all time" : `last ${rangeDef.label.toLowerCase()}`}
+                        {rangeDef.ytd ? "year to date" : rangeDef.months === null ? "all time" : `last ${rangeDef.label.toLowerCase()}`}
                         {avgDelta !== 0 && <> · avg {avgDelta >= 0 ? "+" : ""}₹{fmtINR(avgDelta)}/mo</>}
                       </span>
+                      {/* The toolbar toggle sits outside this card, so fullscreen needs its own exit */}
+                      {fullscreen && (
+                        <button
+                          onClick={() => setFullscreen(false)}
+                          className="mt-1 flex items-center gap-1 px-2 py-1 rounded-lg border border-gray-800 bg-gray-900/80 text-[10px] font-bold text-gray-400 hover:text-gray-200 transition-all cursor-pointer"
+                          title="Exit full screen (Esc)"
+                        >
+                          <Minimize2 size={11} /> Exit
+                        </button>
+                      )}
                     </div>
                   </div>
 
@@ -782,6 +893,9 @@ export default function NetWorthPage() {
                             <tr key={i} className="border-t border-gray-800/60">
                               <td className="py-2 text-gray-400 text-xs">
                                 {new Date(h.date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                                {h.estimated && (
+                                  <span className="ml-1.5 text-[10px] text-gray-600" title="Interpolated between recorded balances">~est</span>
+                                )}
                               </td>
                               <td className="py-2 text-right font-semibold text-gray-200">₹{fmtINR(h.balance)}</td>
                               <td className={`py-2 text-right text-xs font-bold ${d === null ? "text-gray-700" : d >= 0 ? "text-emerald-400" : "text-red-400"}`}>
@@ -793,8 +907,21 @@ export default function NetWorthPage() {
                       </table>
                     </div>
                   ) : (
-                    <div className="h-[300px] px-3 pb-4">
+                    <>
+                    {zoomReady && (
+                      <div className="px-6 pb-1 flex items-center justify-end gap-3 h-5">
+                        <span className="text-[10px] text-gray-600">drag to zoom · shift+drag to pan</span>
+                        <button
+                          onClick={resetZoom}
+                          className="flex items-center gap-1 text-[10px] font-bold text-gray-500 hover:text-emerald-400 transition-all cursor-pointer"
+                        >
+                          <RotateCcw size={11} /> Reset
+                        </button>
+                      </div>
+                    )}
+                    <div className={fullscreen ? "flex-1 min-h-0 px-3 pb-6" : "h-[300px] px-3 pb-4"}>
                       <Line
+                        ref={chartRef}
                         plugins={[lineGlowPlugin, peakLabelPlugin, crosshairPlugin]}
                         data={{
                           labels: allLabels,
@@ -833,7 +960,7 @@ export default function NetWorthPage() {
                               },
                               pointBorderColor: CHART.surface,
                               pointBorderWidth: 2,
-                              pointHitRadius: 24,
+                              pointHitRadius: 8,
                               spanGaps: false,
                             },
                             ...(projActive ? [{
@@ -850,7 +977,7 @@ export default function NetWorthPage() {
                               pointBackgroundColor: CHART.proj,
                               pointBorderColor: CHART.surface,
                               pointBorderWidth: 2,
-                              pointHitRadius: 24,
+                              pointHitRadius: 8,
                               spanGaps: false,
                             }] : []),
                           ],
@@ -858,8 +985,16 @@ export default function NetWorthPage() {
                         options={{
                           responsive: true,
                           maintainAspectRatio: false,
+                          // Data changes stay instant, but the hover/active state eases in
+                          // — with daily points, snapping the marker and crosshair between
+                          // adjacent days reads as jitter.
                           animation: false,
-                          interaction: { mode: "index", intersect: false },
+                          transitions: {
+                            active: { animation: { duration: 180, easing: "easeOutQuart" } },
+                            resize: { animation: { duration: 0 } },
+                          },
+                          interaction: { mode: "index", intersect: false, axis: "x" },
+                          hover: { mode: "index", intersect: false, axis: "x" },
                           plugins: {
                             legend: { display: false },
                             tooltip: {
@@ -871,6 +1006,22 @@ export default function NetWorthPage() {
                                   return `${prefix}₹${fmtINR(Number(item.raw))}`;
                                 },
                               },
+                            },
+                            zoom: {
+                              // Drag a region to zoom into it. Wheel zoom stays off so
+                              // scrolling the page over the chart still scrolls the page.
+                              zoom: {
+                                drag: {
+                                  enabled: zoomReady,
+                                  backgroundColor: "rgba(52,211,153,0.12)",
+                                  borderColor: "rgba(52,211,153,0.55)",
+                                  borderWidth: 1,
+                                },
+                                wheel: { enabled: false },
+                                mode: "x",
+                              },
+                              pan: { enabled: zoomReady, mode: "x", modifierKey: "shift" },
+                              limits: { x: { minRange: 3 } },
                             },
                           },
                           scales: {
@@ -890,6 +1041,7 @@ export default function NetWorthPage() {
                         }}
                       />
                     </div>
+                    </>
                   )}
 
                   {/* Projection footer */}
@@ -1020,9 +1172,17 @@ export default function NetWorthPage() {
               <TrendingUp size={28} className="text-gray-700 mx-auto mb-3" />
               <p className="text-sm font-bold text-gray-400">No history yet</p>
               <p className="text-xs text-gray-600 mt-1 max-w-sm mx-auto">
-                Set your bank balance above and Budgetory will start tracking snapshots —
-                your growth chart appears once there are a couple of data points.
+                Set your bank balance above, then record it — your growth chart appears
+                once there are a couple of data points.
               </p>
+              <button
+                onClick={updateChart}
+                disabled={chartUpdating}
+                className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-xs font-semibold text-emerald-400 hover:bg-emerald-500/20 transition-all cursor-pointer disabled:opacity-40"
+              >
+                <RefreshCw size={12} className={chartUpdating ? "animate-spin" : ""} />
+                {chartUpdating ? "Updating…" : "Record today's balance"}
+              </button>
             </motion.div>
           )}
 

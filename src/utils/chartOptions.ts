@@ -407,8 +407,10 @@ export function getSavingsRateConfig(d: {
   categories: string[];
   rates: (number | null)[];
 }): { data: ChartData<"line">; options: ChartOptions<"line"> } {
+  const GREEN = "#4ade80";
+  const RED = "#fb7185";
   const pointColors = d.rates.map((r) =>
-    r === null ? "transparent" : r >= 20 ? "#4ade80" : r >= 0 ? "#fbbf24" : "#fb7185"
+    r === null ? "transparent" : r >= 0 ? GREEN : RED
   );
   return {
     data: {
@@ -416,9 +418,18 @@ export function getSavingsRateConfig(d: {
       datasets: [{
         label: "Savings Rate",
         data: d.rates,
-        borderColor: "#a5b4fc",
-        backgroundColor: areaGrad("#818cf8", 0.25),
-        fill: true,
+        borderColor: GREEN,
+        // Each segment takes the colour of the side of zero it ends on
+        segment: {
+          borderColor: (ctx) =>
+            (ctx.p1.parsed.y ?? 0) < 0 || (ctx.p0.parsed.y ?? 0) < 0 ? RED : GREEN,
+        },
+        // Fill to the zero line, not the axis floor: green where saving, red where overspending
+        fill: {
+          target: { value: 0 },
+          above: "rgba(74,222,128,0.22)",
+          below: "rgba(251,113,133,0.22)",
+        },
         tension: 0.4,
         pointRadius: 5,
         pointHoverRadius: 8,
@@ -452,13 +463,20 @@ export function getSavingsRateConfig(d: {
           border: { display: false },
         },
         y: {
-          min: 0,
+          // No min — a month that spends more than it earns is a real negative
+          // rate and has to be visible below the zero line.
+          grace: "10%",
           ticks: {
             color: "#94a3b8",
             font: { family: FONT, size: 11 },
             callback: (v) => `${v}%`,
           },
-          grid: { color: "rgba(30,41,59,0.8)" },
+          grid: {
+            // Pick out the break-even line from the ordinary gridlines
+            color: (ctx) =>
+              ctx.tick?.value === 0 ? "rgba(148,163,184,0.45)" : "rgba(30,41,59,0.8)",
+            lineWidth: (ctx) => (ctx.tick?.value === 0 ? 1.5 : 1),
+          },
           border: { display: false },
         },
       },

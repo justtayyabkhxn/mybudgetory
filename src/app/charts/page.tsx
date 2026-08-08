@@ -348,8 +348,8 @@ const ChartsPage = () => {
 
         {/* Hero stats row */}
         {loading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
-            {[...Array(4)].map((_, i) => (
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-8">
+            {[...Array(5)].map((_, i) => (
               <div key={i} className="animate-pulse bg-gray-800/60 rounded-2xl p-5 h-24" />
             ))}
           </div>
@@ -358,7 +358,7 @@ const ChartsPage = () => {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45 }}
-            className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8"
+            className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-8"
           >
             <div className="bg-gradient-to-br from-green-900/40 to-green-900/10 border border-green-500/20 rounded-2xl p-4 flex items-center gap-3">
               <div className="bg-green-500/15 p-2.5 rounded-xl border border-green-500/20">
@@ -378,6 +378,36 @@ const ChartsPage = () => {
                 <CountUp end={expense} prefix="₹" className="text-xl font-black text-red-400" />
               </div>
             </div>
+            {/* Month selector chip — sits between the two pairs of stat chips */}
+            <div className="col-span-2 sm:col-span-1 bg-white/[0.03] border border-white/8 rounded-2xl p-2 flex items-center justify-between gap-1">
+              <button
+                onClick={goToPrev}
+                className="p-1.5 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors cursor-pointer"
+              >
+                <ChevronLeft size={18} />
+              </button>
+              <div className="text-center">
+                <p className="text-sm font-black text-white tracking-tight whitespace-nowrap">
+                  {monthName.slice(0, 3)} {viewYear}
+                </p>
+                {!isCurrentMonth && (
+                  <button
+                    onClick={() => { setViewMonth(today.getMonth()); setViewYear(today.getFullYear()); }}
+                    className="text-[10px] leading-tight text-indigo-400 font-bold hover:underline cursor-pointer"
+                  >
+                    Back to current
+                  </button>
+                )}
+              </div>
+              <button
+                onClick={goToNext}
+                disabled={isCurrentMonth}
+                className="p-1.5 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+              >
+                <ChevronRight size={18} />
+              </button>
+            </div>
+
             <div className={`bg-gradient-to-br ${savings >= 0 ? "from-emerald-900/40 to-emerald-900/10 border-emerald-500/20" : "from-orange-900/40 to-orange-900/10 border-orange-500/20"} border rounded-2xl p-4 flex items-center gap-3`}>
               <div className={`${savings >= 0 ? "bg-emerald-500/15 border-emerald-500/20" : "bg-orange-500/15 border-orange-500/20"} p-2.5 rounded-xl border`}>
                 <Wallet className={`w-5 h-5 ${savings >= 0 ? "text-emerald-400" : "text-orange-400"}`} />
@@ -398,36 +428,6 @@ const ChartsPage = () => {
             </div>
           </motion.div>
         )}
-
-        {/* Month selector */}
-        <div className="flex items-center justify-between mb-6 bg-white/[0.03] border border-white/8 rounded-2xl px-4 py-3">
-          <button
-            onClick={goToPrev}
-            className="p-1.5 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors cursor-pointer"
-          >
-            <ChevronLeft size={18} />
-          </button>
-          <div className="text-center">
-            <p className="text-base font-black text-white tracking-tight">
-              {monthName} {viewYear}
-            </p>
-            {!isCurrentMonth && (
-              <button
-                onClick={() => { setViewMonth(today.getMonth()); setViewYear(today.getFullYear()); }}
-                className="text-[10px] text-indigo-400 font-bold hover:underline cursor-pointer mt-0.5"
-              >
-                Back to current
-              </button>
-            )}
-          </div>
-          <button
-            onClick={goToNext}
-            disabled={isCurrentMonth}
-            className="p-1.5 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
-          >
-            <ChevronRight size={18} />
-          </button>
-        </div>
 
         {/* Spending Heatmap */}
         {!loading && <SpendingHeatmap txs={allTxs} />}

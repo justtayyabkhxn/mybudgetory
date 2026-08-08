@@ -247,3 +247,10 @@ h1, h2, h3, h4, h5, h6 {
 .pb-safe {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
+
+/* Inside the Capacitor shell the web view draws behind the transparent status
+   and navigation bars, so page content needs the insets back as padding. */
+body {
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
