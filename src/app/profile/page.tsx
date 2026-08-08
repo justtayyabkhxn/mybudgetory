@@ -21,6 +21,7 @@ import {
   User,
   X,
 } from "lucide-react";
+import { usePrivacyMode } from "@/hooks/usePrivacyMode";
 
 type UserProfile = {
   name: string;
@@ -221,6 +222,7 @@ function DeleteModal({
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 export default function Profile() {
+  const { hidden, toggle } = usePrivacyMode();
   const [user, setUser] = useState<UserProfile | null>(null);
   const [txs, setTxs] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -437,23 +439,37 @@ export default function Profile() {
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, delay: 0.08 }}
-          className="grid grid-cols-3 gap-3"
+          className="space-y-2"
         >
-          {[
-            { label: "Transactions", value: loading ? "—" : txs.length.toString(), color: "text-indigo-400" },
-            { label: "Total Income", value: loading ? "—" : formatCurrency(totalIncome), color: "text-emerald-400" },
-            { label: "Total Spent", value: loading ? "—" : formatCurrency(totalExpenses), color: "text-rose-400" },
-          ].map((s) => (
-            <div
-              key={s.label}
-              className="bg-white/[0.03] border border-white/8 rounded-2xl px-3 py-4 text-center"
+          <div className="flex justify-end">
+            <button
+              onClick={toggle}
+              className="flex items-center gap-1.5 text-[11px] font-semibold text-gray-500 hover:text-gray-300 transition cursor-pointer"
+              title={hidden ? "Show amounts" : "Hide amounts"}
             >
-              <p className={`text-base font-black ${s.color}`}>{s.value}</p>
-              <p className="text-[10px] text-gray-600 font-semibold mt-1 uppercase tracking-wider">
-                {s.label}
-              </p>
-            </div>
-          ))}
+              {hidden ? <EyeOff size={13} /> : <Eye size={13} />}
+              {hidden ? "Amounts hidden" : "Amounts visible"}
+            </button>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            {[
+              { label: "Transactions", value: loading ? "—" : txs.length.toString(), color: "text-indigo-400", maskable: false },
+              { label: "Total Income", value: loading ? "—" : formatCurrency(totalIncome), color: "text-emerald-400", maskable: true },
+              { label: "Total Spent", value: loading ? "—" : formatCurrency(totalExpenses), color: "text-rose-400", maskable: true },
+            ].map((s) => (
+              <div
+                key={s.label}
+                className="bg-white/[0.03] border border-white/8 rounded-2xl px-3 py-4 text-center"
+              >
+                <p className={`text-base font-black ${s.color}`}>
+                  {s.maskable && hidden && !loading ? "******" : s.value}
+                </p>
+                <p className="text-[10px] text-gray-600 font-semibold mt-1 uppercase tracking-wider">
+                  {s.label}
+                </p>
+              </div>
+            ))}
+          </div>
         </motion.div>
 
         {/* ── Account Info ──────────────────────────────────────────────────── */}

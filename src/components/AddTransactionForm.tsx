@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowDownCircle,
@@ -9,6 +9,7 @@ import {
   CreditCard,
   Banknote,
   Check,
+  ChevronDown,
   Loader2,
   WifiOff,
 } from "lucide-react";
@@ -17,6 +18,19 @@ import { toast } from "@/lib/toast";
 import { getQueue, enqueue } from "@/lib/offlineQueue";
 
 export function AddTransactionForm({ onAdd }: { onAdd: () => void }) {
+  const [categoryOpen, setCategoryOpen] = useState(false);
+  const categoryRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function onClickOutside(e: MouseEvent) {
+      if (categoryRef.current && !categoryRef.current.contains(e.target as Node)) {
+        setCategoryOpen(false);
+      }
+    }
+    if (categoryOpen) document.addEventListener("mousedown", onClickOutside);
+    return () => document.removeEventListener("mousedown", onClickOutside);
+  }, [categoryOpen]);
+
   const [form, setForm] = useState({
     title: "",
     amount: "",
@@ -53,6 +67,7 @@ export function AddTransactionForm({ onAdd }: { onAdd: () => void }) {
   }, []);
 
   useEffect(() => {
+    setCategoryOpen(false);
     if (form.type === "income") {
       setForm((prev) => ({ ...prev, category: "Others" }));
     } else {
@@ -166,11 +181,11 @@ export function AddTransactionForm({ onAdd }: { onAdd: () => void }) {
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
-      className="mb-6 relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-gray-900/90 via-gray-900 to-black shadow-2xl"
+      className="relative rounded-2xl border border-white/10 bg-gradient-to-br from-gray-900/90 via-gray-900 to-black shadow-2xl h-full"
     >
       {/* Colored accent strip at top based on type */}
       <div
-        className={`h-1 w-full transition-all duration-500 ${
+        className={`h-1 w-full rounded-t-2xl transition-all duration-500 ${
           isExpense
             ? "bg-gradient-to-r from-red-500 via-pink-500 to-rose-500"
             : "bg-gradient-to-r from-green-400 via-emerald-400 to-teal-400"
@@ -199,178 +214,209 @@ export function AddTransactionForm({ onAdd }: { onAdd: () => void }) {
         </AnimatePresence>
 
         {/* Type + Payment toggles */}
-        <div className="flex flex-wrap items-center gap-2 mb-6">
+        <div className="flex flex-nowrap items-center justify-between gap-2 mb-6">
           {/* Type toggle */}
-          <div className="flex bg-black/40 rounded-xl p-1 border border-white/10">
+          <div className="flex bg-black/40 rounded-xl p-1 border border-white/10 shrink-0">
             <button
               type="button"
               onClick={() => setForm((p) => ({ ...p, type: "expense" }))}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold transition-all duration-300 cursor-pointer ${
+              className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-2 sm:py-2 rounded-lg text-xs sm:text-sm font-bold transition-all duration-300 cursor-pointer ${
                 isExpense
                   ? "bg-red-500/20 text-red-400 border border-red-500/40 shadow-lg shadow-red-500/10"
                   : "text-gray-500 hover:text-gray-300"
               }`}
             >
               <ArrowUpCircle size={14} />
-              <span>Expense</span>
+              <span className="hidden sm:inline">Expense</span>
             </button>
             <button
               type="button"
               onClick={() => setForm((p) => ({ ...p, type: "income" }))}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold transition-all duration-300 cursor-pointer ${
+              className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-2 sm:py-2 rounded-lg text-xs sm:text-sm font-bold transition-all duration-300 cursor-pointer ${
                 !isExpense
                   ? "bg-green-500/20 text-green-400 border border-green-500/40 shadow-lg shadow-green-500/10"
                   : "text-gray-500 hover:text-gray-300"
               }`}
             >
               <ArrowDownCircle size={14} />
-              <span>Income</span>
+              <span className="hidden sm:inline">Income</span>
             </button>
           </div>
 
           {/* Payment mode toggle */}
-          <div className="flex bg-black/40 rounded-xl p-1 border border-white/10 ml-auto">
+          <div className="flex bg-black/40 rounded-xl p-1 border border-white/10 shrink-0">
             <button
               type="button"
               onClick={() => setForm((p) => ({ ...p, paymentMode: "UPI" }))}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-all duration-200 cursor-pointer ${
+              className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-2 sm:py-2 rounded-lg text-[11px] sm:text-xs font-bold transition-all duration-200 cursor-pointer ${
                 form.paymentMode === "UPI"
                   ? "bg-indigo-500/20 text-indigo-400 border border-indigo-500/40"
                   : "text-gray-500 hover:text-gray-300"
               }`}
             >
               <CreditCard size={13} />
-              <span>UPI</span>
+              <span className="hidden sm:inline">UPI</span>
             </button>
             <button
               type="button"
               onClick={() => setForm((p) => ({ ...p, paymentMode: "Cash" }))}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-all duration-200 cursor-pointer ${
+              className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-2 sm:py-2 rounded-lg text-[11px] sm:text-xs font-bold transition-all duration-200 cursor-pointer ${
                 form.paymentMode === "Cash"
                   ? "bg-yellow-500/20 text-yellow-400 border border-yellow-500/40"
                   : "text-gray-500 hover:text-gray-300"
               }`}
             >
               <Banknote size={13} />
-              <span>Cash</span>
+              <span className="hidden sm:inline">Cash</span>
             </button>
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Amount – hero field */}
-          <div className="relative">
-            <div className="flex items-center gap-2 bg-black/50 border border-white/10 rounded-xl px-4 py-3 focus-within:border-indigo-500/60 focus-within:ring-2 focus-within:ring-indigo-500/10 transition-all duration-200">
-              <span
-                className={`text-2xl font-black ${
-                  isExpense ? "text-red-400" : "text-green-400"
-                }`}
-              >
-                ₹
-              </span>
-              <input
-                type="number"
-                name="amount"
-                placeholder="0"
-                value={form.amount}
-                onChange={(e) =>
-                  setForm((p) => ({ ...p, amount: e.target.value }))
-                }
-                required
-                className="flex-1 bg-transparent text-3xl font-black text-white placeholder-gray-700 outline-none w-full"
-              />
-              {form.paymentMode === "UPI" ? (
-                <span className="text-xs font-bold text-indigo-400 bg-indigo-500/10 border border-indigo-500/30 px-2 py-1 rounded-lg">
-                  UPI
+          {/* Amount + Title — one row */}
+          <div className="flex gap-3">
+            <div className="relative w-[42%] sm:w-2/5 shrink-0">
+              <div className="flex items-center gap-1.5 bg-black/50 border border-white/10 rounded-xl px-3 py-3 focus-within:border-indigo-500/60 focus-within:ring-2 focus-within:ring-indigo-500/10 transition-all duration-200">
+                <span
+                  className={`text-lg font-black ${
+                    isExpense ? "text-red-400" : "text-green-400"
+                  }`}
+                >
+                  ₹
                 </span>
-              ) : (
-                <span className="text-xs font-bold text-yellow-400 bg-yellow-500/10 border border-yellow-500/30 px-2 py-1 rounded-lg">
-                  Cash
-                </span>
-              )}
+                <input
+                  type="number"
+                  name="amount"
+                  placeholder="0"
+                  value={form.amount}
+                  onChange={(e) =>
+                    setForm((p) => ({ ...p, amount: e.target.value }))
+                  }
+                  required
+                  className="flex-1 min-w-0 bg-transparent text-xl font-black text-white placeholder-gray-700 outline-none w-full"
+                />
+              </div>
             </div>
+
+            <input
+              type="text"
+              name="title"
+              placeholder="What was this for?"
+              value={form.title}
+              onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))}
+              required
+              className="flex-1 min-w-0 bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-indigo-500/60 focus:ring-2 focus:ring-indigo-500/10 transition-all duration-200 font-medium"
+            />
           </div>
 
-          {/* Title */}
-          <input
-            type="text"
-            name="title"
-            placeholder="What was this for?"
-            value={form.title}
-            onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))}
-            required
-            className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-indigo-500/60 focus:ring-2 focus:ring-indigo-500/10 transition-all duration-200 font-medium"
-          />
-
-          {/* Category pills — only for expense */}
-          <AnimatePresence>
-            {isExpense && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.25 }}
-              >
-                <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">
-                  Category
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {CATEGORIES.map(({ name, icon: Icon }) => {
+          {/* Category + Date + Note — stacked on mobile, one row from sm up */}
+          <div className="flex flex-col sm:flex-row sm:items-start gap-2">
+            {/* Category dropdown — only for expense */}
+            <AnimatePresence>
+              {isExpense && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.25 }}
+                  className="w-full sm:flex-1 sm:min-w-0 overflow-visible"
+                >
+                <div className="relative" ref={categoryRef}>
+                  {(() => {
+                    const active =
+                      CATEGORIES.find((c) => c.name === form.category) || CATEGORIES[0];
                     const colors =
-                      CATEGORY_COLORS[name] || CATEGORY_COLORS["Others"];
-                    const isActive = form.category === name;
+                      CATEGORY_COLORS[active.name] || CATEGORY_COLORS["Others"];
+                    const ActiveIcon = active.icon;
                     return (
                       <button
-                        key={name}
                         type="button"
-                        onClick={() =>
-                          setForm((p) => ({ ...p, category: name }))
-                        }
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all duration-200 cursor-pointer ${
-                          isActive
-                            ? `${colors.bg} ${colors.text} ${colors.border} shadow-lg`
-                            : "bg-white/5 text-gray-500 border-white/10 hover:bg-white/10 hover:text-gray-300"
-                        }`}
+                        onClick={() => setCategoryOpen((v) => !v)}
+                        className={`w-full flex items-center justify-between gap-1.5 px-3 py-3 rounded-xl border text-xs sm:text-sm font-bold transition-all duration-200 cursor-pointer ${colors.bg} ${colors.text} ${colors.border}`}
                       >
-                        <Icon size={12} />
-                        <span>{name}</span>
+                        <span className="flex items-center gap-2">
+                          <ActiveIcon size={16} />
+                          {active.name}
+                        </span>
+                        <ChevronDown
+                          size={16}
+                          className={`transition-transform duration-200 ${categoryOpen ? "rotate-180" : ""}`}
+                        />
                       </button>
                     );
-                  })}
+                  })()}
+
+                  <AnimatePresence>
+                    {categoryOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -6, scale: 0.98 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -6, scale: 0.98 }}
+                        transition={{ duration: 0.15 }}
+                        className="absolute z-20 mt-2 w-full bg-[#14141f] border border-white/10 rounded-xl shadow-2xl p-2 grid grid-cols-2 gap-1.5"
+                      >
+                        {CATEGORIES.map(({ name, icon: Icon }) => {
+                          const colors =
+                            CATEGORY_COLORS[name] || CATEGORY_COLORS["Others"];
+                          const isActive = form.category === name;
+                          return (
+                            <button
+                              key={name}
+                              type="button"
+                              onClick={() => {
+                                setForm((p) => ({ ...p, category: name }));
+                                setCategoryOpen(false);
+                              }}
+                              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition-colors duration-150 cursor-pointer ${
+                                isActive
+                                  ? `${colors.bg} ${colors.text}`
+                                  : "text-gray-400 hover:bg-white/5 hover:text-gray-200"
+                              }`}
+                            >
+                              <Icon size={14} />
+                              {name}
+                              {isActive && <Check size={12} className="ml-auto" />}
+                            </button>
+                          );
+                        })}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
-          {/* Date row */}
-          <div className="flex items-center gap-2">
-            <div className="flex-1 relative">
-              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
-              <input
-                type="date"
-                name="date"
-                value={form.date}
-                onChange={(e) =>
-                  setForm((p) => ({ ...p, date: e.target.value }))
-                }
-                required
-                className="w-full bg-black/40 border border-white/10 rounded-xl pl-9 pr-4 py-3 text-white focus:outline-none focus:border-indigo-500/60 focus:ring-2 focus:ring-indigo-500/10 transition-all duration-200 text-sm"
-              />
+            {/* Date + Note */}
+            <div className="flex gap-2">
+              <div className="flex-1 min-w-0 relative">
+                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
+                <input
+                  type="date"
+                  name="date"
+                  value={form.date}
+                  onChange={(e) =>
+                    setForm((p) => ({ ...p, date: e.target.value }))
+                  }
+                  required
+                  className="w-full bg-black/40 border border-white/10 rounded-xl pl-9 pr-2 py-3 text-white focus:outline-none focus:border-indigo-500/60 focus:ring-2 focus:ring-indigo-500/10 transition-all duration-200 text-sm"
+                />
+              </div>
+
+              {/* Comment toggle */}
+              <button
+                type="button"
+                onClick={() => setShowComment((v) => !v)}
+                className={`shrink-0 flex items-center gap-1.5 px-3 py-3 rounded-xl border text-xs font-bold transition-all duration-200 cursor-pointer ${
+                  showComment
+                    ? "bg-purple-500/15 text-purple-400 border-purple-500/30"
+                    : "bg-white/5 text-gray-500 border-white/10 hover:bg-white/10"
+                }`}
+              >
+                <MessageSquare size={14} />
+                <span className="hidden sm:inline">Note</span>
+              </button>
             </div>
-
-            {/* Comment toggle */}
-            <button
-              type="button"
-              onClick={() => setShowComment((v) => !v)}
-              className={`flex items-center gap-1.5 px-3 py-3 rounded-xl border text-xs font-bold transition-all duration-200 cursor-pointer ${
-                showComment
-                  ? "bg-purple-500/15 text-purple-400 border-purple-500/30"
-                  : "bg-white/5 text-gray-500 border-white/10 hover:bg-white/10"
-              }`}
-            >
-              <MessageSquare size={14} />
-              <span>Note</span>
-            </button>
           </div>
 
           {/* Comment field */}

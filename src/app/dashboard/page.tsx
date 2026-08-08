@@ -3,33 +3,35 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
 import { AddTransactionForm } from "../../components/AddTransactionForm";
-import { TxnCard } from "../../components/TxnCard";
 import Link from "next/link";
 import Menu from "@/components/Menu";
 import {
   BanknoteArrowUp,
   FileDigit,
   RefreshCcwDot,
-  ArrowDownCircle,
-  ArrowUpCircle,
-  Wallet,
   RefreshCw,
   HandMetal,
   Pencil,
   Trash2,
+  Eye,
+  EyeOff,
+  ArrowDownCircle,
+  ArrowUpCircle,
+  PiggyBank,
 } from "lucide-react";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import axios from "axios";
 import CountUp from "@/components/CountUp";
-import { SkeletonCard, SkeletonTransactionRow } from "@/components/SkeletonLoader";
+import { SkeletonTransactionRow } from "@/components/SkeletonLoader";
 import MonthlyReport from "@/components/MonthlyReport";
 import BottomNav from "@/components/BottomNav";
 import { CATEGORY_COLORS, CATEGORY_ICONS } from "@/lib/categoryConfig";
-import DashboardInsights from "@/components/DashboardInsights";
+import DashboardInsights, { SpendingPaceCard } from "@/components/DashboardInsights";
 import AIAdviceBanner from "@/components/AIAdviceBanner";
 import MonthEndReview from "@/components/MonthEndReview";
 import { useAuthGuard } from "@/hooks/useAuthGuard";
+import { usePrivacyMode } from "@/hooks/usePrivacyMode";
 import { apiFetch } from "@/utils/apiFetch";
 import { toast } from "@/lib/toast";
 import ConfirmDialog from "@/components/ConfirmDialog";
@@ -54,6 +56,7 @@ type User = {
 
 export default function Dashboard() {
   useAuthGuard();
+  const { hidden, toggle } = usePrivacyMode();
 
   const [user, setUser] = useState<User | null>(null);
   const [txs, setTxs] = useState<Transaction[]>([]);
@@ -158,6 +161,13 @@ export default function Dashboard() {
                     }`}
                   />
                 </button>
+                <button
+                  onClick={toggle}
+                  className="mt-1 p-1 rounded cursor-pointer text-gray-500 hover:text-gray-300"
+                  title={hidden ? "Show amounts" : "Hide amounts"}
+                >
+                  {hidden ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
               </div>
               <p className="text-gray-400 mt-1 flex items-center font-bold gap-x-1">
                 Welcome back <HandMetal color="#ff9900" />,{" "}
@@ -177,12 +187,14 @@ export default function Dashboard() {
             )}
           </div>
 
+          {/* Hero stats + Add Transaction form: stacked on mobile, side-by-side on desktop */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 items-start">
           {/* Hero Card */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="bg-gradient-to-br from-gray-900/90 via-indigo-950/40 to-gray-900/90 border border-indigo-500/20 rounded-2xl p-6 mb-6 shadow-xl"
+            className="order-1 lg:order-1 h-full bg-gradient-to-br from-gray-900/90 via-indigo-950/40 to-gray-900/90 border border-indigo-500/20 rounded-2xl p-6 shadow-xl"
           >
             {/* Top row: month + savings badge */}
             <div className="flex items-center justify-between mb-5">
@@ -200,46 +212,91 @@ export default function Dashboard() {
               </span>
             </div>
 
-            {/* Income & Expenses columns */}
-            <div className="grid grid-cols-2 gap-4 mb-5">
-              <div>
-                <Link href="/inflow">
-                  <p className="text-xs font-semibold text-green-300 uppercase tracking-wider mb-1">
+            {/* Stat tiles: Income / Expenses / Net Savings */}
+            <div className="grid grid-cols-3 gap-2.5 sm:gap-4 mb-5">
+              <Link
+                href="/inflow"
+                className="bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.07] rounded-xl p-3 sm:p-4 transition-colors"
+              >
+                <div className="flex items-center gap-1.5 mb-2">
+                  <ArrowDownCircle className="w-3.5 h-3.5 text-green-400 shrink-0" />
+                  <p className="text-[10px] sm:text-xs font-semibold text-green-300 uppercase tracking-wider truncate">
                     Income
                   </p>
-                  {loading ? (
-                    <div className="h-10 w-32 bg-gray-700/50 rounded-lg animate-pulse" />
-                  ) : (
-                    <CountUp
-                      end={inflow}
-                      prefix="₹"
-                      className="text-4xl font-black text-green-300"
-                    />
-                  )}
-                </Link>
-              </div>
-              <div>
-                <Link href="/expenses">
-                  <p className="text-xs font-semibold text-red-400 uppercase tracking-wider mb-1">
+                </div>
+                {loading ? (
+                  <div className="h-7 sm:h-8 w-full bg-gray-700/50 rounded-lg animate-pulse" />
+                ) : hidden ? (
+                  <p className="text-lg sm:text-2xl font-black text-green-300">₹ ******</p>
+                ) : (
+                  <CountUp
+                    end={inflow}
+                    prefix="₹"
+                    className="text-lg sm:text-2xl font-black text-green-300"
+                  />
+                )}
+              </Link>
+
+              <Link
+                href="/expenses"
+                className="bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.07] rounded-xl p-3 sm:p-4 transition-colors"
+              >
+                <div className="flex items-center gap-1.5 mb-2">
+                  <ArrowUpCircle className="w-3.5 h-3.5 text-red-400 shrink-0" />
+                  <p className="text-[10px] sm:text-xs font-semibold text-red-400 uppercase tracking-wider truncate">
                     Expenses
                   </p>
-                  {loading ? (
-                    <div className="h-10 w-32 bg-gray-700/50 rounded-lg animate-pulse" />
-                  ) : (
-                    <CountUp
-                      end={expense}
-                      prefix="₹"
-                      className="text-4xl font-black text-red-400"
-                    />
-                  )}
-                </Link>
+                </div>
+                {loading ? (
+                  <div className="h-7 sm:h-8 w-full bg-gray-700/50 rounded-lg animate-pulse" />
+                ) : hidden ? (
+                  <p className="text-lg sm:text-2xl font-black text-red-400">₹ ******</p>
+                ) : (
+                  <CountUp
+                    end={expense}
+                    prefix="₹"
+                    className="text-lg sm:text-2xl font-black text-red-400"
+                  />
+                )}
+                {!loading && (
+                  <p className="text-[10px] text-gray-500 font-medium mt-1">
+                    {hidden ? "today ₹ ******" : `today ₹${today.toLocaleString()}`}
+                  </p>
+                )}
+              </Link>
+
+              <div className="bg-white/[0.03] border border-white/[0.07] rounded-xl p-3 sm:p-4">
+                <div className="flex items-center gap-1.5 mb-2">
+                  <PiggyBank className="w-3.5 h-3.5 text-indigo-300 shrink-0" />
+                  <p className="text-[10px] sm:text-xs font-semibold text-indigo-300 uppercase tracking-wider truncate">
+                    Savings
+                  </p>
+                </div>
+                {loading ? (
+                  <div className="h-7 sm:h-8 w-full bg-gray-700/50 rounded-lg animate-pulse" />
+                ) : hidden ? (
+                  <p className={`text-lg sm:text-2xl font-black ${net >= 0 ? "text-green-300" : "text-red-400"}`}>
+                    ₹ ******
+                  </p>
+                ) : (
+                  <CountUp
+                    end={Math.abs(net)}
+                    prefix={net >= 0 ? "₹" : "-₹"}
+                    className={`text-lg sm:text-2xl font-black ${
+                      net >= 0 ? "text-green-300" : "text-red-400"
+                    }`}
+                  />
+                )}
               </div>
             </div>
 
             {/* Spend vs income bar */}
             {!loading && inflow > 0 && (
-              <div className="mb-5">
-                <div className="h-2 rounded-full bg-white/[0.06] overflow-hidden">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-[11px] text-gray-500 font-semibold">
+                  {Math.min(100, Math.round((expense / inflow) * 100))}% of this month&apos;s income spent
+                </p>
+                <div className="w-16 sm:w-20 h-1.5 rounded-full bg-white/[0.06] overflow-hidden shrink-0">
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${Math.min(100, Math.round((expense / inflow) * 100))}%` }}
@@ -253,93 +310,32 @@ export default function Dashboard() {
                     }`}
                   />
                 </div>
-                <p className="text-[11px] text-gray-500 font-semibold mt-1.5">
-                  {Math.min(100, Math.round((expense / inflow) * 100))}% of this month&apos;s income spent
-                </p>
               </div>
             )}
-
-            {/* Divider */}
-            <div className="border-t border-gray-700/50 mb-4" />
-
-            {/* Net Savings row */}
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-gray-400 mb-1">Net Savings</p>
-                {loading ? (
-                  <div className="h-7 w-24 bg-gray-700/50 rounded-lg animate-pulse" />
-                ) : (
-                  <CountUp
-                    end={Math.abs(net)}
-                    prefix={net >= 0 ? "₹" : "-₹"}
-                    className={`text-2xl font-black ${
-                      net >= 0 ? "text-green-300" : "text-red-400"
-                    }`}
-                  />
-                )}
-              </div>
-              {!loading && (
-                <div className="text-right">
-                  <span className="text-xs text-gray-500">Today&apos;s Spend</span>
-                  <p className="text-sm font-bold text-orange-400">
-                    ₹{today.toLocaleString()}
-                  </p>
-                </div>
-              )}
-            </div>
           </motion.div>
+
+          {/* Add Transaction Form */}
+          <div className="order-3 lg:order-2">
+            <AddTransactionForm onAdd={fetchTransactions} />
+          </div>
 
           {/* Month-end review — visible days 1-3 of new month */}
           {!loading && (
-            <MonthEndReview transactions={txs} userName={user?.name} />
+            <div className="order-2 lg:order-3 lg:col-span-2">
+              <MonthEndReview transactions={txs} userName={user?.name} />
+            </div>
           )}
-
-          {/* Legacy TxnCards (hidden on mobile, compact grid) */}
-          <div className="hidden sm:grid grid-cols-3 gap-3 mb-6">
-            {loading ? (
-              <>
-                <SkeletonCard />
-                <SkeletonCard />
-                <SkeletonCard />
-              </>
-            ) : (
-              <>
-                <Link href="/inflow">
-                  <TxnCard
-                    title={`Total Inflow (${monthName})`}
-                    amount={`₹${inflow.toLocaleString()}`}
-                    color="text-green-300"
-                    icon={<ArrowDownCircle className="w-5 h-5 text-green-300" />}
-                  />
-                </Link>
-                <Link href="/expenses">
-                  <TxnCard
-                    title={`Total Expenses (${monthName})`}
-                    amount={`₹${expense.toLocaleString()}`}
-                    color="text-red-500"
-                    icon={<ArrowUpCircle className="w-5 h-5 text-red-500" />}
-                  />
-                </Link>
-                <TxnCard
-                  title={`Savings (${monthName})`}
-                  amount={`₹${net.toLocaleString()}`}
-                  color="text-gray-300"
-                  icon={<Wallet className="w-5 h-5 text-gray-300" />}
-                />
-              </>
-            )}
           </div>
 
-          {/* Add Transaction Form */}
-          <AddTransactionForm onAdd={fetchTransactions} />
-
-          {/* Recent Transactions */}
-          <div className="bg-[#111118] border border-white/[0.07] rounded-xl p-6 mt-6">
-            <div className="flex items-center gap-2 mb-4">
+          {/* Recent Transactions + Spending Pace — side by side on desktop, matched height */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6 lg:items-stretch">
+          <div className="bg-[#111118] border border-white/[0.07] rounded-xl p-6 flex flex-col lg:h-full lg:min-h-0">
+            <div className="flex items-center gap-2 mb-4 shrink-0">
               <RefreshCcwDot color="#ec4899" />
               <h2 className="text-xl font-semibold">Recent Transactions</h2>
             </div>
 
+            <div className="lg:flex-1 lg:min-h-0 lg:overflow-y-auto lg:pr-1">
             {loading ? (
               <div className="space-y-3">
                 <SkeletonTransactionRow />
@@ -385,7 +381,7 @@ export default function Dashboard() {
                                 : "text-red-400"
                             }`}
                           >
-                            {tx.type === "income" ? "+ " : "- "}₹ {tx.amount}
+                            {hidden ? "₹ ******" : `${tx.type === "income" ? "+ " : "- "}₹ ${tx.amount}`}
                           </p>
                           <button
                             onClick={(e) => {
@@ -416,12 +412,16 @@ export default function Dashboard() {
                 })}
               </ul>
             )}
+            </div>
 
             {!loading && (
-              <div className="font-bold text-blue-400 mt-3 text-right">
+              <div className="font-bold text-blue-400 mt-3 text-right shrink-0">
                 <Link href="/transactions">See All Transactions</Link>
               </div>
             )}
+          </div>
+
+          <SpendingPaceCard txs={txs} inflow={inflow} expense={expense} loading={loading} />
           </div>
 
           {/* ── AI Advice: Monday (weekly) + days 1-3 of month (monthly) ── */}

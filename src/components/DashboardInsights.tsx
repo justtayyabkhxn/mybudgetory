@@ -183,23 +183,20 @@ function RaceBar({
 }
 
 /* ─────────────────────────────────────────────────────────────
-   Main Component
+   Spending Pace card — split out so it can sit beside other
+   dashboard content (e.g. Recent Transactions) in a row
 ───────────────────────────────────────────────────────────── */
-export default function DashboardInsights({ txs, inflow, expense, loading }: Props) {
-  const [cutPct, setCutPct] = useState(20);
-
+export function SpendingPaceCard({ txs, inflow, expense, loading }: Props) {
   const now = new Date();
   const dayOfMonth  = now.getDate();
   const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
   const daysLeft    = daysInMonth - dayOfMonth;
 
-  /* ── filter current month ── */
   const monthTxs = useMemo(() => txs.filter(tx => {
     const d = new Date(tx.date);
     return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
   }), [txs]);
 
-  /* ── 1. VELOCITY ── */
   const dailyRate        = dayOfMonth > 0 ? expense / dayOfMonth : 0;
   const projectedEnd     = Math.round(dailyRate * daysInMonth);
   const remainingAtRate  = Math.round(dailyRate * daysLeft);
@@ -212,18 +209,15 @@ export default function DashboardInsights({ txs, inflow, expense, loading }: Pro
     velocityStatus === "critical" ? "#f87171" :
     velocityStatus === "warning"  ? "#fb923c" : "#4ade80";
 
-  /* ── 2. MONTH RACE ── */
   const timeElapsedPct     = (dayOfMonth / daysInMonth) * 100;
   const budgetConsumedPct  = inflow > 0 ? (expense / inflow) * 100 : 0;
   const isOverpacing       = budgetConsumedPct > timeElapsedPct + 5;
 
-  /* ── 3. HEALTH SCORE ── */
+  /* ── Health Score ── */
   const healthScore = useMemo(() => {
     if (inflow === 0) return 50;
-    // Savings rate component (0-55)
     const sr      = (inflow - expense) / inflow;
     const srScore = Math.max(0, Math.min(55, sr * 100 * 0.55));
-    // Streak component (0-25) — consecutive days ≤ daily average
     const dailyExpMap: Record<string, number> = {};
     monthTxs.filter(tx => tx.type === "expense").forEach(tx => {
       const key = new Date(tx.date).toDateString();
@@ -239,12 +233,11 @@ export default function DashboardInsights({ txs, inflow, expense, loading }: Pro
       else break;
     }
     const streakScore = Math.min(25, streak * 3);
-    // Activity bonus (0-20): just having data is worth something
     const actScore = monthTxs.length > 0 ? Math.min(20, monthTxs.length * 2) : 0;
     return Math.round(Math.min(100, srScore + streakScore + actScore));
-  }, [txs, inflow, expense, dayOfMonth]);
+  }, [monthTxs, inflow, expense, dayOfMonth, now]);
 
-  /* ── 4. STREAK ── */
+  /* ── Streak ── */
   const { streak, avgPerDay } = useMemo(() => {
     const dailyExpMap: Record<string, number> = {};
     monthTxs.filter(tx => tx.type === "expense").forEach(tx => {
@@ -261,7 +254,176 @@ export default function DashboardInsights({ txs, inflow, expense, loading }: Pro
       else break;
     }
     return { streak: s, avgPerDay: avg };
-  }, [monthTxs, expense, dayOfMonth]);
+  }, [monthTxs, expense, dayOfMonth, now]);
+
+  if (loading) {
+    return <div className="animate-pulse rounded-2xl border border-white/[0.05] bg-white/[0.02] h-full min-h-[220px]" />;
+  }
+
+  if (monthTxs.length === 0) return null;
+
+  return (
+    <InsightCard
+      icon={<Zap size={14} className="text-yellow-400" />}
+      iconBg="bg-yellow-500/10"
+      title="Spending Pace"
+    >
+      {/* Velocity headline */}
+      <div className="flex items-end justify-between mb-5 flex-wrap gap-3">
+        <div>
+          <p className="text-xs text-gray-600 mb-0.5">Daily rate</p>
+          <p className="text-2xl font-black" style={{ color: velocityColor }}>
+            ₹{Math.round(dailyRate).toLocaleString()}
+            <span className="text-sm font-medium text-gray-500 ml-1">/day</span>
+          </p>
+        </div>
+        <div className="text-right">
+          <p className="text-xs text-gray-600 mb-0.5">Projected month-end</p>
+          <p className="text-xl font-black" style={{ color: velocityColor }}>
+            ₹{projectedEnd.toLocaleString()}
+          </p>
+        </div>
+        <div className="text-right">
+          <p className="text-xs text-gray-600 mb-0.5">Remaining at this rate</p>
+          <p className="text-lg font-bold text-gray-300">
+            +₹{remainingAtRate.toLocaleString()}
+          </p>
+        </div>
+      </div>
+
+      {/* Status pill */}
+      <div className="mb-5">
+        <span
+          className="inline-flex items-center gap-1.5 text-xs font-semibold rounded-full px-3 py-1 border"
+          style={{
+            color: velocityColor,
+            borderColor: `${velocityColor}40`,
+            background: `${velocityColor}12`,
+          }}
+        >
+          {velocityStatus === "critical" && <><TrendingDown size={11} /> Overspending pace — cut back now</>}
+          {velocityStatus === "warning"  && <><Clock size={11} /> Slightly ahead of budget — keep an eye</>}
+          {velocityStatus === "on-track" && <><TrendingUp size={11} /> On track — great pacing this month</>}
+        </span>
+      </div>
+
+      {/* Race Bars */}
+      <div className="space-y-3">
+        <RaceBar
+          label={`Time elapsed (Day ${dayOfMonth} of ${daysInMonth})`}
+          pct={timeElapsedPct}
+          color="#818cf8"
+          bgColor="bg-indigo-500/10"
+        />
+        <RaceBar
+          label={`Budget consumed vs income`}
+          pct={budgetConsumedPct}
+          color={isOverpacing ? "#f87171" : "#4ade80"}
+          bgColor={isOverpacing ? "bg-red-500/10" : "bg-green-500/10"}
+        />
+      </div>
+      {isOverpacing && (
+        <p className="text-[11px] text-red-400 mt-2">
+          Spending bar is ahead of time bar — you are using budget faster than the month is moving.
+        </p>
+      )}
+
+      {/* Health Score + Streak — same row */}
+      <div className="grid grid-cols-2 gap-3 mt-5 pt-5 border-t border-white/[0.06]">
+        {/* Health Score */}
+        <div className="rounded-xl bg-white/[0.03] border border-white/[0.05] p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-6 h-6 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
+              <Activity size={12} className="text-blue-400" />
+            </div>
+            <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Health Score</span>
+          </div>
+          <div className="flex flex-col items-center gap-3 pt-1">
+            <HealthGauge score={healthScore} />
+            <div className="w-full space-y-1 text-[11px] text-gray-600">
+              <div className="flex justify-between">
+                <span>Savings rate</span>
+                <span className="text-gray-400">{inflow > 0 ? Math.round(((inflow - expense) / inflow) * 100) : 0}%</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Streak bonus</span>
+                <span className="text-gray-400">{Math.min(25, streak * 3)} pts</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Streak Counter */}
+        <div className="rounded-xl bg-white/[0.03] border border-white/[0.05] p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-6 h-6 rounded-lg bg-orange-500/10 flex items-center justify-center shrink-0">
+              <Flame size={12} className="text-orange-400" />
+            </div>
+            <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Streak</span>
+          </div>
+          <div className="flex flex-col items-center gap-2 pt-1">
+            <div className="relative">
+              <span
+                className="text-5xl font-black"
+                style={{
+                  color: streak >= 7 ? "#f97316" : streak >= 3 ? "#fb923c" : "#6b7280",
+                  textShadow: streak >= 3 ? `0 0 20px ${streak >= 7 ? "#f97316" : "#fb923c"}60` : "none",
+                }}
+              >
+                {streak}
+              </span>
+              {streak >= 3 && (
+                <span className="absolute -top-1 -right-4 text-lg">
+                  {streak >= 7 ? "🔥" : "✨"}
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-gray-400 text-center leading-snug">
+              {streak === 0
+                ? "No streak yet today"
+                : streak === 1
+                ? "1 day under avg — keep going!"
+                : `${streak} days under daily avg`}
+            </p>
+            <div className="text-[11px] text-gray-600 text-center">
+              Avg ₹{Math.round(avgPerDay).toLocaleString()}/day
+            </div>
+            {/* Mini streak dots */}
+            <div className="flex gap-1 flex-wrap justify-center mt-1">
+              {[...Array(Math.min(dayOfMonth, 10))].map((_, i) => (
+                <div
+                  key={i}
+                  className="w-2 h-2 rounded-full"
+                  style={{
+                    background: i < streak
+                      ? (streak >= 7 ? "#f97316" : "#fb923c")
+                      : "rgba(255,255,255,0.1)",
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </InsightCard>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Main Component
+───────────────────────────────────────────────────────────── */
+export default function DashboardInsights({ txs, inflow, expense, loading }: Props) {
+  const [cutPct, setCutPct] = useState(20);
+
+  const now = new Date();
+  const dayOfMonth  = now.getDate();
+  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+
+  /* ── filter current month ── */
+  const monthTxs = useMemo(() => txs.filter(tx => {
+    const d = new Date(tx.date);
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  }), [txs]);
 
   /* ── 5. WHAT IF ── */
   const topCategories = useMemo(() => {
@@ -314,149 +476,8 @@ export default function DashboardInsights({ txs, inflow, expense, loading }: Pro
   return (
     <div className="space-y-4 mt-6">
 
-      {/* ─────── Row 1: Velocity + Race (full width) ─────── */}
-      <InsightCard
-        icon={<Zap size={14} className="text-yellow-400" />}
-        iconBg="bg-yellow-500/10"
-        title="Spending Pace"
-      >
-        {/* Velocity headline */}
-        <div className="flex items-end justify-between mb-5 flex-wrap gap-3">
-          <div>
-            <p className="text-xs text-gray-600 mb-0.5">Daily rate</p>
-            <p className="text-2xl font-black" style={{ color: velocityColor }}>
-              ₹{Math.round(dailyRate).toLocaleString()}
-              <span className="text-sm font-medium text-gray-500 ml-1">/day</span>
-            </p>
-          </div>
-          <div className="text-right">
-            <p className="text-xs text-gray-600 mb-0.5">Projected month-end</p>
-            <p className="text-xl font-black" style={{ color: velocityColor }}>
-              ₹{projectedEnd.toLocaleString()}
-            </p>
-          </div>
-          <div className="text-right">
-            <p className="text-xs text-gray-600 mb-0.5">Remaining at this rate</p>
-            <p className="text-lg font-bold text-gray-300">
-              +₹{remainingAtRate.toLocaleString()}
-            </p>
-          </div>
-        </div>
-
-        {/* Status pill */}
-        <div className="mb-5">
-          <span
-            className="inline-flex items-center gap-1.5 text-xs font-semibold rounded-full px-3 py-1 border"
-            style={{
-              color: velocityColor,
-              borderColor: `${velocityColor}40`,
-              background: `${velocityColor}12`,
-            }}
-          >
-            {velocityStatus === "critical" && <><TrendingDown size={11} /> Overspending pace — cut back now</>}
-            {velocityStatus === "warning"  && <><Clock size={11} /> Slightly ahead of budget — keep an eye</>}
-            {velocityStatus === "on-track" && <><TrendingUp size={11} /> On track — great pacing this month</>}
-          </span>
-        </div>
-
-        {/* Race Bars */}
-        <div className="space-y-3">
-          <RaceBar
-            label={`Time elapsed (Day ${dayOfMonth} of ${daysInMonth})`}
-            pct={timeElapsedPct}
-            color="#818cf8"
-            bgColor="bg-indigo-500/10"
-          />
-          <RaceBar
-            label={`Budget consumed vs income`}
-            pct={budgetConsumedPct}
-            color={isOverpacing ? "#f87171" : "#4ade80"}
-            bgColor={isOverpacing ? "bg-red-500/10" : "bg-green-500/10"}
-          />
-        </div>
-        {isOverpacing && (
-          <p className="text-[11px] text-red-400 mt-2">
-            Spending bar is ahead of time bar — you are using budget faster than the month is moving.
-          </p>
-        )}
-      </InsightCard>
-
-      {/* ─────── Row 2: Health Score + Streak ─────── */}
-      <div className="grid grid-cols-2 gap-4">
-
-        {/* Health Score */}
-        <InsightCard
-          icon={<Activity size={14} className="text-blue-400" />}
-          iconBg="bg-blue-500/10"
-          title="Health Score"
-        >
-          <div className="flex flex-col items-center gap-3 pt-1">
-            <HealthGauge score={healthScore} />
-            <div className="w-full space-y-1 text-[11px] text-gray-600">
-              <div className="flex justify-between">
-                <span>Savings rate</span>
-                <span className="text-gray-400">{inflow > 0 ? Math.round(((inflow - expense) / inflow) * 100) : 0}%</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Streak bonus</span>
-                <span className="text-gray-400">{Math.min(25, streak * 3)} pts</span>
-              </div>
-            </div>
-          </div>
-        </InsightCard>
-
-        {/* Streak Counter */}
-        <InsightCard
-          icon={<Flame size={14} className="text-orange-400" />}
-          iconBg="bg-orange-500/10"
-          title="Streak"
-        >
-          <div className="flex flex-col items-center gap-2 pt-1">
-            <div className="relative">
-              <span
-                className="text-5xl font-black"
-                style={{
-                  color: streak >= 7 ? "#f97316" : streak >= 3 ? "#fb923c" : "#6b7280",
-                  textShadow: streak >= 3 ? `0 0 20px ${streak >= 7 ? "#f97316" : "#fb923c"}60` : "none",
-                }}
-              >
-                {streak}
-              </span>
-              {streak >= 3 && (
-                <span className="absolute -top-1 -right-4 text-lg">
-                  {streak >= 7 ? "🔥" : "✨"}
-                </span>
-              )}
-            </div>
-            <p className="text-xs text-gray-400 text-center leading-snug">
-              {streak === 0
-                ? "No streak yet today"
-                : streak === 1
-                ? "1 day under avg — keep going!"
-                : `${streak} days under daily avg`}
-            </p>
-            <div className="text-[11px] text-gray-600 text-center">
-              Avg ₹{Math.round(avgPerDay).toLocaleString()}/day
-            </div>
-            {/* Mini streak dots */}
-            <div className="flex gap-1 flex-wrap justify-center mt-1">
-              {[...Array(Math.min(dayOfMonth, 10))].map((_, i) => (
-                <div
-                  key={i}
-                  className="w-2 h-2 rounded-full"
-                  style={{
-                    background: i < streak
-                      ? (streak >= 7 ? "#f97316" : "#fb923c")
-                      : "rgba(255,255,255,0.1)",
-                  }}
-                />
-              ))}
-            </div>
-          </div>
-        </InsightCard>
-      </div>
-
-      {/* ─────── Row 3: Weekly Digest ─────── */}
+      {/* ─────── Row 3: Weekly Digest + What If — same row ─────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
       <InsightCard
         icon={<Calendar size={14} className="text-violet-400" />}
         iconBg="bg-violet-500/10"
@@ -519,7 +540,6 @@ export default function DashboardInsights({ txs, inflow, expense, loading }: Pro
         )}
       </InsightCard>
 
-      {/* ─────── Row 4: What If Calculator ─────── */}
       {topCategories.length > 0 && (
         <InsightCard
           icon={<Calculator size={14} className="text-cyan-400" />}
@@ -579,6 +599,7 @@ export default function DashboardInsights({ txs, inflow, expense, loading }: Pro
           </p>
         </InsightCard>
       )}
+      </div>
     </div>
   );
 }
