@@ -102,7 +102,7 @@ export async function POST(req: NextRequest) {
         Authorization: `Bearer ${groqKey}`,
       },
       body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
+        model: "openai/gpt-oss-120b",
         messages: [{ role: "user", content: prompt }],
         max_tokens: 320,
         temperature: 0.72,
