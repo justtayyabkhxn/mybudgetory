@@ -382,7 +382,6 @@ export default function Profile() {
 
   return (
     <main className="min-h-screen md:pt-20 text-ink pb-28">
-      <div className="fixed top-0 inset-x-0 h-px bg-primary pointer-events-none z-50" />
 
       {/* Header */}
       <div className="md:hidden sticky top-0 z-40 bg-canvas-soft/80 backdrop-blur-xl border-b border-hairline">

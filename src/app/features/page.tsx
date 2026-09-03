@@ -299,7 +299,6 @@ export default function FeaturesPage() {
     <div className="min-h-screen text-ink">
       {/* Dot grid */}
       {/* Top accent line */}
-      <div className="fixed top-0 left-0 right-0 h-px bg-primary pointer-events-none" />
 
       <div className="relative max-w-6xl mx-auto px-4 sm:px-8 py-6 pb-24">
         <Header />

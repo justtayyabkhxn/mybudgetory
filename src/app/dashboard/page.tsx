@@ -135,7 +135,6 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen md:pt-20 text-ink p-4 sm:p-8 pb-24">
-      <div className="fixed top-0 inset-x-0 h-px bg-primary pointer-events-none z-50" />
       <div className={menuOpen ? "overflow-hidden h-screen" : ""}>
         <div className="max-w-5xl mx-auto">
           {/* Header */}

@@ -214,7 +214,6 @@ export default function CalendarPage() {
 
   return (
     <div className="min-h-screen md:pt-20 text-ink p-4 sm:p-6 pb-28">
-      <div className="fixed top-0 inset-x-0 h-px bg-primary pointer-events-none z-50" />
       <div className="max-w-3xl mx-auto">
         <div className="md:hidden">
           <Header />

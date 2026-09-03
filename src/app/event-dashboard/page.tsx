@@ -6,7 +6,6 @@ export default function EventDashboard() {
 
   return (
     <div className="min-h-screen text-ink p-4 sm:p-8">
-      <div className="fixed top-0 inset-x-0 h-px bg-primary pointer-events-none z-50" />
       <div className="max-w-5xl mx-auto">
         {/* Header */}
         <section className="text-center max-w-2xl mx-auto space-y-6 mb-2">

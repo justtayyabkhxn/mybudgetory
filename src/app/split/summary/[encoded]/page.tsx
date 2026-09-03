@@ -67,7 +67,6 @@ export default function SummaryPage() {
 
   return (
     <div className="min-h-screen text-ink p-6 sm:p-10">
-      <div className="fixed top-0 inset-x-0 h-px bg-primary pointer-events-none z-50" />
       <Header />
       <div className="max-w-xl mx-auto bg-canvas/80 rounded-xl p-6 shadow-xl">
         <div className="flex items-center gap-2 mb-6">
