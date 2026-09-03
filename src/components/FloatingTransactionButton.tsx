@@ -33,10 +33,8 @@ export default function FloatingTransactionButton({ onAdd }: Props = {}) {
         aria-label="Add Transaction"
         className="fixed bottom-20 right-4 sm:bottom-6 sm:right-6 z-[60]
                    w-14 h-14 rounded-full flex items-center justify-center
-                   bg-gradient-to-br from-violet-600 via-indigo-500 to-cyan-500
-                   shadow-[0_4px_24px_rgba(139,92,246,0.55)]
-                   hover:shadow-[0_4px_32px_rgba(139,92,246,0.75)]
-                    border-white/20 text-white transition-shadow duration-200"
+                   bg-primary text-on-primary hover:bg-primary-active
+                   transition-colors duration-200"
       >
         <motion.span
           animate={{ rotate: open ? 45 : 0 }}
@@ -52,7 +50,7 @@ export default function FloatingTransactionButton({ onAdd }: Props = {}) {
           <>
             {/* Backdrop */}
             <motion.div
-              className="fixed inset-0 z-[70] bg-black/70 backdrop-blur-sm"
+              className="fixed inset-0 z-[70] bg-scrim/70 backdrop-blur-sm"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -70,21 +68,21 @@ export default function FloatingTransactionButton({ onAdd }: Props = {}) {
               <div
                 role="dialog"
                 aria-modal="true"
-                className="relative w-full sm:max-w-md bg-[#0e0e1c] border border-white/10
-                           rounded-t-3xl sm:rounded-2xl shadow-2xl
+                className="relative w-full sm:max-w-md bg-canvas/80 
+                           rounded-t-3xl sm:rounded-2xl shadow-lg
                            max-h-[92dvh] overflow-y-auto"
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* Drag handle (mobile hint) */}
                 <div className="flex justify-center pt-3 pb-1 sm:hidden">
-                  <div className="w-10 h-1 rounded-full bg-white/20" />
+                  <div className="w-10 h-1 rounded-full bg-canvas/80" />
                 </div>
 
                 {/* Close button */}
                 <button
                   onClick={() => setOpen(false)}
-                  className="absolute top-4 right-4 z-10 p-1.5 rounded-full
-                             bg-white/8 hover:bg-white/15 text-gray-400 hover:text-white
+                  className="absolute top-2 right-2 z-10 p-1.5 rounded-full
+                             bg-canvas/80 hover:bg-canvas-soft/80 text-gray-400 hover:text-ink
                              transition-colors cursor-pointer"
                   aria-label="Close"
                 >

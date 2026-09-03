@@ -15,14 +15,14 @@ const config: CapacitorConfig = {
   android: {
     allowMixedContent: false,
     webContentsDebuggingEnabled: false,
-    backgroundColor: '#001F40',
+    backgroundColor: '#E8EBE6',
   },
-  backgroundColor: '#001F40',
+  backgroundColor: '#E8EBE6',
   plugins: {
     SystemBars: {
       // Transparent bars over a full-bleed web view; the page gets the insets
       // back through env(safe-area-inset-*) thanks to viewport-fit=cover.
-      style: 'DARK',
+      style: 'LIGHT',
       insetsHandling: 'css',
     },
   },

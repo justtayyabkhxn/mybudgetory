@@ -65,7 +65,7 @@ export function AddDebtLentForm({ onAdd }: { onAdd: () => void }) {
   };
 
   return (
-    <div className="mb-10 bg-[#111]/80 border border-gray-700 rounded-xl p-6 shadow-lg">
+    <div className="mb-10 bg-canvas/80 rounded-xl p-6 shadow-lg">
       <h2 className="text-xl font-semibold mb-4">Add Debt / Lent Entry</h2>
       <form
         onSubmit={handleSubmit}
@@ -80,7 +80,7 @@ export function AddDebtLentForm({ onAdd }: { onAdd: () => void }) {
             value={form.person}
             onChange={handleChange}
             required
-            className="p-2 rounded bg-black border border-gray-700 text-white flex-1"
+            className="p-2 rounded bg-canvas-soft/80 text-ink flex-1"
           />
         </div>
 
@@ -94,7 +94,7 @@ export function AddDebtLentForm({ onAdd }: { onAdd: () => void }) {
             onChange={handleChange}
             required
             min="1"
-            className="p-2 rounded bg-black border border-gray-700 text-white flex-1"
+            className="p-2 rounded bg-canvas-soft/80 text-ink flex-1"
           />
         </div>
 
@@ -104,7 +104,7 @@ export function AddDebtLentForm({ onAdd }: { onAdd: () => void }) {
             name="type"
             value={form.type}
             onChange={handleChange}
-            className="p-2 rounded bg-black border border-gray-700 text-white flex-1"
+            className="p-2 rounded bg-canvas-soft/80 text-ink flex-1"
           >
             <option value="lent">Lent</option>
             <option value="debt">Debt</option>
@@ -119,7 +119,7 @@ export function AddDebtLentForm({ onAdd }: { onAdd: () => void }) {
             value={form.date}
             onChange={handleChange}
             required
-            className="p-2 rounded bg-black border border-gray-700 text-white flex-1"
+            className="p-2 rounded bg-canvas-soft/80 text-ink flex-1"
           />
         </div>
 
@@ -131,13 +131,13 @@ export function AddDebtLentForm({ onAdd }: { onAdd: () => void }) {
             placeholder="Comment (optional)"
             value={form.comment}
             onChange={handleChange}
-            className="p-2 rounded bg-black border border-gray-700 text-white flex-1"
+            className="p-2 rounded bg-canvas-soft/80 text-ink flex-1"
           />
         </div>
 
         <button
           type="submit"
-          className="sm:col-span-2 mt-2 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded font-bold"
+          className="sm:col-span-2 mt-2 bg-primary hover:bg-primary-active text-on-primary py-2.5 px-6 rounded-3xl font-semibold"
         >
           <span>
 

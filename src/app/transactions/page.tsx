@@ -135,11 +135,12 @@ export default function Transactions() {
   }, {});
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white p-4 sm:p-8 pb-28">
-      <div className="fixed inset-0 pointer-events-none auth-dot-grid opacity-[0.14]" />
-      <div className="fixed top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-violet-500/30 to-transparent pointer-events-none z-50" />
+    <div className="min-h-screen md:pt-20 text-ink p-4 sm:p-8 pb-28">
+      <div className="fixed top-0 inset-x-0 h-px bg-primary pointer-events-none z-50" />
       <div className="max-w-5xl mx-auto">
-        <Header />
+        <div className="md:hidden">
+          <Header />
+        </div>
 
         {/* Page title row */}
         <div className="flex items-center justify-between mt-4 mb-6">
@@ -158,8 +159,8 @@ export default function Transactions() {
             transition={{ duration: 0.4 }}
             className="grid grid-cols-3 gap-3 mb-5"
           >
-            <div className="bg-green-900/20 border border-green-500/20 rounded-2xl p-4 flex items-center gap-3">
-              <div className="bg-green-500/15 p-2 rounded-xl border border-green-500/20 hidden sm:flex">
+            <div className="bg-green-900/20 rounded-2xl p-4 flex items-center gap-3">
+              <div className="bg-green-500/15 p-2 rounded-xl hidden sm:flex">
                 <TrendingUp size={16} className="text-green-400" />
               </div>
               <div>
@@ -167,8 +168,8 @@ export default function Transactions() {
                 <p className="text-lg font-black text-green-400">₹{filteredIncome.toLocaleString()}</p>
               </div>
             </div>
-            <div className="bg-red-900/20 border border-red-500/20 rounded-2xl p-4 flex items-center gap-3">
-              <div className="bg-red-500/15 p-2 rounded-xl border border-red-500/20 hidden sm:flex">
+            <div className="bg-red-900/20 rounded-2xl p-4 flex items-center gap-3">
+              <div className="bg-red-500/15 p-2 rounded-xl hidden sm:flex">
                 <TrendingDown size={16} className="text-red-400" />
               </div>
               <div>
@@ -176,13 +177,13 @@ export default function Transactions() {
                 <p className="text-lg font-black text-red-400">₹{filteredExpense.toLocaleString()}</p>
               </div>
             </div>
-            <div className={`${filteredNet >= 0 ? "bg-emerald-900/20 border-emerald-500/20" : "bg-orange-900/20 border-orange-500/20"} border rounded-2xl p-4 flex items-center gap-3`}>
-              <div className={`${filteredNet >= 0 ? "bg-emerald-500/15 border-emerald-500/20" : "bg-orange-500/15 border-orange-500/20"} p-2 rounded-xl border hidden sm:flex`}>
-                <Wallet size={16} className={filteredNet >= 0 ? "text-emerald-400" : "text-orange-400"} />
+            <div className={`${filteredNet >= 0 ? "bg-emerald-900/20" : "bg-orange-900/20"} rounded-2xl p-4 flex items-center gap-3`}>
+              <div className={`${filteredNet >= 0 ? "bg-emerald-500/15" : "bg-orange-500/15"} p-2 rounded-xl hidden sm:flex`}>
+                <Wallet size={16} className={filteredNet >= 0 ? "text-emerald-400" : "text-warning-deep"} />
               </div>
               <div>
-                <p className={`text-[10px] font-bold uppercase tracking-wider ${filteredNet >= 0 ? "text-emerald-400/70" : "text-orange-400/70"}`}>Net</p>
-                <p className={`text-lg font-black ${filteredNet >= 0 ? "text-emerald-400" : "text-orange-400"}`}>
+                <p className={`text-[10px] font-bold uppercase tracking-wider ${filteredNet >= 0 ? "text-emerald-400/70" : "text-warning-deep/70"}`}>Net</p>
+                <p className={`text-lg font-black ${filteredNet >= 0 ? "text-emerald-400" : "text-warning-deep"}`}>
                   {filteredNet >= 0 ? "+" : ""}₹{Math.abs(filteredNet).toLocaleString()}
                 </p>
               </div>
@@ -200,26 +201,26 @@ export default function Transactions() {
               placeholder="Search transactions..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="w-full bg-gray-900/80 border border-gray-700 text-white placeholder-gray-500 rounded-xl pl-10 pr-9 py-2.5 text-sm focus:outline-none focus:border-indigo-500/60 focus:ring-2 focus:ring-indigo-500/10 transition-all duration-200"
+              className="w-full bg-canvas/80 text-ink placeholder-gray-500 rounded-xl pl-10 pr-9 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-200"
             />
             {searchQuery && (
-              <button onClick={() => setSearchQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white cursor-pointer">
+              <button onClick={() => setSearchQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-ink cursor-pointer">
                 <X size={14} />
               </button>
             )}
           </div>
 
           {/* Type filter pills */}
-          <div className="flex bg-gray-900/80 border border-gray-700 rounded-xl p-1 gap-1 flex-shrink-0">
+          <div className="flex bg-gray-900/80 rounded-xl p-1 gap-1 flex-shrink-0">
             {(["", "income", "expense"] as const).map(t => (
               <button
                 key={t}
                 onClick={() => setTypeFilter(t)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 cursor-pointer ${
                   typeFilter === t
-                    ? t === "income" ? "bg-green-500/20 text-green-400 border border-green-500/30"
-                    : t === "expense" ? "bg-red-500/20 text-red-400 border border-red-500/30"
-                    : "bg-indigo-500/20 text-indigo-400 border border-indigo-500/30"
+                    ? t === "income" ? "bg-green-500/20 text-green-400"
+                    : t === "expense" ? "bg-red-500/20 text-red-400"
+                    : "bg-indigo-500/20 text-indigo-400"
                     : "text-gray-500 hover:text-gray-300"
                 }`}
               >
@@ -237,7 +238,7 @@ export default function Transactions() {
               <select
                 value={sortBy}
                 onChange={e => setSortBy(e.target.value as SortOption)}
-                className="appearance-none flex items-center gap-1.5 pl-8 pr-3 py-2.5 bg-white/5 hover:bg-white/10 border border-gray-700 text-gray-300 rounded-xl text-xs font-bold transition-colors cursor-pointer focus:outline-none focus:border-indigo-500/60"
+                className="appearance-none flex items-center gap-1.5 pl-8 pr-3 py-2.5 bg-canvas/80 hover:bg-primary-pale text-body rounded-xl text-xs font-bold transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <option value="date-desc">Newest</option>
                 <option value="date-asc">Oldest</option>
@@ -247,14 +248,14 @@ export default function Transactions() {
               <ArrowUpDown size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
             </div>
             <Link href="/advanced-search">
-              <button className="flex items-center gap-1.5 px-3 py-2.5 bg-white/5 hover:bg-white/10 border border-gray-700 text-gray-300 rounded-xl text-xs font-bold transition-colors cursor-pointer">
+              <button className="flex items-center gap-1.5 px-3 py-2.5 bg-canvas/80 hover:bg-canvas-soft/80 text-gray-300 rounded-xl text-xs font-bold transition-colors cursor-pointer">
                 <ExternalLink size={13} />
                 <span className="hidden sm:inline">Filter</span>
               </button>
             </Link>
             <button
               onClick={handleExportCSV}
-              className="flex items-center gap-1.5 px-3 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-on-primary rounded-xl text-xs font-bold transition-colors cursor-pointer"
             >
               <Download size={13} />
               <span className="hidden sm:inline">Export</span>
@@ -264,19 +265,19 @@ export default function Transactions() {
 
         {/* Content */}
         {loading ? (
-          <div className="bg-gray-900/60 border border-gray-800 rounded-2xl p-4 space-y-3">
+          <div className="bg-gray-900/60 rounded-2xl p-4 space-y-3">
             {[...Array(6)].map((_, i) => <SkeletonTransactionRow key={i} />)}
           </div>
         ) : txs.length === 0 ? (
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col items-center justify-center py-24 text-center bg-gray-900/40 border border-gray-800 rounded-2xl"
+            className="flex flex-col items-center justify-center py-24 text-center bg-gray-900/40 rounded-2xl"
           >
-            <Receipt size={56} className="text-gray-700 mb-4" />
+            <Receipt size={56} className="text-ink mb-4" />
             <p className="text-xl font-bold text-gray-400 mb-2">No transactions yet</p>
             <p className="text-sm text-gray-600 mb-5">Add your first transaction from the dashboard</p>
-            <Link href="/dashboard" className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-sm font-bold transition-colors">
+            <Link href="/dashboard" className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-on-primary rounded-xl text-sm font-bold transition-colors">
               Go to Dashboard
             </Link>
           </motion.div>
@@ -284,17 +285,17 @@ export default function Transactions() {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="flex flex-col items-center justify-center py-20 text-center bg-gray-900/40 border border-gray-800 rounded-2xl"
+            className="flex flex-col items-center justify-center py-20 text-center bg-gray-900/40 rounded-2xl"
           >
-            <Search size={48} className="text-gray-700 mb-3" />
+            <Search size={48} className="text-ink mb-3" />
             <p className="text-lg font-bold text-gray-400 mb-1">No matches found</p>
             <p className="text-sm text-gray-600">Try different search terms or clear filters</p>
-            <button onClick={() => { setSearchQuery(""); setTypeFilter(""); }} className="mt-4 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-gray-400 rounded-xl text-sm font-bold transition-colors cursor-pointer">
+            <button onClick={() => { setSearchQuery(""); setTypeFilter(""); }} className="mt-4 px-4 py-2 bg-canvas/80 hover:bg-canvas-soft/80 text-gray-400 rounded-xl text-sm font-bold transition-colors cursor-pointer">
               Clear Filters
             </button>
           </motion.div>
         ) : (
-          <div className="bg-gray-900/60 border border-gray-800 rounded-2xl overflow-hidden">
+          <div className="bg-gray-900/60 rounded-2xl overflow-hidden">
             {/* Date-grouped transaction list */}
             {Object.entries(grouped).map(([dateLabel, dayTxs]) => {
               const dayTotal = dayTxs.reduce((s, t) => t.type === "expense" ? s - t.amount : s + t.amount, 0);
@@ -321,9 +322,9 @@ export default function Transactions() {
                           transition={{ duration: 0.18, delay: idx * 0.025 }}
                           className="group"
                         >
-                          <div className="flex items-center gap-3 px-4 py-3.5 hover:bg-white/4 transition-colors duration-150">
+                          <div className="flex items-center gap-3 px-4 py-3.5 hover:bg-canvas-soft/80 transition-colors duration-150">
                             {/* Category icon */}
-                            <div className={`${colors.bg} border ${colors.border} p-2.5 rounded-xl flex-shrink-0`}>
+                            <div className={`${colors.bg} p-2.5 rounded-xl flex-shrink-0`}>
                               <Icon className={`w-4 h-4 ${colors.text}`} />
                             </div>
 
@@ -339,7 +340,7 @@ export default function Transactions() {
                                     <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${
                                       tx.paymentMode === "UPI"
                                         ? "bg-indigo-500/15 text-indigo-400"
-                                        : "bg-yellow-500/15 text-yellow-400"
+                                        : "bg-yellow-500/15 text-warning-deep"
                                     }`}>
                                       {tx.paymentMode}
                                     </span>
@@ -390,7 +391,7 @@ export default function Transactions() {
                 <button
                   onClick={() => setPage(p => Math.max(1, p - 1))}
                   disabled={page === 1}
-                  className="flex items-center gap-1.5 px-4 py-2 bg-white/5 hover:bg-white/10 border border-gray-700 rounded-xl text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                  className="flex items-center gap-1.5 px-4 py-2 bg-canvas/80 hover:bg-canvas-soft/80 rounded-xl text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
                 >
                   <ChevronLeft size={15} /> Prev
                 </button>
@@ -408,7 +409,7 @@ export default function Transactions() {
                         key={p}
                         onClick={() => setPage(p)}
                         className={`w-8 h-8 rounded-lg text-sm font-bold transition-colors cursor-pointer ${
-                          page === p ? "bg-indigo-600 text-white" : "bg-white/5 hover:bg-white/10 text-gray-400"
+                          page === p ? "bg-indigo-600 text-on-primary" : "bg-canvas/80 hover:bg-canvas-soft/80 text-gray-400"
                         }`}
                       >
                         {p}
@@ -420,7 +421,7 @@ export default function Transactions() {
                 <button
                   onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                   disabled={page === totalPages}
-                  className="flex items-center gap-1.5 px-4 py-2 bg-white/5 hover:bg-white/10 border border-gray-700 rounded-xl text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                  className="flex items-center gap-1.5 px-4 py-2 bg-canvas/80 hover:bg-canvas-soft/80 rounded-xl text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
                 >
                   Next <ChevronRight size={15} />
                 </button>

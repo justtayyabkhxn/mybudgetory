@@ -42,7 +42,7 @@ function SkeletonDetail() {
       <div className="h-6 w-32 bg-gray-800/60 rounded-lg mx-auto" />
       <div className="mt-8 space-y-3">
         {[...Array(4)].map((_, i) => (
-          <div key={i} className="flex items-center gap-3 p-4 bg-gray-900/60 rounded-2xl border border-gray-800">
+          <div key={i} className="flex items-center gap-3 p-4 bg-gray-900/60 rounded-2xl">
             <div className="w-9 h-9 bg-gray-800 rounded-xl" />
             <div className="space-y-2 flex-1">
               <div className="h-3 w-20 bg-gray-800 rounded" />
@@ -107,17 +107,18 @@ export default function TransactionDetail() {
   const CatIcon = tx ? (CATEGORY_ICONS[tx.category] || CATEGORY_ICONS["Others"]) : null;
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white p-4 sm:p-8 pb-16">
-      <div className="fixed inset-0 pointer-events-none auth-dot-grid opacity-[0.14]" />
-      <div className="fixed top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-violet-500/30 to-transparent pointer-events-none z-50" />
+    <div className="min-h-screen md:pt-20 text-ink p-4 sm:p-8 pb-16">
+      <div className="fixed top-0 inset-x-0 h-px bg-primary pointer-events-none z-50" />
       <div className="max-w-lg mx-auto">
-        <Header />
+        <div className="md:hidden">
+          <Header />
+        </div>
 
         {/* Nav row */}
         <div className="flex items-center justify-between mt-4 mb-8">
           <button
             onClick={() => router.back()}
-            className="flex items-center gap-2 text-sm font-bold text-gray-400 hover:text-white transition-colors cursor-pointer group"
+            className="flex items-center gap-2 text-sm font-bold text-gray-400 hover:text-ink transition-colors cursor-pointer group"
           >
             <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
             Back
@@ -134,7 +135,7 @@ export default function TransactionDetail() {
             <p className="text-gray-500 text-sm">It may have been deleted or you don&apos;t have access.</p>
             <button
               onClick={() => router.push("/transactions")}
-              className="mt-6 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-sm font-bold transition-colors cursor-pointer"
+              className="mt-6 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-on-primary rounded-xl text-sm font-bold transition-colors cursor-pointer"
             >
               Back to Transactions
             </button>
@@ -148,23 +149,23 @@ export default function TransactionDetail() {
             transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
           >
             {/* Hero amount card */}
-            <div className={`relative overflow-hidden rounded-3xl p-8 mb-6 text-center border ${
-              isExpense
-                ? "bg-gradient-to-br from-red-950/60 via-gray-900 to-gray-900 border-red-500/20"
-                : "bg-gradient-to-br from-emerald-950/60 via-gray-900 to-gray-900 border-emerald-500/20"
-            }`}>
+            <div className={`relative overflow-hidden rounded-3xl p-8 mb-6 text-center ${
+ isExpense
+ ? "bg-canvas/80"
+ : "bg-canvas/80"
+ }`}>
               {/* Background glow */}
               <div className={`absolute inset-0 opacity-10 ${isExpense ? "bg-red-500" : "bg-emerald-500"}`}
                 style={{ filter: "blur(60px)", transform: "translate(-50%,-50%) scale(2)", top: "50%", left: "50%" }}
               />
 
               {/* Category icon */}
-              <div className={`${colors.bg} border ${colors.border} w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4`}>
+              <div className={`${colors.bg} w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4`}>
                 <CatIcon className={`w-8 h-8 ${colors.text}`} />
               </div>
 
               {/* Title */}
-              <h1 className="text-2xl font-black text-white mb-1 tracking-tight">{tx.title}</h1>
+              <h1 className="text-2xl font-black text-ink mb-1 tracking-tight">{tx.title}</h1>
               <p className="text-sm text-gray-400 mb-5">{tx.category}</p>
 
               {/* Amount */}
@@ -173,11 +174,11 @@ export default function TransactionDetail() {
               </div>
 
               {/* Type badge */}
-              <div className={`inline-flex items-center gap-1.5 mt-4 px-3 py-1.5 rounded-full text-xs font-bold border ${
-                isExpense
-                  ? "bg-red-500/15 text-red-300 border-red-500/30"
-                  : "bg-emerald-500/15 text-emerald-300 border-emerald-500/30"
-              }`}>
+              <div className={`inline-flex items-center gap-1.5 mt-4 px-3 py-1.5 rounded-full text-xs font-bold ${
+ isExpense
+ ? "bg-red-500/15 text-red-300"
+ : "bg-emerald-500/15 text-emerald-300"
+ }`}>
                 {isExpense ? <TrendingDown size={12} /> : <TrendingUp size={12} />}
                 {isExpense ? "Expense" : "Income"}
               </div>
@@ -196,21 +197,21 @@ export default function TransactionDetail() {
                 icon={<Tag size={15} className="text-purple-400" />}
                 label="Category"
                 value={tx.category}
-                badge={{ text: tx.category, className: `${colors.bg} ${colors.text} border ${colors.border}` }}
+                badge={{ text: tx.category, className: `${colors.bg} ${colors.text}` }}
               />
               <DetailRow
                 icon={
                   tx.paymentMode === "UPI"
                     ? <CreditCard size={15} className="text-blue-400" />
-                    : <Banknote size={15} className="text-yellow-400" />
+                    : <Banknote size={15} className="text-warning-deep" />
                 }
                 label="Payment Mode"
                 value={tx.paymentMode}
                 badge={{
                   text: tx.paymentMode,
                   className: tx.paymentMode === "UPI"
-                    ? "bg-indigo-500/15 text-indigo-400 border border-indigo-500/30"
-                    : "bg-yellow-500/15 text-yellow-400 border border-yellow-500/30",
+                    ? "bg-indigo-500/15 text-indigo-400"
+                    : "bg-yellow-500/15 text-warning-deep",
                 }}
               />
               {tx.comment && (
@@ -226,7 +227,7 @@ export default function TransactionDetail() {
             <div className="flex gap-3">
               <button
                 onClick={() => setEditing(true)}
-                className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl font-bold text-sm bg-indigo-600/20 hover:bg-indigo-600/40 border border-indigo-500/30 text-indigo-300 hover:text-indigo-200 transition-all duration-200 cursor-pointer"
+                className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl font-bold text-sm bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 hover:text-ink-deep transition-all duration-200 cursor-pointer"
               >
                 <Pencil size={15} />
                 Edit Transaction
@@ -234,7 +235,7 @@ export default function TransactionDetail() {
               <button
                 onClick={() => setConfirmDelete(true)}
                 disabled={deleting}
-                className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl font-bold text-sm bg-red-600/15 hover:bg-red-600/30 border border-red-500/30 text-red-400 hover:text-red-300 transition-all duration-200 cursor-pointer disabled:opacity-50"
+                className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl font-bold text-sm bg-red-600/15 hover:bg-red-600/30 text-red-400 hover:text-red-300 transition-all duration-200 cursor-pointer disabled:opacity-50"
               >
                 <Trash2 size={15} />
                 Delete
@@ -278,8 +279,8 @@ function DetailRow({
   badge?: { text: string; className: string };
 }) {
   return (
-    <div className="flex items-center gap-3 px-4 py-3.5 bg-gray-900/60 border border-gray-800 rounded-2xl">
-      <div className="w-8 h-8 rounded-xl bg-white/5 flex items-center justify-center flex-shrink-0">
+    <div className="flex items-center gap-3 px-4 py-3.5 bg-gray-900/60 rounded-2xl">
+      <div className="w-8 h-8 rounded-xl bg-canvas/80 flex items-center justify-center flex-shrink-0">
         {icon}
       </div>
       <div className="flex-1 min-w-0">

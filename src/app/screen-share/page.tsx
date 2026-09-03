@@ -32,13 +32,13 @@ export default function Page() {
   };
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
+    <main className="min-h-screen flex items-center justify-center px-4">
       <button
         onClick={isSharing ? stopScreenShare : startScreenShare}
-        className={`w-full max-w-xs rounded-xl px-6 py-4 text-white font-semibold text-lg transition ${
+        className={`w-full max-w-xs rounded-3xl px-6 py-4 font-semibold text-lg transition-colors duration-150 cursor-pointer ${
           isSharing
-            ? "bg-red-500 hover:bg-red-600"
-            : "bg-blue-500 hover:bg-blue-600"
+            ? "bg-negative text-on-solid hover:bg-negative-deep"
+            : "bg-primary text-on-primary hover:bg-primary-active"
         }`}
       >
         {isSharing ? "Stop Sharing" : "Share Screen"}

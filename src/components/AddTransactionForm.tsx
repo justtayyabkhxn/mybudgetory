@@ -181,14 +181,14 @@ export function AddTransactionForm({ onAdd }: { onAdd: () => void }) {
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
-      className="relative rounded-2xl border border-white/10 bg-gradient-to-br from-gray-900/90 via-gray-900 to-black shadow-2xl h-full"
+      className="relative rounded-3xl bg-canvas/80 h-full outline-none overflow-hidden"
     >
       {/* Colored accent strip at top based on type */}
       <div
         className={`h-1 w-full rounded-t-2xl transition-all duration-500 ${
           isExpense
-            ? "bg-gradient-to-r from-red-500 via-pink-500 to-rose-500"
-            : "bg-gradient-to-r from-green-400 via-emerald-400 to-teal-400"
+            ? "bg-negative"
+            : "bg-positive"
         }`}
       />
 
@@ -201,14 +201,14 @@ export function AddTransactionForm({ onAdd }: { onAdd: () => void }) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}
               transition={{ duration: 0.2 }}
-              className="flex items-center gap-2 mb-4 px-3 py-2 rounded-xl border border-yellow-500/30 bg-yellow-500/10 text-yellow-400 text-xs font-semibold"
+              className="flex items-center gap-2 mb-4 px-3 py-2 rounded-xl bg-yellow-500/10 text-warning-deep text-xs font-semibold"
             >
               <WifiOff size={13} />
               {isOffline
                 ? pendingCount > 0
-                  ? `Offline — ${pendingCount} transaction${pendingCount > 1 ? "s" : ""} queued`
+                  ? `Offline — ${pendingCount} transaction${pendingCount > 1 ? "s" :""} queued`
                   : "You're offline — transactions will be saved locally"
-                : `${pendingCount} offline transaction${pendingCount > 1 ? "s" : ""} pending sync`}
+                : `${pendingCount} offline transaction${pendingCount > 1 ? "s" :""} pending sync`}
             </motion.div>
           )}
         </AnimatePresence>
@@ -216,13 +216,13 @@ export function AddTransactionForm({ onAdd }: { onAdd: () => void }) {
         {/* Type + Payment toggles */}
         <div className="flex flex-nowrap items-center justify-between gap-2 mb-6">
           {/* Type toggle */}
-          <div className="flex bg-black/40 rounded-xl p-1 border border-white/10 shrink-0">
+          <div className="flex bg-canvas-soft/80 rounded-3xl p-1 shrink-0">
             <button
               type="button"
               onClick={() => setForm((p) => ({ ...p, type: "expense" }))}
               className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-2 sm:py-2 rounded-lg text-xs sm:text-sm font-bold transition-all duration-300 cursor-pointer ${
                 isExpense
-                  ? "bg-red-500/20 text-red-400 border border-red-500/40 shadow-lg shadow-red-500/10"
+                  ? "bg-red-500/20 text-red-400 shadow-lg"
                   : "text-gray-500 hover:text-gray-300"
               }`}
             >
@@ -234,7 +234,7 @@ export function AddTransactionForm({ onAdd }: { onAdd: () => void }) {
               onClick={() => setForm((p) => ({ ...p, type: "income" }))}
               className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-2 sm:py-2 rounded-lg text-xs sm:text-sm font-bold transition-all duration-300 cursor-pointer ${
                 !isExpense
-                  ? "bg-green-500/20 text-green-400 border border-green-500/40 shadow-lg shadow-green-500/10"
+                  ? "bg-green-500/20 text-green-400 shadow-lg"
                   : "text-gray-500 hover:text-gray-300"
               }`}
             >
@@ -244,13 +244,13 @@ export function AddTransactionForm({ onAdd }: { onAdd: () => void }) {
           </div>
 
           {/* Payment mode toggle */}
-          <div className="flex bg-black/40 rounded-xl p-1 border border-white/10 shrink-0">
+          <div className="flex bg-canvas-soft/80 rounded-3xl p-1 shrink-0">
             <button
               type="button"
               onClick={() => setForm((p) => ({ ...p, paymentMode: "UPI" }))}
               className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-2 sm:py-2 rounded-lg text-[11px] sm:text-xs font-bold transition-all duration-200 cursor-pointer ${
                 form.paymentMode === "UPI"
-                  ? "bg-indigo-500/20 text-indigo-400 border border-indigo-500/40"
+                  ? "bg-indigo-500/20 text-indigo-400"
                   : "text-gray-500 hover:text-gray-300"
               }`}
             >
@@ -262,7 +262,7 @@ export function AddTransactionForm({ onAdd }: { onAdd: () => void }) {
               onClick={() => setForm((p) => ({ ...p, paymentMode: "Cash" }))}
               className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-2 sm:py-2 rounded-lg text-[11px] sm:text-xs font-bold transition-all duration-200 cursor-pointer ${
                 form.paymentMode === "Cash"
-                  ? "bg-yellow-500/20 text-yellow-400 border border-yellow-500/40"
+                  ? "bg-yellow-500/20 text-warning-deep"
                   : "text-gray-500 hover:text-gray-300"
               }`}
             >
@@ -276,7 +276,7 @@ export function AddTransactionForm({ onAdd }: { onAdd: () => void }) {
           {/* Amount + Title — one row */}
           <div className="flex gap-3">
             <div className="relative w-[42%] sm:w-2/5 shrink-0">
-              <div className="flex items-center gap-1.5 bg-black/50 border border-white/10 rounded-xl px-3 py-3 focus-within:border-indigo-500/60 focus-within:ring-2 focus-within:ring-indigo-500/10 transition-all duration-200">
+              <div className="flex items-center gap-1.5 bg-canvas-soft/80 rounded-xl px-3 py-3 focus-within:ring-2 focus-within:ring-primary transition-all duration-200">
                 <span
                   className={`text-lg font-black ${
                     isExpense ? "text-red-400" : "text-green-400"
@@ -293,7 +293,7 @@ export function AddTransactionForm({ onAdd }: { onAdd: () => void }) {
                     setForm((p) => ({ ...p, amount: e.target.value }))
                   }
                   required
-                  className="flex-1 min-w-0 bg-transparent text-xl font-black text-white placeholder-gray-700 outline-none w-full"
+                  className="flex-1 min-w-0 bg-transparent text-xl font-black text-ink placeholder-mute outline-none w-full"
                 />
               </div>
             </div>
@@ -305,7 +305,7 @@ export function AddTransactionForm({ onAdd }: { onAdd: () => void }) {
               value={form.title}
               onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))}
               required
-              className="flex-1 min-w-0 bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-indigo-500/60 focus:ring-2 focus:ring-indigo-500/10 transition-all duration-200 font-medium"
+              className="flex-1 min-w-0 bg-canvas-soft/80 rounded-xl px-4 py-3 text-ink placeholder-mute focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-200 font-medium"
             />
           </div>
 
@@ -332,7 +332,7 @@ export function AddTransactionForm({ onAdd }: { onAdd: () => void }) {
                       <button
                         type="button"
                         onClick={() => setCategoryOpen((v) => !v)}
-                        className={`w-full flex items-center justify-between gap-1.5 px-3 py-3 rounded-xl border text-xs sm:text-sm font-bold transition-all duration-200 cursor-pointer ${colors.bg} ${colors.text} ${colors.border}`}
+                        className={`w-full flex items-center justify-between gap-1.5 px-3 py-3 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 cursor-pointer ${colors.bg} ${colors.text}`}
                       >
                         <span className="flex items-center gap-2">
                           <ActiveIcon size={16} />
@@ -340,7 +340,7 @@ export function AddTransactionForm({ onAdd }: { onAdd: () => void }) {
                         </span>
                         <ChevronDown
                           size={16}
-                          className={`transition-transform duration-200 ${categoryOpen ? "rotate-180" : ""}`}
+                          className={`transition-transform duration-200 ${categoryOpen ? "rotate-180" :""}`}
                         />
                       </button>
                     );
@@ -353,7 +353,7 @@ export function AddTransactionForm({ onAdd }: { onAdd: () => void }) {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -6, scale: 0.98 }}
                         transition={{ duration: 0.15 }}
-                        className="absolute z-20 mt-2 w-full bg-[#14141f] border border-white/10 rounded-xl shadow-2xl p-2 grid grid-cols-2 gap-1.5"
+                        className="absolute z-20 mt-2 w-full bg-canvas/80 rounded-xl shadow-lg p-2 grid grid-cols-2 gap-1.5"
                       >
                         {CATEGORIES.map(({ name, icon: Icon }) => {
                           const colors =
@@ -370,7 +370,7 @@ export function AddTransactionForm({ onAdd }: { onAdd: () => void }) {
                               className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition-colors duration-150 cursor-pointer ${
                                 isActive
                                   ? `${colors.bg} ${colors.text}`
-                                  : "text-gray-400 hover:bg-white/5 hover:text-gray-200"
+                                  : "text-gray-400 hover:bg-canvas-soft/80 hover:text-gray-200"
                               }`}
                             >
                               <Icon size={14} />
@@ -399,7 +399,7 @@ export function AddTransactionForm({ onAdd }: { onAdd: () => void }) {
                     setForm((p) => ({ ...p, date: e.target.value }))
                   }
                   required
-                  className="w-full bg-black/40 border border-white/10 rounded-xl pl-9 pr-2 py-3 text-white focus:outline-none focus:border-indigo-500/60 focus:ring-2 focus:ring-indigo-500/10 transition-all duration-200 text-sm"
+                  className="w-full bg-canvas-soft/80 rounded-xl pl-9 pr-2 py-3 text-ink focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-200 text-sm"
                 />
               </div>
 
@@ -407,10 +407,10 @@ export function AddTransactionForm({ onAdd }: { onAdd: () => void }) {
               <button
                 type="button"
                 onClick={() => setShowComment((v) => !v)}
-                className={`shrink-0 flex items-center gap-1.5 px-3 py-3 rounded-xl border text-xs font-bold transition-all duration-200 cursor-pointer ${
+                className={`shrink-0 flex items-center gap-1.5 px-3 py-3 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer ${
                   showComment
-                    ? "bg-purple-500/15 text-purple-400 border-purple-500/30"
-                    : "bg-white/5 text-gray-500 border-white/10 hover:bg-white/10"
+                    ? "bg-purple-500/15 text-purple-400"
+                    : "bg-canvas-soft/80 text-body hover:bg-primary-pale"
                 }`}
               >
                 <MessageSquare size={14} />
@@ -435,7 +435,7 @@ export function AddTransactionForm({ onAdd }: { onAdd: () => void }) {
                   onChange={(e) =>
                     setForm((p) => ({ ...p, comment: e.target.value }))
                   }
-                  className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-purple-500/60 focus:ring-2 focus:ring-purple-500/10 transition-all duration-200 text-sm"
+                  className="w-full bg-canvas-soft/80 rounded-xl px-4 py-3 text-ink placeholder-mute focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-200 text-sm"
                 />
               </motion.div>
             )}
@@ -446,12 +446,10 @@ export function AddTransactionForm({ onAdd }: { onAdd: () => void }) {
             type="submit"
             disabled={loading}
             whileTap={{ scale: 0.98 }}
-            className={`w-full py-3.5 rounded-xl font-black text-base tracking-wide transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer shadow-lg ${
+            className={`w-full py-3.5 rounded-3xl font-semibold text-base transition-colors duration-200 flex items-center justify-center gap-2 cursor-pointer ${
               loading
-                ? "bg-gray-700 text-gray-400 cursor-not-allowed"
-                : isExpense
-                  ? "bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white shadow-red-900/40"
-                  : "bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white shadow-green-900/40"
+                ? "bg-canvas-soft/80 text-mute cursor-not-allowed"
+                : "bg-primary hover:bg-primary-active text-on-primary"
             }`}
           >
             {loading ? (
@@ -481,7 +479,7 @@ export function AddTransactionForm({ onAdd }: { onAdd: () => void }) {
           <motion.p
             initial={{ opacity: 0, y: 4 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-red-400 text-sm mt-3 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2"
+            className="text-red-400 text-sm mt-3 bg-red-500/10 rounded-lg px-3 py-2"
           >
             {error}
           </motion.p>

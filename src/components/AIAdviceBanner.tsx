@@ -223,7 +223,7 @@ function AdviceCard({
   const colors = {
     violet: {
       border: "border-violet-500/25",
-      bg: "from-violet-500/10 via-gray-900/60 to-gray-900/80",
+      bg: "",
       iconBg: "bg-violet-500/15 border-violet-500/25",
       iconText: "text-violet-400",
       badge: "bg-violet-500/15 text-violet-300 border-violet-500/25",
@@ -231,7 +231,7 @@ function AdviceCard({
     },
     emerald: {
       border: "border-emerald-500/25",
-      bg: "from-emerald-500/10 via-gray-900/60 to-gray-900/80",
+      bg: "",
       iconBg: "bg-emerald-500/15 border-emerald-500/25",
       iconText: "text-emerald-400",
       badge: "bg-emerald-500/15 text-emerald-300 border-emerald-500/25",
@@ -239,7 +239,7 @@ function AdviceCard({
     },
   }[accentColor] ?? {
     border: "border-violet-500/25",
-    bg: "from-violet-500/10 via-gray-900/60 to-gray-900/80",
+    bg: "",
     iconBg: "bg-violet-500/15 border-violet-500/25",
     iconText: "text-violet-400",
     badge: "bg-violet-500/15 text-violet-300 border-violet-500/25",
@@ -255,7 +255,7 @@ function AdviceCard({
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -8, scale: 0.97 }}
         transition={{ duration: 0.38 }}
-        className={`relative rounded-2xl border ${colors.border} bg-gradient-to-br ${colors.bg} p-5 shadow-xl`}
+        className={`relative rounded-2xl bg-primary-pale p-5 shadow-xl`}
       >
         {/* Dismiss */}
         <button
@@ -269,7 +269,7 @@ function AdviceCard({
         {/* Header */}
         <div className="flex items-center gap-2.5 mb-3">
           <div
-            className={`p-1.5 rounded-lg ${colors.iconBg} border`}
+            className={`p-1.5 rounded-lg ${colors.iconBg}`}
           >
             <Bot size={14} className={colors.iconText} />
           </div>
@@ -280,7 +280,7 @@ function AdviceCard({
             <p className="text-[10px] text-gray-600">{sublabel}</p>
           </div>
           <span
-            className={`ml-auto mr-6 text-[10px] font-semibold px-2 py-0.5 rounded-full border ${colors.badge}`}
+            className={`ml-auto mr-6 text-[10px] font-semibold px-2 py-0.5 rounded-full ${colors.badge}`}
           >
             AI
           </span>

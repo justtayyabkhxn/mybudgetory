@@ -1,33 +1,32 @@
 "use client";
 
 import Link from "next/link";
-import { Sparkles } from "lucide-react";
 
+// Wise `footer` — the dark band closing every page.
+//
+// It uses --color-ink-surface rather than --color-ink: this band is dark by
+// design, so it must NOT invert with the theme the way a text token does. In
+// dark mode it only lifts enough to separate from the page ground.
 const Footer = () => {
   return (
-    <footer className="mt-16 pb-18 md:pb-10 border-t border-white/[0.06]">
-      <div className="max-w-4xl mx-auto px-4 py-8 flex flex-col items-center gap-3">
+    <footer className="mt-16 bg-ink-surface text-on-ink-surface rounded-t-3xl">
+      <div className="max-w-4xl mx-auto px-6 py-12 pb-24 md:pb-12 flex flex-col items-center gap-3">
         {/* Brand */}
-        <div className="flex items-center gap-1.5">
-          <Sparkles size={13} className="text-violet-400" />
-          <span className="text-sm font-black bg-gradient-to-r from-violet-400 via-purple-400 to-indigo-400 bg-clip-text text-transparent tracking-tight">
-            MyBudgetory
-          </span>
-        </div>
+        <span className="text-xl font-extrabold tracking-tight text-on-ink-surface">
+          MyBudgetory<span className="text-primary">.</span>
+        </span>
 
         {/* Tagline */}
-        <p className="text-[11px] text-gray-600 font-medium tracking-widest uppercase">
-          Your Budget. Your Story.
-        </p>
+        <p className="text-sm text-on-ink-surface/70">Your budget. Your story.</p>
 
         {/* Credit */}
-        <p className="text-xs text-gray-600">
+        <p className="text-sm text-on-ink-surface/70 mt-2">
           Crafted by{" "}
           <Link
             href="https://justtayyabkhan.vercel.app"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-gray-400 hover:text-violet-400 font-semibold transition-colors duration-200"
+            className="text-primary font-semibold hover:text-primary-active transition-colors duration-200"
           >
             Tayyab Khan
           </Link>{" "}

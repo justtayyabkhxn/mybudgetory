@@ -12,24 +12,26 @@ export default function Header() {
       transition={{ duration: 1, ease: "easeOut" }}
     >
       <Link href="/">
+        {/* Wordmark — ink display weight with the single brand accent as the
+            full stop. The lime green never carries the whole word. */}
         <motion.span
-          whileHover={{ scale: 1.05, rotate: 0.5 }}
-          whileTap={{ scale: 0.95 }}
-          className="text-4xl md:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-violet-400 via-purple-400 to-indigo-400 bg-clip-text text-transparent transition-all duration-300"
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.97 }}
+          className="inline-block text-4xl md:text-5xl font-extrabold tracking-tight text-ink transition-all duration-300"
         >
-          MyBudgetory
+          MyBudgetory<span className="text-primary">.</span>
         </motion.span>
       </Link>
 
       <motion.p
-        className="text-sm text-gray-500 font-semibold tracking-tight mt-1 mb-3 flex items-center gap-2"
+        className="text-sm text-body font-medium mt-1 mb-3 flex items-center gap-2"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.5, duration: 1 }}
       >
-        <CreditCard size={14} className="text-violet-500" />
+        <CreditCard size={14} className="text-ink-deep" />
         Your Budget.
-        <ScrollText size={14} className="text-indigo-500" />
+        <ScrollText size={14} className="text-ink-deep" />
         Your Story.
       </motion.p>
     </motion.div>

@@ -211,19 +211,19 @@ export default function BudgetGoalsPage() {
     const pct = (spent / limit) * 100;
     if (pct > 100)
       return (
-        <span className="text-xs font-bold bg-red-500/20 text-red-400 border border-red-500/30 px-2 py-0.5 rounded-full flex items-center gap-1">
+        <span className="text-xs font-bold bg-red-500/20 text-red-400 px-2 py-0.5 rounded-full flex items-center gap-1">
           <AlertTriangle size={10} /> Over Budget!
         </span>
       );
     if (pct >= 80)
       return (
-        <span className="text-xs font-bold bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 px-2 py-0.5 rounded-full flex items-center gap-1">
+        <span className="text-xs font-bold bg-yellow-500/20 text-warning-deep px-2 py-0.5 rounded-full flex items-center gap-1">
           <AlertTriangle size={10} /> Warning
         </span>
       );
     if (pct >= 1)
       return (
-        <span className="text-xs font-bold bg-green-500/20 text-green-400 border border-green-500/30 px-2 py-0.5 rounded-full flex items-center gap-1">
+        <span className="text-xs font-bold bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full flex items-center gap-1">
           <CheckCircle size={10} /> On Track
         </span>
       );
@@ -233,15 +233,16 @@ export default function BudgetGoalsPage() {
   const monthName = now.toLocaleString("default", { month: "long" });
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white p-4 sm:p-8 pb-24">
-      <div className="fixed inset-0 pointer-events-none auth-dot-grid opacity-[0.14]" />
-      <div className="fixed top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-violet-500/30 to-transparent pointer-events-none z-50" />
+    <div className="min-h-screen md:pt-20 text-ink p-4 sm:p-8 pb-24">
+      <div className="fixed top-0 inset-x-0 h-px bg-primary pointer-events-none z-50" />
       <div className="max-w-5xl mx-auto">
-        <Header />
+        <div className="md:hidden">
+          <Header />
+        </div>
 
         <div className="flex items-center justify-between mt-4 mb-6">
           <div className="flex items-center gap-2">
-            <Target className="text-orange-400" size={28} />
+            <Target className="text-warning-deep" size={28} />
             <h1 className="text-3xl font-extrabold tracking-tight">
               Budget Goals
             </h1>
@@ -254,7 +255,7 @@ export default function BudgetGoalsPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
-          className="bg-gradient-to-r from-indigo-900/40 via-purple-900/40 to-pink-900/40 border border-indigo-500/20 rounded-2xl p-6 mb-6"
+          className="bg-primary-pale rounded-2xl p-6 mb-6"
         >
           <div className="flex items-center gap-2 mb-3">
             <TrendingUp className="text-indigo-400" size={20} />
@@ -295,9 +296,9 @@ export default function BudgetGoalsPage() {
               <SpeedometerGauge
                 pct={Math.round((totalSpent / totalLimit) * 100)}
                 hex={
-                  totalSpent > totalLimit ? "#f87171" :
-                  (totalSpent / totalLimit) >= 0.8 ? "#fb923c" :
-                  "#6366f1"
+                  totalSpent > totalLimit ? "var(--color-negative)" :
+                  (totalSpent / totalLimit) >= 0.8 ? "var(--color-warning-deep)" :
+                  "var(--color-primary)"
                 }
                 size={110}
               />
@@ -346,13 +347,13 @@ export default function BudgetGoalsPage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3, delay: idx * 0.05 }}
-                  className={`bg-gray-900/80 border ${colors.border} rounded-2xl p-5 hover:bg-gray-800/80 transition-colors duration-200`}
+                  className={`bg-gray-900/80 rounded-2xl p-5 hover:bg-gray-800/80 transition-colors duration-200`}
                 >
                   {/* Card Header */}
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3">
                       <div
-                        className={`${colors.bg} p-2.5 rounded-xl border ${colors.border}`}
+                        className={`${colors.bg} p-2.5 rounded-xl`}
                       >
                         <Icon className={`${colors.text} w-5 h-5`} />
                       </div>
@@ -380,9 +381,9 @@ export default function BudgetGoalsPage() {
                           <SpeedometerGauge
                             pct={pct}
                             hex={
-                              pct > 100 ? "#f87171" :
-                              pct >= 80  ? "#fb923c" :
-                              pct >= 60  ? "#facc15" :
+                              pct > 100 ? "var(--color-negative)" :
+                              pct >= 80  ? "var(--color-warning-deep)" :
+                              pct >= 60  ? "var(--color-warning)" :
                               colors.hex
                             }
                             size={96}
@@ -391,9 +392,9 @@ export default function BudgetGoalsPage() {
                             className="text-sm font-black -mt-1 tabular-nums"
                             style={{
                               color:
-                                pct > 100 ? "#f87171" :
-                                pct >= 80  ? "#fb923c" :
-                                pct >= 60  ? "#facc15" :
+                                pct > 100 ? "var(--color-negative)" :
+                                pct >= 80  ? "var(--color-warning-deep)" :
+                                pct >= 60  ? "var(--color-warning)" :
                                 colors.hex,
                             }}
                           >
@@ -429,13 +430,13 @@ export default function BudgetGoalsPage() {
                         value={limitInput}
                         onChange={(e) => setLimitInput(e.target.value)}
                         placeholder="Enter limit ₹"
-                        className="flex-1 bg-gray-700/60 border border-gray-600 text-white placeholder-gray-500 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="flex-1 bg-canvas-soft/80 text-ink placeholder-gray-500 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                         autoFocus
                       />
                       <button
                         onClick={() => handleSaveLimit(category)}
                         disabled={savingCategory === category}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-lg text-sm font-bold transition-colors flex items-center gap-1 cursor-pointer"
+                        className="bg-indigo-600 hover:bg-indigo-200 text-on-primary px-3 py-2 rounded-lg text-sm font-bold transition-colors flex items-center gap-1 cursor-pointer"
                       >
                         <Save size={14} />
                         <span>
@@ -448,7 +449,7 @@ export default function BudgetGoalsPage() {
                           setEditingCategory(null);
                           setLimitInput("");
                         }}
-                        className="text-gray-400 hover:text-white p-2 cursor-pointer"
+                        className="text-gray-400 hover:text-ink p-2 cursor-pointer"
                       >
                         <X size={16} />
                       </button>
@@ -460,7 +461,7 @@ export default function BudgetGoalsPage() {
                           setEditingCategory(category);
                           setLimitInput(limit ? limit.toString() : "");
                         }}
-                        className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg border ${colors.border} ${colors.text} ${colors.bg} hover:opacity-80 transition-opacity cursor-pointer`}
+                        className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg ${colors.text} ${colors.bg} hover:opacity-80 transition-opacity cursor-pointer`}
                       >
                         <Edit3 size={12} />
                         <span>
@@ -471,7 +472,7 @@ export default function BudgetGoalsPage() {
                       {limit > 0 && (
                         <button
                           onClick={() => handleDeleteGoal(category)}
-                          className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg border border-red-500/30 text-red-400 bg-red-500/10 hover:bg-red-500/20 transition-colors cursor-pointer"
+                          className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg text-red-400 bg-red-500/10 hover:bg-red-500/20 transition-colors cursor-pointer"
                         >
                           <Trash2 size={12} />
                           <span>

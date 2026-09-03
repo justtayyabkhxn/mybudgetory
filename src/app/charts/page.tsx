@@ -12,16 +12,18 @@ import { TrendingUp, TrendingDown, BarChartBig, Wallet, Sparkles, Flame, Chevron
 import { motion } from "framer-motion";
 
 // ─── Spending Heatmap ─────────────────────────────────────────────────────────
-const MONTH_LABELS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-const DAY_LABELS   = ["S","M","T","W","T","F","S"];
+const MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const DAY_LABELS   = ["S", "M", "T", "W", "T", "F", "S"];
 
+// Sequential ramp built from the Wise palette: pale brand green through the
+// warning family into negative red. Empty days stay on the sage canvas.
 function getHeatColor(amount: number): string {
-  if (amount === 0)    return "bg-white/[0.04]";
-  if (amount < 150)   return "bg-emerald-800/70";
-  if (amount < 400)   return "bg-emerald-500/75";
-  if (amount < 800)   return "bg-amber-500/75";
-  if (amount < 1500)  return "bg-orange-500/80";
-  return                     "bg-red-500/85";
+  if (amount === 0)   return "bg-canvas-soft/80";
+  if (amount < 150)   return "bg-primary-pale";
+  if (amount < 400)   return "bg-primary";
+  if (amount < 800)   return "bg-warning";
+  if (amount < 1500)  return "bg-warning-deep";
+  return                     "bg-negative";
 }
 
 function SpendingHeatmap({ txs }: { txs: Transaction[] }) {
@@ -33,7 +35,7 @@ function SpendingHeatmap({ txs }: { txs: Transaction[] }) {
     if (tx.type !== "expense") return;
     const d = new Date(tx.date);
     if (d.getFullYear() !== year) return;
-    const key = `${year}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    const key = `${year}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2,"0")}`;
     expMap[key] = (expMap[key] || 0) + tx.amount;
   });
 
@@ -48,7 +50,7 @@ function SpendingHeatmap({ txs }: { txs: Transaction[] }) {
   const cells: Cell[] = Array(startOffset).fill(null);
   for (let i = 0; i < numDays; i++) {
     const d = new Date(year, 0, 1 + i);
-    const key = `${year}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    const key = `${year}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2,"0")}`;
     cells.push({ date: key, amount: expMap[key] || 0 });
   }
   // Pad to full weeks
@@ -79,26 +81,26 @@ function SpendingHeatmap({ txs }: { txs: Transaction[] }) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.1 }}
-      className="bg-white/[0.03] border border-white/8 rounded-2xl p-5 mb-6"
+      className="bg-canvas/80 rounded-2xl p-5 mb-6"
     >
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
         <div className="flex items-center gap-2">
-          <div className="p-2 rounded-xl bg-orange-500/10 border border-orange-500/20">
-            <Flame size={15} className="text-orange-400" />
+          <div className="p-2 rounded-xl bg-orange-500/10">
+            <Flame size={15} className="text-warning-deep" />
           </div>
           <div>
-            <p className="text-sm font-black text-white tracking-tight">Spending Heatmap</p>
+            <p className="text-sm font-black text-ink tracking-tight">Spending Heatmap</p>
             <p className="text-[10px] text-gray-600 font-semibold uppercase tracking-widest">{year} · every day</p>
           </div>
         </div>
         <div className="flex gap-4 text-xs">
           <div className="text-center">
-            <p className="font-black text-orange-400">₹{totalSpent >= 1000 ? `${(totalSpent/1000).toFixed(1)}k` : totalSpent}</p>
+            <p className="font-black text-warning-deep">₹{totalSpent >= 1000 ? `${(totalSpent/1000).toFixed(1)}k` : totalSpent}</p>
             <p className="text-gray-600 text-[10px] uppercase tracking-wider">total</p>
           </div>
           <div className="text-center">
-            <p className="font-black text-amber-400">{activeDays}</p>
+            <p className="font-black text-warning-deep">{activeDays}</p>
             <p className="text-gray-600 text-[10px] uppercase tracking-wider">days</p>
           </div>
         </div>
@@ -140,7 +142,7 @@ function SpendingHeatmap({ txs }: { txs: Transaction[] }) {
                       title={cell && cell.amount > 0 ? `${cell.date}  ₹${cell.amount.toLocaleString()}` : cell?.date || ""}
                       className={`w-[12px] h-[12px] rounded-[2px] transition-all duration-200 cursor-default
                         ${cell ? getHeatColor(cell.amount) : "opacity-0"}
-                        ${cell && cell.amount > 0 ? "hover:ring-1 hover:ring-white/40 hover:scale-125" : ""}
+                        ${cell && cell.amount > 0 ? "hover:ring-1 hover:ring-primary hover:scale-125" : ""}
                       `}
                     />
                   ))}
@@ -154,7 +156,7 @@ function SpendingHeatmap({ txs }: { txs: Transaction[] }) {
       {/* Legend */}
       <div className="flex items-center gap-2 mt-4">
         <span className="text-[10px] text-gray-600">Less</span>
-        {["bg-white/[0.04]","bg-emerald-800/70","bg-emerald-500/75","bg-amber-500/75","bg-orange-500/80","bg-red-500/85"].map((c, i) => (
+        {["bg-canvas-soft/80", "bg-primary-pale", "bg-primary", "bg-warning", "bg-warning-deep", "bg-negative"].map((c, i) => (
           <div key={i} className={`w-3 h-3 rounded-[2px] ${c}`} />
         ))}
         <span className="text-[10px] text-gray-600">More</span>
@@ -332,11 +334,12 @@ const ChartsPage = () => {
   const monthName = viewDate.toLocaleString("default", { month: "long" });
 
   return (
-    <main className="min-h-screen bg-[#0a0a0f] text-white p-4 sm:p-5 pb-28">
-      <div className="fixed inset-0 pointer-events-none auth-dot-grid opacity-[0.14]" />
-      <div className="fixed top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-violet-500/30 to-transparent pointer-events-none z-50" />
+    <main className="min-h-screen md:pt-20 text-ink p-4 sm:p-5 pb-28">
+      <div className="fixed top-0 inset-x-0 h-px bg-primary pointer-events-none z-50" />
       <div className="max-w-5xl mx-auto">
-        <Header />
+        <div className="md:hidden">
+          <Header />
+        </div>
 
         <div className="flex justify-between items-center mt-4 mb-6">
           <div className="flex items-center gap-3">
@@ -360,8 +363,8 @@ const ChartsPage = () => {
             transition={{ duration: 0.45 }}
             className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-8"
           >
-            <div className="bg-gradient-to-br from-green-900/40 to-green-900/10 border border-green-500/20 rounded-2xl p-4 flex items-center gap-3">
-              <div className="bg-green-500/15 p-2.5 rounded-xl border border-green-500/20">
+            <div className="bg-primary-pale rounded-2xl p-4 flex items-center gap-3">
+              <div className="bg-green-500/15 p-2.5 rounded-xl">
                 <TrendingUp className="w-5 h-5 text-green-400" />
               </div>
               <div>
@@ -369,8 +372,8 @@ const ChartsPage = () => {
                 <CountUp end={inflow} prefix="₹" className="text-xl font-black text-green-400" />
               </div>
             </div>
-            <div className="bg-gradient-to-br from-red-900/40 to-red-900/10 border border-red-500/20 rounded-2xl p-4 flex items-center gap-3">
-              <div className="bg-red-500/15 p-2.5 rounded-xl border border-red-500/20">
+            <div className="bg-red-50 rounded-2xl p-4 flex items-center gap-3">
+              <div className="bg-red-500/15 p-2.5 rounded-xl">
                 <TrendingDown className="w-5 h-5 text-red-400" />
               </div>
               <div>
@@ -379,15 +382,15 @@ const ChartsPage = () => {
               </div>
             </div>
             {/* Month selector chip — sits between the two pairs of stat chips */}
-            <div className="col-span-2 sm:col-span-1 bg-white/[0.03] border border-white/8 rounded-2xl p-2 flex items-center justify-between gap-1">
+            <div className="col-span-2 sm:col-span-1 bg-canvas/80 rounded-2xl p-2 flex items-center justify-between gap-1">
               <button
                 onClick={goToPrev}
-                className="p-1.5 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors cursor-pointer"
+                className="p-1.5 rounded-lg hover:bg-canvas-soft/80 text-gray-400 hover:text-ink transition-colors cursor-pointer"
               >
                 <ChevronLeft size={18} />
               </button>
               <div className="text-center">
-                <p className="text-sm font-black text-white tracking-tight whitespace-nowrap">
+                <p className="text-sm font-black text-ink tracking-tight whitespace-nowrap">
                   {monthName.slice(0, 3)} {viewYear}
                 </p>
                 {!isCurrentMonth && (
@@ -402,23 +405,23 @@ const ChartsPage = () => {
               <button
                 onClick={goToNext}
                 disabled={isCurrentMonth}
-                className="p-1.5 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                className="p-1.5 rounded-lg hover:bg-canvas-soft/80 text-gray-400 hover:text-ink disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
               >
                 <ChevronRight size={18} />
               </button>
             </div>
 
-            <div className={`bg-gradient-to-br ${savings >= 0 ? "from-emerald-900/40 to-emerald-900/10 border-emerald-500/20" : "from-orange-900/40 to-orange-900/10 border-orange-500/20"} border rounded-2xl p-4 flex items-center gap-3`}>
-              <div className={`${savings >= 0 ? "bg-emerald-500/15 border-emerald-500/20" : "bg-orange-500/15 border-orange-500/20"} p-2.5 rounded-xl border`}>
-                <Wallet className={`w-5 h-5 ${savings >= 0 ? "text-emerald-400" : "text-orange-400"}`} />
+            <div className={`${savings >= 0 ? "bg-primary-pale" : "bg-orange-100"} rounded-2xl p-4 flex items-center gap-3`}>
+              <div className={`${savings >= 0 ? "bg-emerald-500/15" : "bg-orange-500/15"} p-2.5 rounded-xl`}>
+                <Wallet className={`w-5 h-5 ${savings >= 0 ? "text-emerald-400" : "text-warning-deep"}`} />
               </div>
               <div>
-                <p className={`text-xs font-bold uppercase tracking-wider ${savings >= 0 ? "text-emerald-400/70" : "text-orange-400/70"}`}>Savings</p>
-                <CountUp end={Math.abs(savings)} prefix={savings >= 0 ? "₹" : "-₹"} className={`text-xl font-black ${savings >= 0 ? "text-emerald-400" : "text-orange-400"}`} />
+                <p className={`text-xs font-bold uppercase tracking-wider ${savings >= 0 ? "text-emerald-400/70" : "text-warning-deep/70"}`}>Savings</p>
+                <CountUp end={Math.abs(savings)} prefix={savings >= 0 ? "₹" : "-₹"} className={`text-xl font-black ${savings >= 0 ? "text-emerald-400" : "text-warning-deep"}`} />
               </div>
             </div>
-            <div className={`bg-gradient-to-br ${savingsRate >= 20 ? "from-indigo-900/40 to-indigo-900/10 border-indigo-500/20" : "from-gray-900/40 to-gray-900/10 border-gray-500/20"} border rounded-2xl p-4 flex items-center gap-3`}>
-              <div className="bg-indigo-500/15 p-2.5 rounded-xl border border-indigo-500/20">
+            <div className={`${savingsRate >= 20 ? "bg-primary-pale" : "bg-canvas-soft/80"} rounded-2xl p-4 flex items-center gap-3`}>
+              <div className="bg-indigo-500/15 p-2.5 rounded-xl">
                 <Sparkles className="w-5 h-5 text-indigo-400" />
               </div>
               <div>

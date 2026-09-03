@@ -23,6 +23,8 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import DesktopNav from "./DesktopNav";
+import ThemeToggle from "./ThemeToggle";
 
 type NavItem = {
   href: string;
@@ -40,11 +42,11 @@ const sections: Section[] = [
     title: "Finance",
     items: [
       { href: "/dashboard", icon: <FileDigit size={15} />, label: "Dashboard" },
-      {
-        href: "/screen-share",
-        icon: <FileDigit size={15} />,
-        label: "ScreenShare",
-      },
+      // {
+      //   href: "/screen-share",
+      //   icon: <FileDigit size={15} />,
+      //   label: "ScreenShare",
+      // },
       {
         href: "/transactions",
         icon: <BadgeIndianRupee size={15} />,
@@ -131,11 +133,11 @@ const sectionColors: Record<string, { text: string; dot: string; bg: string }> =
       bg: "bg-purple-500/10",
     },
     Tools: {
-      text: "text-orange-400",
+      text: "text-warning-deep",
       dot: "bg-orange-500",
       bg: "bg-orange-500/10",
     },
-    Account: { text: "text-sky-400", dot: "bg-sky-500", bg: "bg-sky-500/10" },
+    Account: { text: "text-ink-deep", dot: "bg-primary", bg: "bg-primary/10" },
   };
 
 // ─── Hover colours by icon accent ────────────────────────────────────────────
@@ -143,12 +145,22 @@ const itemHoverColors: Record<string, string> = {
   Finance: "hover:bg-indigo-500/10 hover:text-indigo-300",
   Analytics: "hover:bg-purple-500/10 hover:text-purple-300",
   Tools: "hover:bg-orange-500/10 hover:text-orange-300",
-  Account: "hover:bg-sky-500/10    hover:text-sky-300",
+  Account: "hover:bg-primary/10    hover:text-ink-deep",
 };
 
 export default function MenuButton() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+
+  // A viewport that grows past the mobile breakpoint should drop the drawer.
+  useEffect(() => {
+    if (!open || typeof matchMedia === "undefined") return;
+    const mq = matchMedia("(min-width: 768px)");
+    const close = () => mq.matches && setOpen(false);
+    close();
+    mq.addEventListener("change", close);
+    return () => mq.removeEventListener("change", close);
+  }, [open]);
 
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
@@ -156,6 +168,15 @@ export default function MenuButton() {
       document.body.style.overflow = "";
     };
   }, [open]);
+
+  // This nav carries its own theme switch (in the bar on desktop, in the
+  // drawer footer on mobile), so the floating fallback from the root layout
+  // stands down while it is mounted.
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.add("has-nav-theme-toggle");
+    return () => root.classList.remove("has-nav-theme-toggle");
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -169,17 +190,18 @@ export default function MenuButton() {
 
   return (
     <div className="relative z-50">
-      {/* ── Trigger button ──────────────────────────────────────────────────── */}
+      {/* Desktop gets a full nav bar; the drawer below is mobile-only. */}
+      <DesktopNav />
+
+      {/* ── Trigger button (mobile) ─────────────────────────────────────────── */}
       <motion.button
         onClick={() => setOpen((v) => !v)}
         whileTap={{ scale: 0.92 }}
         whileHover={{ scale: 1.04 }}
-        className="flex items-center justify-center w-10 h-10 rounded-full text-white cursor-pointer
-                   bg-gradient-to-r from-violet-600 via-indigo-500 to-cyan-500
-                   hover:from-violet-500 hover:via-indigo-400 hover:to-cyan-400
-                   shadow-[0_4px_20px_rgba(139,92,246,0.5)]
-                   hover:shadow-[0_4px_28px_rgba(139,92,246,0.7)]
-                    border-white/20 transition-all duration-200"
+        aria-label="Open menu"
+        className="md:hidden flex items-center justify-center w-10 h-10 rounded-full cursor-pointer
+                   bg-primary text-on-primary hover:bg-primary-active
+                   transition-colors duration-200"
       >
         <motion.span
           animate={{ rotate: open ? 90 : 0 }}
@@ -193,7 +215,7 @@ export default function MenuButton() {
       <AnimatePresence>
         {open && (
           <motion.div
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+            className="md:hidden fixed inset-0 bg-scrim/60 backdrop-blur-sm z-40"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -211,13 +233,13 @@ export default function MenuButton() {
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: "100%", opacity: 0 }}
             transition={{ type: "spring", stiffness: 220, damping: 24 }}
-            className="fixed top-0 right-0 h-full w-72 z-50 flex flex-col overflow-hidden
-                       bg-[#0b0b14]/95 backdrop-blur-xl border-l border-white/8 shadow-2xl"
+            className="md:hidden fixed top-0 right-0 h-full w-72 z-50 flex flex-col overflow-hidden
+                       bg-canvas-soft/95 backdrop-blur-xl shadow-lg"
           >
             {/* Top bar */}
-            <div className="flex items-center justify-between px-5 pt-6 pb-4 border-b border-white/6">
+            <div className="flex items-center justify-between px-5 pt-6 pb-4 border-b border-hairline">
               <div>
-                <p className="text-base font-black bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent tracking-tight">
+                <p className="text-ink text-base font-black tracking-tight">
                   MyBudgetory
                 </p>
                 <p className="text-[11px] text-gray-600 font-semibold mt-0.5">
@@ -226,7 +248,7 @@ export default function MenuButton() {
               </div>
               <button
                 onClick={() => setOpen(false)}
-                className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-colors cursor-pointer"
+                className="p-1.5 rounded-lg bg-canvas/80 hover:bg-canvas-soft/80 text-gray-400 hover:text-ink transition-colors cursor-pointer"
               >
                 <X size={16} />
               </button>
@@ -271,7 +293,7 @@ export default function MenuButton() {
                               onClick={() => setOpen(false)}
                               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 ${
                                 isActive
-                                  ? `${sc.bg} ${sc.text} border border-current/20`
+                                  ? `${sc.bg} ${sc.text} border-current/20`
                                   : `text-gray-400 ${hover}`
                               }`}
                             >
@@ -296,17 +318,23 @@ export default function MenuButton() {
               })}
             </nav>
 
-            {/* Footer / Logout */}
-            <div className="px-4 pt-4 pb-20 md:pb-4 border-t border-white/6">
+            {/* Footer — sign out, with the theme switch alongside it */}
+            <div className="px-4 pt-4 pb-20 md:pb-4 border-t border-hairline flex items-center gap-2">
               <motion.button
                 whileHover={{ x: 2 }}
                 whileTap={{ scale: 0.97 }}
                 onClick={handleLogout}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-all duration-150 cursor-pointer border border-transparent hover:border-red-500/20"
+                className="flex-1 flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-all duration-150 cursor-pointer"
               >
                 <LogOut size={15} />
                 <span>Sign Out</span>
               </motion.button>
+
+              <ThemeToggle
+                variant="inline"
+                size={16}
+                className="h-10 w-10 shrink-0 bg-canvas/80 text-ink hover:bg-canvas-soft/80"
+              />
             </div>
           </motion.aside>
         )}

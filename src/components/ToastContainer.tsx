@@ -17,22 +17,24 @@ const ICONS = {
   info: Info,
 };
 
+// Wise `ex-toast` — canvas surface, 24px radius, semantic colour carried by
+// the icon and the progress bar rather than the whole panel.
 const STYLES = {
-  success: "bg-emerald-950/90 border-emerald-500/40 text-emerald-200 shadow-[0_8px_32px_rgba(16,185,129,0.15)]",
-  error: "bg-red-950/90 border-red-500/40 text-red-200 shadow-[0_8px_32px_rgba(239,68,68,0.15)]",
-  info: "bg-gray-900/90 border-gray-600/40 text-gray-200 shadow-[0_8px_32px_rgba(0,0,0,0.4)]",
+  success: "bg-canvas/95 backdrop-blur-xl  text-ink",
+  error: "bg-canvas/95 backdrop-blur-xl  text-ink",
+  info: "bg-canvas/95 backdrop-blur-xl  text-ink",
 };
 
 const ICON_STYLES = {
-  success: "text-emerald-400",
-  error: "text-red-400",
-  info: "text-gray-400",
+  success: "text-positive-deep",
+  error: "text-negative",
+  info: "text-ink-deep",
 };
 
 const BAR_STYLES = {
-  success: "bg-emerald-400/70",
-  error: "bg-red-400/70",
-  info: "bg-gray-400/60",
+  success: "bg-positive",
+  error: "bg-negative",
+  info: "bg-primary",
 };
 
 export default function ToastContainer() {
@@ -63,7 +65,7 @@ export default function ToastContainer() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -8, scale: 0.95 }}
               transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-              className={`relative overflow-hidden flex items-start gap-3 px-4 py-3 rounded-xl border backdrop-blur-md pointer-events-auto ${STYLES[t.type]}`}
+              className={`relative overflow-hidden flex items-start gap-3 px-4 py-3 rounded-3xl pointer-events-auto ${STYLES[t.type]}`}
             >
               <Icon size={17} className={`flex-shrink-0 mt-0.5 ${ICON_STYLES[t.type]}`} />
               <p className="flex-1 text-sm font-semibold leading-snug">{t.message}</p>

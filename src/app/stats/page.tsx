@@ -192,7 +192,7 @@ export default function StatsPage() {
   const isPositive = netBalance >= 0;
 
   return (
-    <div className="min-h-screen bg-[#060608] text-white">
+    <div className="min-h-screen md:pt-20 text-ink">
 
       {/* ── Background glow blobs ── */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
@@ -201,13 +201,15 @@ export default function StatsPage() {
       </div>
 
       <div className="relative z-10 max-w-5xl mx-auto px-5 py-6">
-        <Header />
+        <div className="md:hidden">
+          <Header />
+        </div>
 
         {/* ── Page header ── */}
         <div className="flex justify-between items-start mb-8 mt-2">
           <div>
             <div className="flex items-center gap-2.5 mb-1">
-              <div className="w-8 h-8 rounded-lg bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-lg bg-indigo-500/20 flex items-center justify-center">
                 <ChartNoAxesCombined size={16} className="text-indigo-400" />
               </div>
               <h1 className="text-3xl font-extrabold tracking-tight">Statistics</h1>
@@ -234,7 +236,7 @@ export default function StatsPage() {
                 icon={<ArrowUpRight size={16} className="text-emerald-400" />}
                 iconBg="bg-emerald-500/10"
                 valueColor="text-emerald-400"
-                glow="shadow-[0_0_30px_rgba(16,185,129,0.08)]"
+                glow=""
               />
               <HeroCard
                 label="Total Expenses"
@@ -242,15 +244,15 @@ export default function StatsPage() {
                 icon={<ArrowDownRight size={16} className="text-rose-400" />}
                 iconBg="bg-rose-500/10"
                 valueColor="text-rose-400"
-                glow="shadow-[0_0_30px_rgba(244,63,94,0.08)]"
+                glow=""
               />
               <HeroCard
                 label="Net Balance"
                 value={`₹ ${netBalance.toLocaleString()}`}
-                icon={<Equal size={16} className={isPositive ? "text-cyan-400" : "text-orange-400"} />}
-                iconBg={isPositive ? "bg-cyan-500/10" : "bg-orange-500/10"}
-                valueColor={isPositive ? "text-cyan-300" : "text-orange-300"}
-                glow={isPositive ? "shadow-[0_0_30px_rgba(34,211,238,0.08)]" : "shadow-[0_0_30px_rgba(251,146,60,0.08)]"}
+                icon={<Equal size={16} className={isPositive ? "text-ink-deep" : "text-warning-deep"} />}
+                iconBg={isPositive ? "bg-primary/10" : "bg-orange-500/10"}
+                valueColor={isPositive ? "text-ink-deep" : "text-orange-300"}
+                glow={isPositive ? "" : ""}
               />
             </div>
 
@@ -280,7 +282,7 @@ export default function StatsPage() {
                 value={avgMonthlySpending()}
               />
               <StatCard
-                icon={<Calendar className="w-4 h-4 text-yellow-400" />}
+                icon={<Calendar className="w-4 h-4 text-warning-deep" />}
                 iconBg="bg-yellow-500/10"
                 title="Max Expense Month"
                 value={`${maxSpentMonth}`}
@@ -377,7 +379,7 @@ function SectionLabel({ label }: { label: string }) {
   return (
     <div className="flex items-center gap-3 mb-4">
       <span className="text-xs font-semibold text-gray-500 uppercase tracking-widest">{label}</span>
-      <div className="flex-1 h-px bg-white/[0.05]" />
+      <div className="flex-1 h-px bg-canvas/80" />
     </div>
   );
 }
@@ -393,8 +395,8 @@ function HeroCard({
   glow: string;
 }) {
   return (
-    <div className={`relative rounded-2xl border border-white/[0.07] bg-white/[0.03] backdrop-blur-xl p-5 ${glow} transition-all duration-300 hover:border-white/[0.12] hover:bg-white/[0.05]`}>
-      <div className="absolute top-0 left-6 right-6 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+    <div className={`relative rounded-2xl bg-canvas/80 backdrop-blur-xl p-5 ${glow} transition-all duration-300 hover:bg-canvas-soft/80`}>
+      <div className="absolute top-0 left-6 right-6 h-px bg-hairline" />
       <div className="flex items-center justify-between mb-3">
         <span className="text-xs font-medium text-gray-500">{label}</span>
         <div className={`w-7 h-7 rounded-lg ${iconBg} flex items-center justify-center`}>{icon}</div>
@@ -414,14 +416,14 @@ function StatCard({
   sub?: string;
 }) {
   return (
-    <div className="group relative rounded-2xl border border-white/[0.07] bg-white/[0.03] backdrop-blur-xl p-5 transition-all duration-300 hover:border-white/[0.12] hover:bg-white/[0.05] hover:shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
-      <div className="absolute top-0 left-6 right-6 h-px bg-gradient-to-r from-transparent via-white/[0.07] to-transparent" />
+    <div className="group relative rounded-2xl bg-canvas/80 backdrop-blur-xl p-5 transition-all duration-300 hover:bg-canvas-soft/80">
+      <div className="absolute top-0 left-6 right-6 h-px bg-hairline" />
       <div className="flex items-center gap-2.5 mb-3">
         <div className={`w-7 h-7 rounded-lg ${iconBg} flex items-center justify-center shrink-0`}>{icon}</div>
         <span className="text-xs font-medium text-gray-500">{title}</span>
       </div>
       {typeof value === "string" ? (
-        <p className="text-base font-bold text-white leading-snug">{value}</p>
+        <p className="text-base font-bold text-ink leading-snug">{value}</p>
       ) : (
         value
       )}

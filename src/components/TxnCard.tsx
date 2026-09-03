@@ -20,13 +20,13 @@ export function TxnCard({ title, amount, color, icon, subtitle }: TxnCardProps) 
       className="relative group"
     >
       {/* Gradient border glow wrapper */}
-      <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-indigo-500/20 via-purple-500/10 to-pink-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm" />
+      <div className="absolute inset-0 rounded-xl bg-primary/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm" />
 
-      <div className="card-shine relative bg-gradient-to-br from-gray-900 via-gray-900/95 to-gray-800 border border-gray-700/60 group-hover:border-indigo-500/40 rounded-xl p-4 shadow-lg group-hover:shadow-indigo-500/10 group-hover:shadow-xl transition-all duration-300">
+      <div className="card-shine relative bg-canvas/80 rounded-xl p-4 shadow-lg group-hover: group-hover:shadow-xl transition-all duration-300">
         {/* Icon top-left */}
         <div className="flex items-start justify-between mb-3">
           {icon && (
-            <div className="bg-white/5 border border-white/10 p-2 rounded-lg">
+            <div className="bg-canvas-soft/80 p-2 rounded-lg">
               {icon}
             </div>
           )}

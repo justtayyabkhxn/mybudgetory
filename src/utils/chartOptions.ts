@@ -1,19 +1,27 @@
 // src/utils/chartOptions.ts — Chart.js v4 config builders
 import type { ChartData, ChartOptions } from "chart.js";
+import { alpha as alphaOf, chartChrome, cssVar } from "./themeColors";
 
 const FONT = "var(--font-bricolage), 'Bricolage Grotesque', sans-serif";
 
 // ─── Colors ───────────────────────────────────────────────────────────────────
-const CAT_HEX: Record<string, string> = {
-  Food: "#f97316", Outing: "#3b82f6", Clothes: "#a855f7",
-  Medical: "#ef4444", Bills: "#eab308", Entertainment: "#ec4899",
-  Travel: "#06b6d4", SMM: "#10b981", Vacation: "#84cc16",
-  Others: "#6b7280", Other: "#6b7280",
+// Category marks resolve from the --color-cat-* tokens so the scale flips with
+// the theme. Chart.js paints to a canvas and cannot read CSS variables itself,
+// so the value is resolved when the config is built.
+const CAT_TOKEN: Record<string, string> = {
+  Food: "food", Outing: "outing", Clothes: "clothes",
+  Medical: "medical", Bills: "bills", Entertainment: "entertainment",
+  Travel: "travel", SMM: "smm", Vacation: "vacation",
+  Others: "other", Other: "other",
 };
-const PALETTE = ["#6366f1","#ec4899","#f97316","#10b981","#f59e0b","#06b6d4","#a855f7","#ef4444"];
+const PALETTE_TOKENS = [
+  "clothes", "outing", "food", "travel", "bills",
+  "medical", "vacation", "smm", "entertainment", "other",
+];
 
 export function getCatColor(cat: string, idx: number) {
-  return CAT_HEX[cat] ?? PALETTE[idx % PALETTE.length];
+  const token = CAT_TOKEN[cat] ?? PALETTE_TOKENS[idx % PALETTE_TOKENS.length];
+  return cssVar(`--color-cat-${token}`, cssVar("--color-mute"));
 }
 
 export function fmtK(v: number | string): string {
@@ -62,31 +70,36 @@ function hexAlpha(hex: string, alpha: number): string {
 }
 
 // ─── Shared style primitives ──────────────────────────────────────────────────
-const TT = {
-  backgroundColor: "rgba(15,23,42,0.95)",
-  borderColor: "#334155",
-  borderWidth: 1,
-  titleColor: "#e2e8f0",
-  bodyColor: "#94a3b8",
-  cornerRadius: 12,
-  padding: 12,
-  titleFont: { family: FONT, size: 13, weight: "bold" as const },
-  bodyFont:  { family: FONT, size: 12 },
-  usePointStyle: true,
-  pointStyle: "circle" as const,
-  boxWidth: 8,
-  boxHeight: 8,
+// Built per call rather than held as constants: the neutrals come from the
+// active theme, which can change without a reload.
+const TT = () => {
+  const c = chartChrome();
+  return {
+    backgroundColor: c.tooltipBg,
+    borderColor: c.tooltipBorder,
+    borderWidth: 1,
+    titleColor: c.tooltipText,
+    bodyColor: c.tooltipText,
+    cornerRadius: 12,
+    padding: 12,
+    titleFont: { family: FONT, size: 13, weight: "bold" as const },
+    bodyFont: { family: FONT, size: 12 },
+    usePointStyle: true,
+    pointStyle: "circle" as const,
+    boxWidth: 8,
+    boxHeight: 8,
+  };
 };
 
-const LEG_LABELS = {
-  color: "#94a3b8",
+const LEG_LABELS = () => ({
+  color: chartChrome().label,
   font: { family: FONT, size: 11 },
   usePointStyle: true,
   pointStyle: "circle" as const,
   boxWidth: 6,
   boxHeight: 6,
   padding: 12,
-};
+});
 
 // ─── 1. Income vs Expenses Donut ──────────────────────────────────────────────
 export function getDonutConfig(inflow: number, expense: number): {
@@ -98,8 +111,8 @@ export function getDonutConfig(inflow: number, expense: number): {
       labels: ["Income", "Expenses"],
       datasets: [{
         data: [inflow, expense],
-        backgroundColor: ["#34d399", "#f87171"],
-        hoverBackgroundColor: ["#6ee7b7", "#fca5a5"],
+        backgroundColor: [cssVar("--color-positive"), cssVar("--color-negative")],
+        hoverBackgroundColor: [cssVar("--color-primary-neutral"), cssVar("--color-negative-deep")],
         borderWidth: 0,
         hoverOffset: 10,
       }],
@@ -110,9 +123,9 @@ export function getDonutConfig(inflow: number, expense: number): {
       cutout: "68%",
       animation: { duration: 900 },
       plugins: {
-        legend: { display: true, position: "bottom", labels: LEG_LABELS },
+        legend: { display: true, position: "bottom", labels: LEG_LABELS() },
         tooltip: {
-          ...TT,
+          ...TT(),
           callbacks: {
             label: (ctx) => {
               const arr = ctx.chart.data.datasets[0].data as number[];
@@ -137,8 +150,8 @@ export function getPaymentModeConfig(cash: number, upi: number): {
       labels: ["Cash", "UPI"],
       datasets: [{
         data: [cash, upi],
-        backgroundColor: ["#fbbf24", "#818cf8"],
-        hoverBackgroundColor: ["#fde68a", "#c7d2fe"],
+        backgroundColor: [cssVar("--color-warning"), cssVar("--color-primary")],
+        hoverBackgroundColor: [cssVar("--color-warning"), cssVar("--color-primary-pale")],
         borderWidth: 0,
         hoverOffset: 10,
       }],
@@ -149,9 +162,9 @@ export function getPaymentModeConfig(cash: number, upi: number): {
       cutout: "68%",
       animation: { duration: 900 },
       plugins: {
-        legend: { display: true, position: "bottom", labels: LEG_LABELS },
+        legend: { display: true, position: "bottom", labels: LEG_LABELS() },
         tooltip: {
-          ...TT,
+          ...TT(),
           callbacks: {
             label: (ctx) => {
               const arr = ctx.chart.data.datasets[0].data as number[];
@@ -179,16 +192,16 @@ export function getDailyBarConfig(d: {
         {
           label: "Income",
           data: d.inflow,
-          backgroundColor: vGrad("#4ade80", "#16a34a"),
-          hoverBackgroundColor: "#4ade80",
+          backgroundColor: vGrad(cssVar("--color-positive"), cssVar("--color-positive-deep")),
+          hoverBackgroundColor: cssVar("--color-positive"),
           borderRadius: 5,
           borderSkipped: false,
         },
         {
           label: "Expenses",
           data: d.expense,
-          backgroundColor: vGrad("#fb7185", "#e11d48"),
-          hoverBackgroundColor: "#fb7185",
+          backgroundColor: vGrad(cssVar("--color-negative"), cssVar("--color-negative-deep")),
+          hoverBackgroundColor: cssVar("--color-negative"),
           borderRadius: 5,
           borderSkipped: false,
         },
@@ -199,21 +212,21 @@ export function getDailyBarConfig(d: {
       maintainAspectRatio: false,
       animation: { duration: 800 },
       plugins: {
-        legend: { display: true, labels: LEG_LABELS },
+        legend: { display: true, labels: LEG_LABELS() },
         tooltip: {
-          ...TT,
+          ...TT(),
           callbacks: { label: (ctx) => `  ${ctx.dataset.label}: ${fmtK(ctx.raw as number)}` },
         },
       },
       scales: {
         x: {
-          ticks: { color: "#94a3b8", font: { family: FONT, size: 10, weight: 600 } },
+          ticks: { color: chartChrome().tick, font: { family: FONT, size: 10, weight: 600 } },
           grid: { display: false },
           border: { display: false },
         },
         y: {
-          ticks: { color: "#94a3b8", font: { family: FONT, size: 11 }, callback: fmtK },
-          grid: { color: "rgba(30,41,59,0.8)" },
+          ticks: { color: chartChrome().tick, font: { family: FONT, size: 11 }, callback: fmtK },
+          grid: { color: chartChrome().grid },
           border: { display: false },
         },
       },
@@ -234,26 +247,26 @@ export function getCumulativeConfig(d: {
         {
           label: "Cumulative",
           data: d.cumulative,
-          borderColor: "#fb923c",
-          backgroundColor: areaGrad("#fb923c", 0.3),
+          borderColor: cssVar("--color-warning-deep"),
+          backgroundColor: areaGrad(cssVar("--color-warning-deep"), 0.3),
           fill: true,
           tension: 0.4,
           pointRadius: 0,
           pointHoverRadius: 6,
-          pointHoverBackgroundColor: "#fb923c",
+          pointHoverBackgroundColor: cssVar("--color-warning-deep"),
           borderWidth: 2.5,
           spanGaps: false,
         },
         {
           label: "Daily",
           data: d.daily,
-          borderColor: "#a5b4fc",
-          backgroundColor: areaGrad("#818cf8", 0.2),
+          borderColor: cssVar("--color-ink-deep"),
+          backgroundColor: areaGrad(cssVar("--color-primary"), 0.2),
           fill: true,
           tension: 0.4,
           pointRadius: 0,
           pointHoverRadius: 6,
-          pointHoverBackgroundColor: "#a5b4fc",
+          pointHoverBackgroundColor: cssVar("--color-ink-deep"),
           borderWidth: 2,
           spanGaps: false,
         },
@@ -264,9 +277,9 @@ export function getCumulativeConfig(d: {
       maintainAspectRatio: false,
       animation: { duration: 800 },
       plugins: {
-        legend: { display: true, labels: LEG_LABELS },
+        legend: { display: true, labels: LEG_LABELS() },
         tooltip: {
-          ...TT,
+          ...TT(),
           mode: "index",
           intersect: false,
           callbacks: { label: (ctx) => `  ${ctx.dataset.label}: ${fmtK(ctx.raw as number)}` },
@@ -274,13 +287,13 @@ export function getCumulativeConfig(d: {
       },
       scales: {
         x: {
-          ticks: { color: "#94a3b8", font: { family: FONT, size: 10, weight: 600 } },
+          ticks: { color: chartChrome().tick, font: { family: FONT, size: 10, weight: 600 } },
           grid: { display: false },
           border: { display: false },
         },
         y: {
-          ticks: { color: "#94a3b8", font: { family: FONT, size: 11 }, callback: fmtK },
-          grid: { color: "rgba(30,41,59,0.8)" },
+          ticks: { color: chartChrome().tick, font: { family: FONT, size: 11 }, callback: fmtK },
+          grid: { color: chartChrome().grid },
           border: { display: false },
         },
       },
@@ -301,16 +314,16 @@ export function getMonthlyBarConfig(d: {
         {
           label: "Income",
           data: d.inflow,
-          backgroundColor: vGrad("#4ade80", "#16a34a"),
-          hoverBackgroundColor: "#4ade80",
+          backgroundColor: vGrad(cssVar("--color-positive"), cssVar("--color-positive-deep")),
+          hoverBackgroundColor: cssVar("--color-positive"),
           borderRadius: 6,
           borderSkipped: false,
         },
         {
           label: "Expenses",
           data: d.expense,
-          backgroundColor: vGrad("#fb7185", "#e11d48"),
-          hoverBackgroundColor: "#fb7185",
+          backgroundColor: vGrad(cssVar("--color-negative"), cssVar("--color-negative-deep")),
+          hoverBackgroundColor: cssVar("--color-negative"),
           borderRadius: 6,
           borderSkipped: false,
         },
@@ -321,9 +334,9 @@ export function getMonthlyBarConfig(d: {
       maintainAspectRatio: false,
       animation: { duration: 800 },
       plugins: {
-        legend: { display: true, labels: LEG_LABELS },
+        legend: { display: true, labels: LEG_LABELS() },
         tooltip: {
-          ...TT,
+          ...TT(),
           mode: "index",
           intersect: false,
           callbacks: { label: (ctx) => `  ${ctx.dataset.label}: ${fmtK(ctx.raw as number)}` },
@@ -331,13 +344,13 @@ export function getMonthlyBarConfig(d: {
       },
       scales: {
         x: {
-          ticks: { color: "#94a3b8", font: { family: FONT, size: 11, weight: 600 } },
+          ticks: { color: chartChrome().tick, font: { family: FONT, size: 11, weight: 600 } },
           grid: { display: false },
           border: { display: false },
         },
         y: {
-          ticks: { color: "#94a3b8", font: { family: FONT, size: 11 }, callback: fmtK },
-          grid: { color: "rgba(30,41,59,0.8)" },
+          ticks: { color: chartChrome().tick, font: { family: FONT, size: 11 }, callback: fmtK },
+          grid: { color: chartChrome().grid },
           border: { display: false },
         },
       },
@@ -361,14 +374,16 @@ export function getMonthlySavingsConfig(d: {
           const { chart, dataIndex } = ctx;
           const { ctx: c, chartArea } = chart;
           const v = d.data[dataIndex];
-          const [top, bot] = v >= 0 ? ["#4ade80", "#16a34a"] : ["#fb7185", "#e11d48"];
+          const [top, bot] = v >= 0
+            ? [cssVar("--color-positive"), cssVar("--color-positive-deep")]
+            : [cssVar("--color-negative"), cssVar("--color-negative-deep")];
           if (!chartArea) return top;
           const g = c.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
           g.addColorStop(0, top);
           g.addColorStop(1, bot);
           return g;
         },
-        hoverBackgroundColor: d.data.map((v) => (v >= 0 ? "#4ade80" : "#fb7185")),
+        hoverBackgroundColor: d.data.map((v) => (v >= 0 ? cssVar("--color-positive") : cssVar("--color-negative"))),
         borderRadius: 6,
         borderSkipped: false,
       }],
@@ -380,7 +395,7 @@ export function getMonthlySavingsConfig(d: {
       plugins: {
         legend: { display: false },
         tooltip: {
-          ...TT,
+          ...TT(),
           callbacks: {
             label: (ctx) => `  Savings: ${fmtK(ctx.raw as number)}`,
           },
@@ -388,13 +403,13 @@ export function getMonthlySavingsConfig(d: {
       },
       scales: {
         x: {
-          ticks: { color: "#94a3b8", font: { family: FONT, size: 11, weight: 600 } },
+          ticks: { color: chartChrome().tick, font: { family: FONT, size: 11, weight: 600 } },
           grid: { display: false },
           border: { display: false },
         },
         y: {
-          ticks: { color: "#94a3b8", font: { family: FONT, size: 11 }, callback: fmtK },
-          grid: { color: "rgba(30,41,59,0.8)" },
+          ticks: { color: chartChrome().tick, font: { family: FONT, size: 11 }, callback: fmtK },
+          grid: { color: chartChrome().grid },
           border: { display: false },
         },
       },
@@ -407,8 +422,8 @@ export function getSavingsRateConfig(d: {
   categories: string[];
   rates: (number | null)[];
 }): { data: ChartData<"line">; options: ChartOptions<"line"> } {
-  const GREEN = "#4ade80";
-  const RED = "#fb7185";
+  const GREEN = cssVar("--color-positive");
+  const RED = cssVar("--color-negative");
   const pointColors = d.rates.map((r) =>
     r === null ? "transparent" : r >= 0 ? GREEN : RED
   );
@@ -446,7 +461,7 @@ export function getSavingsRateConfig(d: {
       plugins: {
         legend: { display: false },
         tooltip: {
-          ...TT,
+          ...TT(),
           callbacks: {
             label: (ctx) => {
               const v = ctx.raw as number;
@@ -458,7 +473,7 @@ export function getSavingsRateConfig(d: {
       },
       scales: {
         x: {
-          ticks: { color: "#94a3b8", font: { family: FONT, size: 11, weight: 600 } },
+          ticks: { color: chartChrome().tick, font: { family: FONT, size: 11, weight: 600 } },
           grid: { display: false },
           border: { display: false },
         },
@@ -466,15 +481,14 @@ export function getSavingsRateConfig(d: {
           // No min — a month that spends more than it earns is a real negative
           // rate and has to be visible below the zero line.
           grace: "10%",
-          ticks: {
-            color: "#94a3b8",
+          ticks: { color: chartChrome().tick,
             font: { family: FONT, size: 11 },
             callback: (v) => `${v}%`,
           },
           grid: {
             // Pick out the break-even line from the ordinary gridlines
             color: (ctx) =>
-              ctx.tick?.value === 0 ? "rgba(148,163,184,0.45)" : "rgba(30,41,59,0.8)",
+              ctx.tick?.value === 0 ? chartChrome().gridStrong : chartChrome().grid,
             lineWidth: (ctx) => (ctx.tick?.value === 0 ? 1.5 : 1),
           },
           border: { display: false },
@@ -497,16 +511,16 @@ export function getDayOfWeekConfig(d: {
         {
           label: "Income",
           data: d.income,
-          backgroundColor: vGrad("#4ade80", "#16a34a"),
-          hoverBackgroundColor: "#4ade80",
+          backgroundColor: vGrad(cssVar("--color-positive"), cssVar("--color-positive-deep")),
+          hoverBackgroundColor: cssVar("--color-positive"),
           borderRadius: 6,
           borderSkipped: false,
         },
         {
           label: "Expenses",
           data: d.expense,
-          backgroundColor: vGrad("#fb7185", "#e11d48"),
-          hoverBackgroundColor: "#fb7185",
+          backgroundColor: vGrad(cssVar("--color-negative"), cssVar("--color-negative-deep")),
+          hoverBackgroundColor: cssVar("--color-negative"),
           borderRadius: 6,
           borderSkipped: false,
         },
@@ -517,9 +531,9 @@ export function getDayOfWeekConfig(d: {
       maintainAspectRatio: false,
       animation: { duration: 800 },
       plugins: {
-        legend: { display: true, labels: LEG_LABELS },
+        legend: { display: true, labels: LEG_LABELS() },
         tooltip: {
-          ...TT,
+          ...TT(),
           mode: "index",
           intersect: false,
           callbacks: { label: (ctx) => `  ${ctx.dataset.label}: ${fmtK(ctx.raw as number)}` },
@@ -527,13 +541,13 @@ export function getDayOfWeekConfig(d: {
       },
       scales: {
         x: {
-          ticks: { color: "#94a3b8", font: { family: FONT, size: 12, weight: 700 } },
+          ticks: { color: chartChrome().tick, font: { family: FONT, size: 12, weight: 700 } },
           grid: { display: false },
           border: { display: false },
         },
         y: {
-          ticks: { color: "#94a3b8", font: { family: FONT, size: 11 }, callback: fmtK },
-          grid: { color: "rgba(30,41,59,0.8)" },
+          ticks: { color: chartChrome().tick, font: { family: FONT, size: 11 }, callback: fmtK },
+          grid: { color: chartChrome().grid },
           border: { display: false },
         },
       },
@@ -566,18 +580,18 @@ export function getCategoryMonthlyBarConfig(d: {
       plugins: {
         legend: { display: false },
         tooltip: {
-          ...TT,
+          ...TT(),
           callbacks: { label: (ctx) => `  ${ctx.label}: ${fmtK(ctx.raw as number)}` },
         },
       },
       scales: {
         x: {
-          ticks: { color: "#94a3b8", font: { family: FONT, size: 11 }, callback: fmtK },
-          grid: { color: "rgba(30,41,59,0.8)" },
+          ticks: { color: chartChrome().tick, font: { family: FONT, size: 11 }, callback: fmtK },
+          grid: { color: chartChrome().grid },
           border: { display: false },
         },
         y: {
-          ticks: { color: "#94a3b8", font: { family: FONT, size: 12, weight: 600 } },
+          ticks: { color: chartChrome().tick, font: { family: FONT, size: 12, weight: 600 } },
           grid: { display: false },
           border: { display: false },
         },
@@ -611,7 +625,7 @@ export function getCategoryMonthlyDonutConfig(d: {
       plugins: {
         legend: { display: true, position: "bottom", labels: { ...LEG_LABELS, padding: 10 } },
         tooltip: {
-          ...TT,
+          ...TT(),
           callbacks: {
             label: (ctx) => {
               const arr = ctx.chart.data.datasets[0].data as number[];
@@ -651,18 +665,18 @@ export function getCategoryYearlyBarConfig(d: {
       plugins: {
         legend: { display: false },
         tooltip: {
-          ...TT,
+          ...TT(),
           callbacks: { label: (ctx) => `  ${ctx.label}: ${fmtK(ctx.raw as number)}` },
         },
       },
       scales: {
         x: {
-          ticks: { color: "#94a3b8", font: { family: FONT, size: 11 }, callback: fmtK },
-          grid: { color: "rgba(30,41,59,0.8)" },
+          ticks: { color: chartChrome().tick, font: { family: FONT, size: 11 }, callback: fmtK },
+          grid: { color: chartChrome().grid },
           border: { display: false },
         },
         y: {
-          ticks: { color: "#94a3b8", font: { family: FONT, size: 12, weight: 600 } },
+          ticks: { color: chartChrome().tick, font: { family: FONT, size: 12, weight: 600 } },
           grid: { display: false },
           border: { display: false },
         },
@@ -699,7 +713,7 @@ export function getCategoryTrendConfig(d: {
       plugins: {
         legend: { display: true, labels: { ...LEG_LABELS, padding: 12 } },
         tooltip: {
-          ...TT,
+          ...TT(),
           mode: "index",
           intersect: false,
           callbacks: { label: (ctx) => `  ${ctx.dataset.label}: ${fmtK(ctx.raw as number)}` },
@@ -707,13 +721,13 @@ export function getCategoryTrendConfig(d: {
       },
       scales: {
         x: {
-          ticks: { color: "#94a3b8", font: { family: FONT, size: 11, weight: 600 } },
+          ticks: { color: chartChrome().tick, font: { family: FONT, size: 11, weight: 600 } },
           grid: { display: false },
           border: { display: false },
         },
         y: {
-          ticks: { color: "#94a3b8", font: { family: FONT, size: 11 }, callback: fmtK },
-          grid: { color: "rgba(30,41,59,0.8)" },
+          ticks: { color: chartChrome().tick, font: { family: FONT, size: 11 }, callback: fmtK },
+          grid: { color: chartChrome().grid },
           border: { display: false },
         },
       },
@@ -736,16 +750,16 @@ export function getMonthOverMonthConfig(d: {
         {
           label: d.thisMonthLabel,
           data: d.thisMonth,
-          backgroundColor: vGrad("#a5b4fc", "#4338ca"),
-          hoverBackgroundColor: "#a5b4fc",
+          backgroundColor: vGrad(cssVar("--color-ink-deep"), cssVar("--color-ink-deep")),
+          hoverBackgroundColor: cssVar("--color-ink-deep"),
           borderRadius: 6,
           borderSkipped: false,
         },
         {
           label: d.lastMonthLabel,
           data: d.lastMonth,
-          backgroundColor: "rgba(100,116,139,0.4)",
-          hoverBackgroundColor: "rgba(100,116,139,0.65)",
+          backgroundColor: alphaOf(cssVar("--color-mute"), 0.4),
+          hoverBackgroundColor: alphaOf(cssVar("--color-mute"), 0.65),
           borderRadius: 6,
           borderSkipped: false,
         },
@@ -756,9 +770,9 @@ export function getMonthOverMonthConfig(d: {
       maintainAspectRatio: false,
       animation: { duration: 800 },
       plugins: {
-        legend: { display: true, labels: LEG_LABELS },
+        legend: { display: true, labels: LEG_LABELS() },
         tooltip: {
-          ...TT,
+          ...TT(),
           mode: "index",
           intersect: false,
           callbacks: { label: (ctx) => `  ${ctx.dataset.label}: ${fmtK(ctx.raw as number)}` },
@@ -766,13 +780,13 @@ export function getMonthOverMonthConfig(d: {
       },
       scales: {
         x: {
-          ticks: { color: "#94a3b8", font: { family: FONT, size: 11, weight: 600 } },
+          ticks: { color: chartChrome().tick, font: { family: FONT, size: 11, weight: 600 } },
           grid: { display: false },
           border: { display: false },
         },
         y: {
-          ticks: { color: "#94a3b8", font: { family: FONT, size: 11 }, callback: fmtK },
-          grid: { color: "rgba(30,41,59,0.8)" },
+          ticks: { color: chartChrome().tick, font: { family: FONT, size: 11 }, callback: fmtK },
+          grid: { color: chartChrome().grid },
           border: { display: false },
         },
       },
@@ -805,7 +819,7 @@ export function getIncomeSourcesConfig(d: {
       plugins: {
         legend: { display: true, labels: { ...LEG_LABELS, padding: 12 } },
         tooltip: {
-          ...TT,
+          ...TT(),
           mode: "index",
           intersect: false,
           callbacks: { label: (ctx) => `  ${ctx.dataset.label}: ${fmtK(ctx.raw as number)}` },
@@ -814,14 +828,14 @@ export function getIncomeSourcesConfig(d: {
       scales: {
         x: {
           stacked: true,
-          ticks: { color: "#94a3b8", font: { family: FONT, size: 11, weight: 600 } },
+          ticks: { color: chartChrome().tick, font: { family: FONT, size: 11, weight: 600 } },
           grid: { display: false },
           border: { display: false },
         },
         y: {
           stacked: true,
-          ticks: { color: "#94a3b8", font: { family: FONT, size: 11 }, callback: fmtK },
-          grid: { color: "rgba(30,41,59,0.8)" },
+          ticks: { color: chartChrome().tick, font: { family: FONT, size: 11 }, callback: fmtK },
+          grid: { color: chartChrome().grid },
           border: { display: false },
         },
       },
@@ -842,8 +856,8 @@ export function getCashUpiTrendConfig(d: {
         {
           label: "Cash",
           data: d.cash,
-          backgroundColor: vGrad("#fde68a", "#d97706"),
-          hoverBackgroundColor: "#fde68a",
+          backgroundColor: vGrad(cssVar("--color-warning"), cssVar("--color-warning-deep")),
+          hoverBackgroundColor: cssVar("--color-warning"),
           borderRadius: 4,
           borderSkipped: false,
           stack: "payment",
@@ -851,8 +865,8 @@ export function getCashUpiTrendConfig(d: {
         {
           label: "UPI",
           data: d.upi,
-          backgroundColor: vGrad("#a5b4fc", "#4338ca"),
-          hoverBackgroundColor: "#a5b4fc",
+          backgroundColor: vGrad(cssVar("--color-ink-deep"), cssVar("--color-ink-deep")),
+          hoverBackgroundColor: cssVar("--color-ink-deep"),
           borderRadius: 4,
           borderSkipped: false,
           stack: "payment",
@@ -864,9 +878,9 @@ export function getCashUpiTrendConfig(d: {
       maintainAspectRatio: false,
       animation: { duration: 800 },
       plugins: {
-        legend: { display: true, labels: LEG_LABELS },
+        legend: { display: true, labels: LEG_LABELS() },
         tooltip: {
-          ...TT,
+          ...TT(),
           mode: "index",
           intersect: false,
           callbacks: { label: (ctx) => `  ${ctx.dataset.label}: ${fmtK(ctx.raw as number)}` },
@@ -875,14 +889,14 @@ export function getCashUpiTrendConfig(d: {
       scales: {
         x: {
           stacked: true,
-          ticks: { color: "#94a3b8", font: { family: FONT, size: 11, weight: 600 } },
+          ticks: { color: chartChrome().tick, font: { family: FONT, size: 11, weight: 600 } },
           grid: { display: false },
           border: { display: false },
         },
         y: {
           stacked: true,
-          ticks: { color: "#94a3b8", font: { family: FONT, size: 11 }, callback: fmtK },
-          grid: { color: "rgba(30,41,59,0.8)" },
+          ticks: { color: chartChrome().tick, font: { family: FONT, size: 11 }, callback: fmtK },
+          grid: { color: chartChrome().grid },
           border: { display: false },
         },
       },
@@ -895,9 +909,9 @@ export function getWeekOfMonthConfig(d: {
   weeks: string[];
   data: number[];
 }): { data: ChartData<"bar">; options: ChartOptions<"bar"> } {
-  const WEEK_TOPS = ["#a5b4fc","#67e8f9","#fb923c","#d8b4fe"];
-  const WEEK_BOTS = ["#4338ca","#0e7490","#c2410c","#7e22ce"];
-  const WEEK_HOVER = ["#c7d2fe","#a5f3fc","#fdba74","#e9d5ff"];
+  const WEEK_TOPS = [cssVar("--color-ink-deep"),cssVar("--color-accent-cyan"),cssVar("--color-warning-deep"),cssVar("--color-primary-active")];
+  const WEEK_BOTS = [cssVar("--color-ink-deep"),cssVar("--color-cat-outing"),cssVar("--color-warning-content"),cssVar("--color-ink-deep")];
+  const WEEK_HOVER = [cssVar("--color-primary-pale"),cssVar("--color-accent-cyan"),cssVar("--color-accent-orange"),cssVar("--color-primary-pale")];
   return {
     data: {
       labels: d.weeks,
@@ -927,19 +941,19 @@ export function getWeekOfMonthConfig(d: {
       plugins: {
         legend: { display: false },
         tooltip: {
-          ...TT,
+          ...TT(),
           callbacks: { label: (ctx) => `  Spent: ${fmtK(ctx.raw as number)}` },
         },
       },
       scales: {
         x: {
-          ticks: { color: "#94a3b8", font: { family: FONT, size: 12, weight: 700 } },
+          ticks: { color: chartChrome().tick, font: { family: FONT, size: 12, weight: 700 } },
           grid: { display: false },
           border: { display: false },
         },
         y: {
-          ticks: { color: "#94a3b8", font: { family: FONT, size: 11 }, callback: fmtK },
-          grid: { color: "rgba(30,41,59,0.8)" },
+          ticks: { color: chartChrome().tick, font: { family: FONT, size: 11 }, callback: fmtK },
+          grid: { color: chartChrome().grid },
           border: { display: false },
         },
       },
@@ -958,13 +972,13 @@ export function getRolling30DayConfig(d: {
       datasets: [{
         label: "Daily Expense",
         data: d.values,
-        borderColor: "#fb7185",
-        backgroundColor: areaGrad("#f43f5e", 0.3),
+        borderColor: cssVar("--color-negative"),
+        backgroundColor: areaGrad(cssVar("--color-negative"), 0.3),
         fill: true,
         tension: 0.4,
         pointRadius: 0,
         pointHoverRadius: 6,
-        pointHoverBackgroundColor: "#fb7185",
+        pointHoverBackgroundColor: cssVar("--color-negative"),
         borderWidth: 2.5,
       }],
     },
@@ -975,7 +989,7 @@ export function getRolling30DayConfig(d: {
       plugins: {
         legend: { display: false },
         tooltip: {
-          ...TT,
+          ...TT(),
           mode: "index",
           intersect: false,
           callbacks: { label: (ctx) => `  Spent: ${fmtK(ctx.raw as number)}` },
@@ -983,8 +997,7 @@ export function getRolling30DayConfig(d: {
       },
       scales: {
         x: {
-          ticks: {
-            color: "#94a3b8",
+          ticks: { color: chartChrome().tick,
             font: { family: FONT, size: 10, weight: 600 },
             maxTicksLimit: 8,
           },
@@ -992,8 +1005,8 @@ export function getRolling30DayConfig(d: {
           border: { display: false },
         },
         y: {
-          ticks: { color: "#94a3b8", font: { family: FONT, size: 11 }, callback: fmtK },
-          grid: { color: "rgba(30,41,59,0.8)" },
+          ticks: { color: chartChrome().tick, font: { family: FONT, size: 11 }, callback: fmtK },
+          grid: { color: chartChrome().grid },
           border: { display: false },
         },
       },
@@ -1014,8 +1027,8 @@ export function getIncomeExpenseLineConfig(d: {
         {
           label: "Income",
           data: d.inflow,
-          borderColor: "#4ade80",
-          backgroundColor: areaGrad("#22c55e", 0.25),
+          borderColor: cssVar("--color-positive"),
+          backgroundColor: areaGrad(cssVar("--color-positive"), 0.25),
           fill: true,
           tension: 0.4,
           pointRadius: 0,
@@ -1026,8 +1039,8 @@ export function getIncomeExpenseLineConfig(d: {
         {
           label: "Expenses",
           data: d.expense,
-          borderColor: "#fb7185",
-          backgroundColor: areaGrad("#f43f5e", 0.2),
+          borderColor: cssVar("--color-negative"),
+          backgroundColor: areaGrad(cssVar("--color-negative"), 0.2),
           fill: true,
           tension: 0.4,
           pointRadius: 0,
@@ -1040,7 +1053,7 @@ export function getIncomeExpenseLineConfig(d: {
           data: d.inflow.map((v, i) =>
             v === null || d.expense[i] === null ? null : v - (d.expense[i] as number)
           ),
-          borderColor: "#a5b4fc",
+          borderColor: cssVar("--color-ink-deep"),
           backgroundColor: "transparent",
           fill: false,
           tension: 0.4,
@@ -1057,9 +1070,9 @@ export function getIncomeExpenseLineConfig(d: {
       maintainAspectRatio: false,
       animation: { duration: 800 },
       plugins: {
-        legend: { display: true, labels: LEG_LABELS },
+        legend: { display: true, labels: LEG_LABELS() },
         tooltip: {
-          ...TT,
+          ...TT(),
           mode: "index",
           intersect: false,
           callbacks: {
@@ -1075,13 +1088,13 @@ export function getIncomeExpenseLineConfig(d: {
       },
       scales: {
         x: {
-          ticks: { color: "#94a3b8", font: { family: FONT, size: 11, weight: 600 } },
+          ticks: { color: chartChrome().tick, font: { family: FONT, size: 11, weight: 600 } },
           grid: { display: false },
           border: { display: false },
         },
         y: {
-          ticks: { color: "#94a3b8", font: { family: FONT, size: 11 }, callback: fmtK },
-          grid: { color: "rgba(30,41,59,0.8)" },
+          ticks: { color: chartChrome().tick, font: { family: FONT, size: 11 }, callback: fmtK },
+          grid: { color: chartChrome().grid },
           border: { display: false },
         },
       },
@@ -1102,26 +1115,26 @@ export function getAvgTxnSizeConfig(d: {
         {
           label: "Avg Expense",
           data: d.avgExpense,
-          borderColor: "#fb7185",
-          backgroundColor: areaGrad("#f43f5e", 0.2),
+          borderColor: cssVar("--color-negative"),
+          backgroundColor: areaGrad(cssVar("--color-negative"), 0.2),
           fill: true,
           tension: 0.4,
           pointRadius: 4,
           pointHoverRadius: 8,
-          pointBackgroundColor: "#fb7185",
+          pointBackgroundColor: cssVar("--color-negative"),
           pointBorderColor: "transparent",
           borderWidth: 2.5,
         },
         {
           label: "Avg Income",
           data: d.avgIncome,
-          borderColor: "#4ade80",
-          backgroundColor: areaGrad("#22c55e", 0.2),
+          borderColor: cssVar("--color-positive"),
+          backgroundColor: areaGrad(cssVar("--color-positive"), 0.2),
           fill: true,
           tension: 0.4,
           pointRadius: 4,
           pointHoverRadius: 8,
-          pointBackgroundColor: "#4ade80",
+          pointBackgroundColor: cssVar("--color-positive"),
           pointBorderColor: "transparent",
           borderWidth: 2.5,
         },
@@ -1132,9 +1145,9 @@ export function getAvgTxnSizeConfig(d: {
       maintainAspectRatio: false,
       animation: { duration: 800 },
       plugins: {
-        legend: { display: true, labels: LEG_LABELS },
+        legend: { display: true, labels: LEG_LABELS() },
         tooltip: {
-          ...TT,
+          ...TT(),
           mode: "index",
           intersect: false,
           callbacks: { label: (ctx) => `  ${ctx.dataset.label}: ${fmtK(ctx.raw as number)}` },
@@ -1142,13 +1155,13 @@ export function getAvgTxnSizeConfig(d: {
       },
       scales: {
         x: {
-          ticks: { color: "#94a3b8", font: { family: FONT, size: 11, weight: 600 } },
+          ticks: { color: chartChrome().tick, font: { family: FONT, size: 11, weight: 600 } },
           grid: { display: false },
           border: { display: false },
         },
         y: {
-          ticks: { color: "#94a3b8", font: { family: FONT, size: 11 }, callback: fmtK },
-          grid: { color: "rgba(30,41,59,0.8)" },
+          ticks: { color: chartChrome().tick, font: { family: FONT, size: 11 }, callback: fmtK },
+          grid: { color: chartChrome().grid },
           border: { display: false },
         },
       },

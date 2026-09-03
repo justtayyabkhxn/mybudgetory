@@ -40,7 +40,7 @@ function toXY(cx: number, cy: number, r: number, angleDeg: number) {
 ───────────────────────────────────────────────────────────── */
 export function SpeedometerGauge({
   pct,
-  hex = "#6366f1",
+  hex = "var(--color-primary)",
   size = 120,
 }: {
   pct: number;
@@ -72,24 +72,24 @@ export function SpeedometerGauge({
   return (
     <svg viewBox="0 0 120 70" style={{ width: size, height: size * 0.583 }}>
       {/* Track */}
-      <path d={trackPath} fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth="9" strokeLinecap="round" />
+      <path d={trackPath} fill="none" stroke="color-mix(in srgb, var(--color-ink) 7.0%, transparent)" strokeWidth="9" strokeLinecap="round" />
       {/* Filled */}
       <path d={filledPath} fill="none" stroke={hex} strokeWidth="9" strokeLinecap="round"
-        style={{ filter: `drop-shadow(0 0 4px ${hex}80)` }} />
+        style={{ filter: `drop-shadow(0 0 4px color-mix(in srgb, ${hex} 50%, transparent))` }} />
       {/* Zone ticks */}
       <line x1={tick60.x.toFixed(1)} y1={tick60.y.toFixed(1)} x2={tick60inner.x.toFixed(1)} y2={tick60inner.y.toFixed(1)}
-        stroke="rgba(234,179,8,0.6)" strokeWidth="1.5" />
+        stroke="var(--color-warning)" strokeOpacity="0.6" strokeWidth="1.5" />
       <line x1={tick80.x.toFixed(1)} y1={tick80.y.toFixed(1)} x2={tick80inner.x.toFixed(1)} y2={tick80inner.y.toFixed(1)}
-        stroke="rgba(249,115,22,0.6)" strokeWidth="1.5" />
+        stroke="var(--color-accent-orange)" strokeOpacity="0.6" strokeWidth="1.5" />
       {/* Needle */}
       <line x1={cx} y1={cy} x2={tip.x.toFixed(1)} y2={tip.y.toFixed(1)}
-        stroke="white" strokeWidth="2.5" strokeLinecap="round" />
+        stroke="var(--color-ink)" strokeWidth="2.5" strokeLinecap="round" />
       {/* Pivot */}
-      <circle cx={cx} cy={cy} r="5" fill="white" />
+      <circle cx={cx} cy={cy} r="5" fill="var(--color-ink)" />
       <circle cx={cx} cy={cy} r="2.5" fill={hex} />
       {/* Labels */}
-      <text x="9"  y="68" fontSize="7" fill="rgba(255,255,255,0.25)" textAnchor="middle">0</text>
-      <text x="111" y="68" fontSize="7" fill="rgba(255,255,255,0.25)" textAnchor="middle">100</text>
+      <text x="9"  y="68" fontSize="7" fill="color-mix(in srgb, var(--color-ink) 25.0%, transparent)" textAnchor="middle">0</text>
+      <text x="111" y="68" fontSize="7" fill="color-mix(in srgb, var(--color-ink) 25.0%, transparent)" textAnchor="middle">100</text>
     </svg>
   );
 }
@@ -101,9 +101,9 @@ function HealthGauge({ score }: { score: number }) {
   const r = 36, circ = 2 * Math.PI * r;
   const filled = (Math.max(0, Math.min(score, 100)) / 100) * circ;
   const hex =
-    score >= 80 ? "#4ade80" :
-    score >= 60 ? "#facc15" :
-    score >= 40 ? "#fb923c" : "#f87171";
+    score >= 80 ? "var(--color-positive)" :
+    score >= 60 ? "var(--color-warning)" :
+    score >= 40 ? "var(--color-warning-deep)" : "var(--color-negative)";
   const label =
     score >= 80 ? "Excellent" :
     score >= 60 ? "Good" :
@@ -113,11 +113,11 @@ function HealthGauge({ score }: { score: number }) {
     <div className="flex flex-col items-center gap-1.5">
       <div className="relative w-[88px] h-[88px]">
         <svg viewBox="0 0 88 88" className="w-full h-full -rotate-90">
-          <circle cx="44" cy="44" r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="8" />
+          <circle cx="44" cy="44" r={r} fill="none" stroke="color-mix(in srgb, var(--color-ink) 6.0%, transparent)" strokeWidth="8" />
           <circle cx="44" cy="44" r={r} fill="none" stroke={hex} strokeWidth="8"
             strokeLinecap="round"
             strokeDasharray={`${filled.toFixed(1)} ${circ.toFixed(1)}`}
-            style={{ filter: `drop-shadow(0 0 6px ${hex}90)`, transition: "stroke-dasharray 1s ease" }} />
+            style={{ filter: `drop-shadow(0 0 6px color-mix(in srgb, ${hex} 55%, transparent))`, transition: "stroke-dasharray 1s ease" }} />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <span className="text-[22px] font-black leading-none" style={{ color: hex }}>{score}</span>
@@ -142,8 +142,8 @@ function InsightCard({
   className?: string;
 }) {
   return (
-    <div className={`relative rounded-2xl border border-white/[0.07] bg-white/[0.03] backdrop-blur-xl p-5 ${className}`}>
-      <div className="absolute top-0 left-6 right-6 h-px bg-gradient-to-r from-transparent via-white/[0.08] to-transparent" />
+    <div className={`relative rounded-2xl bg-canvas/80 backdrop-blur-xl p-5 ${className}`}>
+      <div className="absolute top-0 left-6 right-6 h-px bg-hairline" />
       <div className="flex items-center gap-2.5 mb-4">
         <div className={`w-7 h-7 rounded-lg ${iconBg} flex items-center justify-center shrink-0`}>{icon}</div>
         <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">{title}</span>
@@ -206,8 +206,8 @@ export function SpendingPaceCard({ txs, inflow, expense, loading }: Props) {
     inflow > 0 && projectedEnd > inflow * 0.85 ? "warning" : "on-track";
 
   const velocityColor =
-    velocityStatus === "critical" ? "#f87171" :
-    velocityStatus === "warning"  ? "#fb923c" : "#4ade80";
+    velocityStatus === "critical" ? "var(--color-negative)" :
+    velocityStatus === "warning"  ? "var(--color-warning-deep)" : "var(--color-positive)";
 
   const timeElapsedPct     = (dayOfMonth / daysInMonth) * 100;
   const budgetConsumedPct  = inflow > 0 ? (expense / inflow) * 100 : 0;
@@ -257,14 +257,14 @@ export function SpendingPaceCard({ txs, inflow, expense, loading }: Props) {
   }, [monthTxs, expense, dayOfMonth, now]);
 
   if (loading) {
-    return <div className="animate-pulse rounded-2xl border border-white/[0.05] bg-white/[0.02] h-full min-h-[220px]" />;
+    return <div className="animate-pulse rounded-2xl bg-canvas/80 h-full min-h-[220px]" />;
   }
 
   if (monthTxs.length === 0) return null;
 
   return (
     <InsightCard
-      icon={<Zap size={14} className="text-yellow-400" />}
+      icon={<Zap size={14} className="text-warning-deep" />}
       iconBg="bg-yellow-500/10"
       title="Spending Pace"
     >
@@ -294,7 +294,7 @@ export function SpendingPaceCard({ txs, inflow, expense, loading }: Props) {
       {/* Status pill */}
       <div className="mb-5">
         <span
-          className="inline-flex items-center gap-1.5 text-xs font-semibold rounded-full px-3 py-1 border"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold rounded-full px-3 py-1"
           style={{
             color: velocityColor,
             borderColor: `${velocityColor}40`,
@@ -312,13 +312,13 @@ export function SpendingPaceCard({ txs, inflow, expense, loading }: Props) {
         <RaceBar
           label={`Time elapsed (Day ${dayOfMonth} of ${daysInMonth})`}
           pct={timeElapsedPct}
-          color="#818cf8"
+          color="var(--color-primary)"
           bgColor="bg-indigo-500/10"
         />
         <RaceBar
           label={`Budget consumed vs income`}
           pct={budgetConsumedPct}
-          color={isOverpacing ? "#f87171" : "#4ade80"}
+          color={isOverpacing ? "var(--color-negative)" : "var(--color-positive)"}
           bgColor={isOverpacing ? "bg-red-500/10" : "bg-green-500/10"}
         />
       </div>
@@ -329,9 +329,9 @@ export function SpendingPaceCard({ txs, inflow, expense, loading }: Props) {
       )}
 
       {/* Health Score + Streak — same row */}
-      <div className="grid grid-cols-2 gap-3 mt-5 pt-5 border-t border-white/[0.06]">
+      <div className="grid grid-cols-2 gap-3 mt-5 pt-5 border-t border-hairline">
         {/* Health Score */}
-        <div className="rounded-xl bg-white/[0.03] border border-white/[0.05] p-4">
+        <div className="rounded-xl bg-canvas-soft/80 p-4">
           <div className="flex items-center gap-2 mb-3">
             <div className="w-6 h-6 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
               <Activity size={12} className="text-blue-400" />
@@ -354,10 +354,10 @@ export function SpendingPaceCard({ txs, inflow, expense, loading }: Props) {
         </div>
 
         {/* Streak Counter */}
-        <div className="rounded-xl bg-white/[0.03] border border-white/[0.05] p-4">
+        <div className="rounded-xl bg-canvas-soft/80 p-4">
           <div className="flex items-center gap-2 mb-3">
             <div className="w-6 h-6 rounded-lg bg-orange-500/10 flex items-center justify-center shrink-0">
-              <Flame size={12} className="text-orange-400" />
+              <Flame size={12} className="text-warning-deep" />
             </div>
             <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Streak</span>
           </div>
@@ -366,8 +366,8 @@ export function SpendingPaceCard({ txs, inflow, expense, loading }: Props) {
               <span
                 className="text-5xl font-black"
                 style={{
-                  color: streak >= 7 ? "#f97316" : streak >= 3 ? "#fb923c" : "#6b7280",
-                  textShadow: streak >= 3 ? `0 0 20px ${streak >= 7 ? "#f97316" : "#fb923c"}60` : "none",
+                  color: streak >= 7 ? "var(--color-warning-deep)" : streak >= 3 ? "var(--color-warning-deep)" : "var(--color-mute)",
+                  textShadow: streak >= 3 ? `0 0 20px ${streak >= 7 ? "var(--color-warning-deep)" : "var(--color-warning-deep)"}60` : "none",
                 }}
               >
                 {streak}
@@ -396,8 +396,8 @@ export function SpendingPaceCard({ txs, inflow, expense, loading }: Props) {
                   className="w-2 h-2 rounded-full"
                   style={{
                     background: i < streak
-                      ? (streak >= 7 ? "#f97316" : "#fb923c")
-                      : "rgba(255,255,255,0.1)",
+                      ? (streak >= 7 ? "var(--color-warning-deep)" : "var(--color-warning-deep)")
+                      : "color-mix(in srgb, var(--color-ink) 10.0%, transparent)",
                   }}
                 />
               ))}
@@ -464,7 +464,7 @@ export default function DashboardInsights({ txs, inflow, expense, loading }: Pro
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
         {[...Array(4)].map((_, i) => (
-          <div key={i} className="animate-pulse rounded-2xl border border-white/[0.05] bg-white/[0.02] h-32" />
+          <div key={i} className="animate-pulse rounded-2xl bg-canvas/80 h-32" />
         ))}
       </div>
     );
@@ -485,21 +485,21 @@ export default function DashboardInsights({ txs, inflow, expense, loading }: Pro
       >
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {/* Total spent */}
-          <div className="rounded-xl bg-white/[0.03] border border-white/[0.05] p-3">
+          <div className="rounded-xl bg-canvas-soft/80 p-3">
             <p className="text-[10px] text-gray-600 mb-1">Total spent</p>
             <p className="text-base font-black text-rose-400">
               ₹{digest.weekExp.toLocaleString()}
             </p>
           </div>
           {/* Income */}
-          <div className="rounded-xl bg-white/[0.03] border border-white/[0.05] p-3">
+          <div className="rounded-xl bg-canvas-soft/80 p-3">
             <p className="text-[10px] text-gray-600 mb-1">Income received</p>
             <p className="text-base font-black text-emerald-400">
               ₹{digest.weekInc.toLocaleString()}
             </p>
           </div>
           {/* Best day */}
-          <div className="rounded-xl bg-emerald-500/[0.06] border border-emerald-500/10 p-3">
+          <div className="rounded-xl bg-emerald-500/[0.06] p-3">
             <p className="text-[10px] text-gray-600 mb-1 flex items-center gap-1">
               <TrendingDown size={9} className="text-emerald-400" /> Best day
             </p>
@@ -511,7 +511,7 @@ export default function DashboardInsights({ txs, inflow, expense, loading }: Pro
             ) : <p className="text-xs text-gray-600">No data</p>}
           </div>
           {/* Worst day */}
-          <div className="rounded-xl bg-rose-500/[0.06] border border-rose-500/10 p-3">
+          <div className="rounded-xl bg-rose-500/[0.06] p-3">
             <p className="text-[10px] text-gray-600 mb-1 flex items-center gap-1">
               <TrendingUp size={9} className="text-rose-400" /> Worst day
             </p>
@@ -530,7 +530,7 @@ export default function DashboardInsights({ txs, inflow, expense, loading }: Pro
               Heaviest category this week:{" "}
               <span
                 className="font-semibold"
-                style={{ color: CATEGORY_COLORS[digest.topCat[0]]?.hex || "#6366f1" }}
+                style={{ color: CATEGORY_COLORS[digest.topCat[0]]?.hex || "var(--color-primary)" }}
               >
                 {digest.topCat[0]}
               </span>{" "}
@@ -542,8 +542,8 @@ export default function DashboardInsights({ txs, inflow, expense, loading }: Pro
 
       {topCategories.length > 0 && (
         <InsightCard
-          icon={<Calculator size={14} className="text-cyan-400" />}
-          iconBg="bg-cyan-500/10"
+          icon={<Calculator size={14} className="text-ink-deep" />}
+          iconBg="bg-primary/10"
           title="What If You Spent Less?"
         >
           {/* Cut % selector */}
@@ -553,11 +553,11 @@ export default function DashboardInsights({ txs, inflow, expense, loading }: Pro
               <button
                 key={n}
                 onClick={() => setCutPct(n)}
-                className="text-xs font-bold px-2.5 py-1 rounded-lg border transition-all duration-150 cursor-pointer"
+                className="text-xs font-bold px-2.5 py-1 rounded-lg transition-all duration-150 cursor-pointer"
                 style={
                   cutPct === n
-                    ? { background: "#0891b220", borderColor: "#0891b250", color: "#22d3ee" }
-                    : { background: "rgba(255,255,255,0.03)", borderColor: "rgba(255,255,255,0.07)", color: "#6b7280" }
+                    ? { background: "color-mix(in srgb, var(--color-accent-cyan) 14%, transparent)", color: "var(--color-cat-outing)" }
+                    : { background: "color-mix(in srgb, var(--color-ink) 3.0%, transparent)", borderColor: "color-mix(in srgb, var(--color-ink) 7.0%, transparent)", color: "var(--color-mute)" }
                 }
               >
                 {n}%
@@ -570,9 +570,9 @@ export default function DashboardInsights({ txs, inflow, expense, loading }: Pro
             {topCategories.map(([cat, monthlyAmt]) => {
               const saved = Math.round(monthlyAmt * (cutPct / 100));
               const annualSaved = saved * 12;
-              const hex = CATEGORY_COLORS[cat]?.hex || "#6366f1";
+              const hex = CATEGORY_COLORS[cat]?.hex || "var(--color-primary)";
               return (
-                <div key={cat} className="flex items-center justify-between gap-3 rounded-xl border border-white/[0.05] bg-white/[0.02] px-4 py-3">
+                <div key={cat} className="flex items-center justify-between gap-3 rounded-xl bg-canvas-soft/80 px-4 py-3">
                   <div className="flex items-center gap-2.5">
                     <div
                       className="w-2 h-8 rounded-full shrink-0"
@@ -584,7 +584,7 @@ export default function DashboardInsights({ txs, inflow, expense, loading }: Pro
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-black text-cyan-400">
+                    <p className="text-sm font-black text-ink-deep">
                       Save ₹{annualSaved.toLocaleString()}
                     </p>
                     <p className="text-[11px] text-gray-600">per year</p>
@@ -594,7 +594,7 @@ export default function DashboardInsights({ txs, inflow, expense, loading }: Pro
             })}
           </div>
 
-          <p className="text-[11px] text-gray-700 mt-3">
+          <p className="text-[11px] text-ink mt-3">
             Based on your {now.toLocaleString("default", { month: "long" })} spending patterns.
           </p>
         </InsightCard>

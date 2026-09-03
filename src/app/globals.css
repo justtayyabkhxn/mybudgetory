@@ -1,28 +1,765 @@
 @import "tailwindcss";
 
+/* ═══════════════════════════════════════════════════════════
+   BUDGETORY — Wise-inspired design system
+   Source of truth: wise/DESIGN.md
+   Typeface intentionally unchanged: Bricolage Grotesque.
+   ═══════════════════════════════════════════════════════════ */
+
+@theme {
+  /* ── Brand ─────────────────────────────────────────── */
+  --color-primary:         #9fe870;
+  --color-primary-active:  #cdffad;
+  --color-primary-neutral: #c5edab;
+  --color-primary-pale:    #e2f6d5;
+  --color-on-primary:      #163300;
+  /* Text on a solid semantic fill (negative / positive / warning). Unlike
+     --color-ink this does NOT invert: the fill itself is the same colour in
+     both themes, so its foreground has to be too. */
+  --color-on-solid:        #ffffff;
+  /* Polarity-flipped surfaces — the dark footer band, the dark CTA card,
+     modal scrims. These are dark BY DESIGN, so unlike --color-ink they must
+     not invert with the theme; in dark mode they only lift enough to
+     separate from the page ground. */
+  --color-ink-surface:     #163300;
+  --color-on-ink-surface:  #e8ebe6;
+  /* Danger foreground for those flipped surfaces. --color-negative is tuned
+     for a light ground and drops to ~2.5:1 on the dark band, so it gets its
+     own non-inverting tint here. */
+  --color-negative-on-ink: #f0787d;
+  --color-scrim:           #0a1400;
+
+  /* ── Ink & text ────────────────────────────────────── */
+  /* The brand's forest ink carries all primary text and every dark
+     surface (footer band, dark CTA card, modal scrims), so the whole
+     dark end of the palette sits in the same olive family as the
+     lime accent rather than reading as a neutral black. */
+  --color-ink:      #163300;
+  --color-ink-deep: #163300;
+  --color-body:     #454745;
+  --color-mute:     #868685;
+
+  /* ── Surface ───────────────────────────────────────── */
+  --color-canvas:      #ffffff;
+  --color-canvas-soft: #e8ebe6;
+  --color-hairline:    #dfe3dc;
+
+  /* ── Semantic ──────────────────────────────────────── */
+  --color-positive:         #2ead4b;
+  --color-positive-deep:    #054d28;
+  --color-warning:          #ffd11a;
+  --color-warning-deep:     #b86700;
+  --color-warning-content:  #4a3b1c;
+  --color-negative:         #d03238;
+  --color-negative-deep:    #a72027;
+  --color-negative-darkest: #a7000d;
+  --color-negative-bg:      #320707;
+
+  /* ── Tertiary illustration accents ─────────────────── */
+  --color-accent-orange: #ffc091;
+  --color-accent-cyan:   #38c8ff;
+
+  /* `ring-*` with no colour falls back to this instead of currentColor */
+  --default-ring-color: var(--color-primary);
+
+  /* ── Spend-category scale ─────────────────────────────
+     Every hue is drawn from the Wise palette. The lime brand
+     accent is deliberately absent: it belongs to CTAs, never
+     to data marks. Dark-theme counterparts are lifted for
+     legibility on the ink ground. */
+  --color-cat-food:          #b86700;
+  --color-cat-outing:        #0b6f96;
+  --color-cat-clothes:       #163300;
+  --color-cat-medical:       #d03238;
+  --color-cat-bills:         #4a3b1c;
+  --color-cat-entertainment: #a72027;
+  --color-cat-travel:        #2ead4b;
+  --color-cat-smm:           #054d28;
+  --color-cat-vacation:      #0e8fbd;
+  --color-cat-other:         #868685;
+
+  /* Backdrop glyph ink. The light theme carries more of it than the dark one:
+     forest ink on the sage ground is a lower-contrast pairing than lime on
+     near-black, and the translucent cards knock it back further still. */
+  --backdrop-ink: rgb(22 51 0 / 0.11);
+
+  /* ── Radius — 24px is the canonical card/button shape ─ */
+  --radius-sm:  8px;
+  --radius-md:  12px;
+  --radius-lg:  16px;
+  --radius-xl:  24px;
+  --radius-2xl: 24px;
+  --radius-3xl: 24px;
+
+  /* ── Elevation — the brand is flat; surface contrast
+        carries depth. Shadows are whisper-soft only. ──── */
+  --shadow-sm:  0 1px 2px 0 rgb(14 15 12 / 0.04);
+  --shadow-md:  0 2px 6px -1px rgb(14 15 12 / 0.06);
+  --shadow-lg:  0 4px 14px -4px rgb(14 15 12 / 0.08);
+  --shadow-xl:  0 8px 24px -8px rgb(14 15 12 / 0.10);
+  --shadow-2xl: 0 12px 36px -12px rgb(14 15 12 / 0.12);
+
+  /* ═══════════════════════════════════════════════════
+     Legacy palette remap.
+     The app was authored against Tailwind's dark-theme
+     default ramps. Rather than rewrite every utility in
+     the codebase, the ramps themselves are re-pointed at
+     Wise tokens: the grey scale is inverted (dark
+     surfaces become light sage/white, dim text becomes
+     ink) and every former accent ramp collapses onto the
+     single Wise green. New markup should prefer the
+     semantic tokens above.
+     ═══════════════════════════════════════════════════ */
+
+  /* Grey ramp — inverted: 950 page, 900 card, 800/700 lines, 500-50 text */
+  --color-gray-950: #e8ebe6;
+  --color-gray-900: #ffffff;
+  --color-gray-800: #eef1ec;
+  --color-gray-700: #dfe3dc;
+  --color-gray-600: #868685;
+  --color-gray-500: #454745;
+  --color-gray-400: #454745;
+  --color-gray-300: #454745;
+  --color-gray-200: #163300;
+  --color-gray-100: #163300;
+  --color-gray-50:  #163300;
+
+  --color-slate-950: #e8ebe6;
+  --color-slate-900: #ffffff;
+  --color-slate-800: #eef1ec;
+  --color-slate-700: #dfe3dc;
+  --color-slate-600: #868685;
+  --color-slate-500: #454745;
+  --color-slate-400: #454745;
+  --color-slate-300: #454745;
+  --color-slate-200: #163300;
+  --color-slate-100: #163300;
+  --color-slate-50:  #163300;
+
+  --color-neutral-950: #e8ebe6;
+  --color-neutral-900: #ffffff;
+  --color-neutral-800: #eef1ec;
+  --color-neutral-700: #dfe3dc;
+  --color-neutral-600: #868685;
+  --color-neutral-500: #454745;
+  --color-neutral-400: #454745;
+  --color-neutral-300: #454745;
+  --color-neutral-200: #163300;
+  --color-neutral-100: #163300;
+  --color-neutral-50:  #163300;
+
+  --color-zinc-950: #e8ebe6;
+  --color-zinc-900: #ffffff;
+  --color-zinc-800: #eef1ec;
+  --color-zinc-700: #dfe3dc;
+  --color-zinc-600: #868685;
+  --color-zinc-500: #454745;
+  --color-zinc-400: #454745;
+  --color-zinc-300: #454745;
+  --color-zinc-200: #163300;
+  --color-zinc-100: #163300;
+  --color-zinc-50:  #163300;
+
+  /* Brand ramps — indigo / violet / purple / fuchsia / blue / pink all
+     collapse onto Wise green. "Don't introduce a second brand accent." */
+  --color-indigo-950: #e2f6d5;
+  --color-indigo-900: #e2f6d5;
+  --color-indigo-800: #163300;
+  --color-indigo-700: #163300;
+  --color-indigo-600: #9fe870;
+  --color-indigo-500: #9fe870;
+  --color-indigo-400: #163300;
+  --color-indigo-300: #163300;
+  --color-indigo-200: #cdffad;
+  --color-indigo-100: #e2f6d5;
+  --color-indigo-50:  #e2f6d5;
+
+  --color-violet-950: #e2f6d5;
+  --color-violet-900: #e2f6d5;
+  --color-violet-800: #163300;
+  --color-violet-700: #163300;
+  --color-violet-600: #9fe870;
+  --color-violet-500: #9fe870;
+  --color-violet-400: #163300;
+  --color-violet-300: #163300;
+  --color-violet-200: #cdffad;
+  --color-violet-100: #e2f6d5;
+  --color-violet-50:  #e2f6d5;
+
+  --color-purple-950: #e2f6d5;
+  --color-purple-900: #e2f6d5;
+  --color-purple-800: #163300;
+  --color-purple-700: #163300;
+  --color-purple-600: #9fe870;
+  --color-purple-500: #9fe870;
+  --color-purple-400: #163300;
+  --color-purple-300: #163300;
+  --color-purple-200: #cdffad;
+  --color-purple-100: #e2f6d5;
+  --color-purple-50:  #e2f6d5;
+
+  --color-fuchsia-950: #e2f6d5;
+  --color-fuchsia-900: #e2f6d5;
+  --color-fuchsia-800: #163300;
+  --color-fuchsia-700: #163300;
+  --color-fuchsia-600: #9fe870;
+  --color-fuchsia-500: #9fe870;
+  --color-fuchsia-400: #163300;
+  --color-fuchsia-300: #163300;
+  --color-fuchsia-200: #cdffad;
+  --color-fuchsia-100: #e2f6d5;
+  --color-fuchsia-50:  #e2f6d5;
+
+  --color-pink-950: #e2f6d5;
+  --color-pink-900: #e2f6d5;
+  --color-pink-800: #163300;
+  --color-pink-700: #163300;
+  --color-pink-600: #9fe870;
+  --color-pink-500: #9fe870;
+  --color-pink-400: #163300;
+  --color-pink-300: #163300;
+  --color-pink-200: #cdffad;
+  --color-pink-100: #e2f6d5;
+  --color-pink-50:  #e2f6d5;
+
+  --color-blue-950: #e2f6d5;
+  --color-blue-900: #e2f6d5;
+  --color-blue-800: #163300;
+  --color-blue-700: #163300;
+  --color-blue-600: #9fe870;
+  --color-blue-500: #9fe870;
+  --color-blue-400: #163300;
+  --color-blue-300: #163300;
+  --color-blue-200: #cdffad;
+  --color-blue-100: #e2f6d5;
+  --color-blue-50:  #e2f6d5;
+
+  /* Sky / cyan carry the tertiary illustration accent */
+  --color-sky-950: #e0f6ff;
+  --color-sky-900: #e0f6ff;
+  --color-sky-800: #0b6f96;
+  --color-sky-700: #0b6f96;
+  --color-sky-600: #0b6f96;
+  --color-sky-500: #38c8ff;
+  --color-sky-400: #0b6f96;
+  --color-sky-300: #0b6f96;
+  --color-sky-200: #b9ecff;
+  --color-sky-100: #e0f6ff;
+  --color-sky-50:  #e0f6ff;
+
+  --color-cyan-950: #e0f6ff;
+  --color-cyan-900: #e0f6ff;
+  --color-cyan-800: #0b6f96;
+  --color-cyan-700: #0b6f96;
+  --color-cyan-600: #0b6f96;
+  --color-cyan-500: #38c8ff;
+  --color-cyan-400: #0b6f96;
+  --color-cyan-300: #0b6f96;
+  --color-cyan-200: #b9ecff;
+  --color-cyan-100: #e0f6ff;
+  --color-cyan-50:  #e0f6ff;
+
+  /* Positive family — green / emerald / teal / lime */
+  --color-green-950: #e2f6d5;
+  --color-green-900: #e2f6d5;
+  --color-green-800: #054d28;
+  --color-green-700: #054d28;
+  --color-green-600: #2ead4b;
+  --color-green-500: #2ead4b;
+  --color-green-400: #054d28;
+  --color-green-300: #054d28;
+  --color-green-200: #c5edab;
+  --color-green-100: #e2f6d5;
+  --color-green-50:  #e2f6d5;
+
+  --color-emerald-950: #e2f6d5;
+  --color-emerald-900: #e2f6d5;
+  --color-emerald-800: #054d28;
+  --color-emerald-700: #054d28;
+  --color-emerald-600: #2ead4b;
+  --color-emerald-500: #2ead4b;
+  --color-emerald-400: #054d28;
+  --color-emerald-300: #054d28;
+  --color-emerald-200: #c5edab;
+  --color-emerald-100: #e2f6d5;
+  --color-emerald-50:  #e2f6d5;
+
+  --color-teal-950: #e2f6d5;
+  --color-teal-900: #e2f6d5;
+  --color-teal-800: #054d28;
+  --color-teal-700: #054d28;
+  --color-teal-600: #2ead4b;
+  --color-teal-500: #2ead4b;
+  --color-teal-400: #054d28;
+  --color-teal-300: #054d28;
+  --color-teal-200: #c5edab;
+  --color-teal-100: #e2f6d5;
+  --color-teal-50:  #e2f6d5;
+
+  --color-lime-950: #e2f6d5;
+  --color-lime-900: #e2f6d5;
+  --color-lime-800: #163300;
+  --color-lime-700: #163300;
+  --color-lime-600: #9fe870;
+  --color-lime-500: #9fe870;
+  --color-lime-400: #163300;
+  --color-lime-300: #163300;
+  --color-lime-200: #cdffad;
+  --color-lime-100: #e2f6d5;
+  --color-lime-50:  #e2f6d5;
+
+  /* Negative family — red / rose */
+  --color-red-950: #fdecec;
+  --color-red-900: #fdecec;
+  --color-red-800: #a7000d;
+  --color-red-700: #a72027;
+  --color-red-600: #d03238;
+  --color-red-500: #d03238;
+  --color-red-400: #a72027;
+  --color-red-300: #a72027;
+  --color-red-200: #f6cdcf;
+  --color-red-100: #fdecec;
+  --color-red-50:  #fdecec;
+
+  --color-rose-950: #fdecec;
+  --color-rose-900: #fdecec;
+  --color-rose-800: #a7000d;
+  --color-rose-700: #a72027;
+  --color-rose-600: #d03238;
+  --color-rose-500: #d03238;
+  --color-rose-400: #a72027;
+  --color-rose-300: #a72027;
+  --color-rose-200: #f6cdcf;
+  --color-rose-100: #fdecec;
+  --color-rose-50:  #fdecec;
+
+  /* Warning family — yellow / amber / orange */
+  --color-yellow-950: #fff6d6;
+  --color-yellow-900: #fff6d6;
+  --color-yellow-800: #4a3b1c;
+  --color-yellow-700: #b86700;
+  --color-yellow-600: #b86700;
+  --color-yellow-500: #ffd11a;
+  --color-yellow-400: #b86700;
+  --color-yellow-300: #b86700;
+  --color-yellow-200: #ffe89a;
+  --color-yellow-100: #fff6d6;
+  --color-yellow-50:  #fff6d6;
+
+  --color-amber-950: #fff6d6;
+  --color-amber-900: #fff6d6;
+  --color-amber-800: #4a3b1c;
+  --color-amber-700: #b86700;
+  --color-amber-600: #b86700;
+  --color-amber-500: #ffd11a;
+  --color-amber-400: #b86700;
+  --color-amber-300: #b86700;
+  --color-amber-200: #ffe89a;
+  --color-amber-100: #fff6d6;
+  --color-amber-50:  #fff6d6;
+
+  --color-orange-950: #ffefe3;
+  --color-orange-900: #ffefe3;
+  --color-orange-800: #4a3b1c;
+  --color-orange-700: #b86700;
+  --color-orange-600: #b86700;
+  --color-orange-500: #ffc091;
+  --color-orange-400: #b86700;
+  --color-orange-300: #b86700;
+  --color-orange-200: #ffdcc2;
+  --color-orange-100: #ffefe3;
+  --color-orange-50:  #ffefe3;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   DARK THEME
+   Wise publishes no dark surface, so this is the brand's own
+   logic inverted: the near-black ink becomes the page ground,
+   cards lift off it, and the lime CTA is untouched — #9fe870
+   on #0e0f0c is the brand's own `hero-band-dark` pairing.
+   Text-weight tokens flip to their light counterparts; fill
+   tokens stay put.
+
+   `data-theme` is always written to the <html> element by the
+   boot script in layout.tsx (resolving "system" against
+   prefers-color-scheme before first paint), so one explicit
+   selector covers every case.
+   ═══════════════════════════════════════════════════════════ */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Brand — the CTA pill is identical in both themes */
+  --color-primary:         #9fe870;
+  --color-primary-active:  #cdffad;
+  --color-primary-neutral: #7cc94f;
+  --color-primary-pale:    #1c2a14;
+  --color-on-primary:      #163300;
+  /* Text on a solid semantic fill (negative / positive / warning). Unlike
+     --color-ink this does NOT invert: the fill itself is the same colour in
+     both themes, so its foreground has to be too. */
+  --color-on-solid:        #ffffff;
+  --color-ink-surface:     #1d2b12;
+  --color-on-ink-surface:  #e8ebe6;
+  --color-negative-on-ink: #f0787d;
+  --color-scrim:           #050a00;
+
+  /* Ink & text — inverted */
+  --color-ink:      #f4f6f2;
+  --color-ink-deep: #9fe870;
+  --color-body:     #c3c9c0;
+  --color-mute:     #8d928a;
+
+  /* Surface */
+  --color-canvas:      #161814;
+  --color-canvas-soft: #0e0f0c;
+  --color-hairline:    #2a2d27;
+
+  /* Semantic — the "deep" variants become the light-on-dark voice */
+  --color-positive:         #2ead4b;
+  --color-positive-deep:    #7fd99a;
+  --color-warning:          #ffd11a;
+  --color-warning-deep:     #ffc35c;
+  --color-warning-content:  #ffe89a;
+  --color-negative:         #d03238;
+  --color-negative-deep:    #f0787d;
+  --color-negative-darkest: #ffa3a6;
+  --color-negative-bg:      #3d0e0e;
+
+  --color-accent-orange: #ffc091;
+  --color-accent-cyan:   #38c8ff;
+
+  /* Elevation reads as a lift in luminance rather than a cast shadow */
+  --shadow-sm:  0 1px 2px 0 rgb(0 0 0 / 0.30);
+  --shadow-md:  0 2px 6px -1px rgb(0 0 0 / 0.36);
+  --shadow-lg:  0 4px 14px -4px rgb(0 0 0 / 0.42);
+  --shadow-xl:  0 8px 24px -8px rgb(0 0 0 / 0.48);
+  --shadow-2xl: 0 12px 36px -12px rgb(0 0 0 / 0.55);
+
+  /* Backdrop glyphs read as a faint lime wash on the ink ground */
+  --backdrop-ink: rgb(159 232 112 / 0.07);
+
+  /* Scrollbar */
+  --sb-track-color: #0e0f0c;
+  --sb-thumb-color: #2f332c;
+
+
+  /* Spend-category scale — lifted for legibility on the ink ground */
+  --color-cat-food:          #ffc091;
+  --color-cat-outing:        #7fdcff;
+  --color-cat-clothes:       #9fe870;
+  --color-cat-medical:       #f0787d;
+  --color-cat-bills:         #ffe89a;
+  --color-cat-entertainment: #ffa3a6;
+  --color-cat-travel:        #7fd99a;
+  --color-cat-smm:           #a8e8bd;
+  --color-cat-vacation:      #38c8ff;
+  --color-cat-other:         #8d928a;
+
+  /* ── Legacy ramps, inverted the same way ── */
+
+  /* Grey ramp — inverted */
+  --color-gray-950:       #0e0f0c;
+  --color-gray-900:       #161814;
+  --color-gray-800:       #1e211c;
+  --color-gray-700:       #2a2d27;
+  --color-gray-600:       #8d928a;
+  --color-gray-500:       #c3c9c0;
+  --color-gray-400:       #c3c9c0;
+  --color-gray-300:       #c3c9c0;
+  --color-gray-200:       #f4f6f2;
+  --color-gray-100:       #f4f6f2;
+  --color-gray-50:        #f4f6f2;
+
+  --color-slate-950:      #0e0f0c;
+  --color-slate-900:      #161814;
+  --color-slate-800:      #1e211c;
+  --color-slate-700:      #2a2d27;
+  --color-slate-600:      #8d928a;
+  --color-slate-500:      #c3c9c0;
+  --color-slate-400:      #c3c9c0;
+  --color-slate-300:      #c3c9c0;
+  --color-slate-200:      #f4f6f2;
+  --color-slate-100:      #f4f6f2;
+  --color-slate-50:       #f4f6f2;
+
+  --color-neutral-950:    #0e0f0c;
+  --color-neutral-900:    #161814;
+  --color-neutral-800:    #1e211c;
+  --color-neutral-700:    #2a2d27;
+  --color-neutral-600:    #8d928a;
+  --color-neutral-500:    #c3c9c0;
+  --color-neutral-400:    #c3c9c0;
+  --color-neutral-300:    #c3c9c0;
+  --color-neutral-200:    #f4f6f2;
+  --color-neutral-100:    #f4f6f2;
+  --color-neutral-50:     #f4f6f2;
+
+  --color-zinc-950:       #0e0f0c;
+  --color-zinc-900:       #161814;
+  --color-zinc-800:       #1e211c;
+  --color-zinc-700:       #2a2d27;
+  --color-zinc-600:       #8d928a;
+  --color-zinc-500:       #c3c9c0;
+  --color-zinc-400:       #c3c9c0;
+  --color-zinc-300:       #c3c9c0;
+  --color-zinc-200:       #f4f6f2;
+  --color-zinc-100:       #f4f6f2;
+  --color-zinc-50:        #f4f6f2;
+
+
+  /* Former brand accents — still the single Wise green */
+  --color-indigo-950:     #1c2a14;
+  --color-indigo-900:     #1c2a14;
+  --color-indigo-800:     #cdffad;
+  --color-indigo-700:     #cdffad;
+  --color-indigo-600:     #9fe870;
+  --color-indigo-500:     #9fe870;
+  --color-indigo-400:     #9fe870;
+  --color-indigo-300:     #9fe870;
+  --color-indigo-200:     #cdffad;
+  --color-indigo-100:     #1c2a14;
+  --color-indigo-50:      #1c2a14;
+
+  --color-violet-950:     #1c2a14;
+  --color-violet-900:     #1c2a14;
+  --color-violet-800:     #cdffad;
+  --color-violet-700:     #cdffad;
+  --color-violet-600:     #9fe870;
+  --color-violet-500:     #9fe870;
+  --color-violet-400:     #9fe870;
+  --color-violet-300:     #9fe870;
+  --color-violet-200:     #cdffad;
+  --color-violet-100:     #1c2a14;
+  --color-violet-50:      #1c2a14;
+
+  --color-purple-950:     #1c2a14;
+  --color-purple-900:     #1c2a14;
+  --color-purple-800:     #cdffad;
+  --color-purple-700:     #cdffad;
+  --color-purple-600:     #9fe870;
+  --color-purple-500:     #9fe870;
+  --color-purple-400:     #9fe870;
+  --color-purple-300:     #9fe870;
+  --color-purple-200:     #cdffad;
+  --color-purple-100:     #1c2a14;
+  --color-purple-50:      #1c2a14;
+
+  --color-fuchsia-950:    #1c2a14;
+  --color-fuchsia-900:    #1c2a14;
+  --color-fuchsia-800:    #cdffad;
+  --color-fuchsia-700:    #cdffad;
+  --color-fuchsia-600:    #9fe870;
+  --color-fuchsia-500:    #9fe870;
+  --color-fuchsia-400:    #9fe870;
+  --color-fuchsia-300:    #9fe870;
+  --color-fuchsia-200:    #cdffad;
+  --color-fuchsia-100:    #1c2a14;
+  --color-fuchsia-50:     #1c2a14;
+
+  --color-pink-950:       #1c2a14;
+  --color-pink-900:       #1c2a14;
+  --color-pink-800:       #cdffad;
+  --color-pink-700:       #cdffad;
+  --color-pink-600:       #9fe870;
+  --color-pink-500:       #9fe870;
+  --color-pink-400:       #9fe870;
+  --color-pink-300:       #9fe870;
+  --color-pink-200:       #cdffad;
+  --color-pink-100:       #1c2a14;
+  --color-pink-50:        #1c2a14;
+
+  --color-blue-950:       #1c2a14;
+  --color-blue-900:       #1c2a14;
+  --color-blue-800:       #cdffad;
+  --color-blue-700:       #cdffad;
+  --color-blue-600:       #9fe870;
+  --color-blue-500:       #9fe870;
+  --color-blue-400:       #9fe870;
+  --color-blue-300:       #9fe870;
+  --color-blue-200:       #cdffad;
+  --color-blue-100:       #1c2a14;
+  --color-blue-50:        #1c2a14;
+
+  --color-lime-950:       #1c2a14;
+  --color-lime-900:       #1c2a14;
+  --color-lime-800:       #cdffad;
+  --color-lime-700:       #cdffad;
+  --color-lime-600:       #9fe870;
+  --color-lime-500:       #9fe870;
+  --color-lime-400:       #9fe870;
+  --color-lime-300:       #9fe870;
+  --color-lime-200:       #cdffad;
+  --color-lime-100:       #1c2a14;
+  --color-lime-50:        #1c2a14;
+
+
+  /* Tertiary cyan accent */
+  --color-sky-950:        #0c2530;
+  --color-sky-900:        #0c2530;
+  --color-sky-800:        #7fdcff;
+  --color-sky-700:        #7fdcff;
+  --color-sky-600:        #7fdcff;
+  --color-sky-500:        #38c8ff;
+  --color-sky-400:        #7fdcff;
+  --color-sky-300:        #7fdcff;
+  --color-sky-200:        #b9ecff;
+  --color-sky-100:        #0c2530;
+  --color-sky-50:         #0c2530;
+
+  --color-cyan-950:       #0c2530;
+  --color-cyan-900:       #0c2530;
+  --color-cyan-800:       #7fdcff;
+  --color-cyan-700:       #7fdcff;
+  --color-cyan-600:       #7fdcff;
+  --color-cyan-500:       #38c8ff;
+  --color-cyan-400:       #7fdcff;
+  --color-cyan-300:       #7fdcff;
+  --color-cyan-200:       #b9ecff;
+  --color-cyan-100:       #0c2530;
+  --color-cyan-50:        #0c2530;
+
+
+  /* Positive family */
+  --color-green-950:      #102a19;
+  --color-green-900:      #102a19;
+  --color-green-800:      #a8e8bd;
+  --color-green-700:      #a8e8bd;
+  --color-green-600:      #2ead4b;
+  --color-green-500:      #2ead4b;
+  --color-green-400:      #7fd99a;
+  --color-green-300:      #7fd99a;
+  --color-green-200:      #c5edab;
+  --color-green-100:      #102a19;
+  --color-green-50:       #102a19;
+
+  --color-emerald-950:    #102a19;
+  --color-emerald-900:    #102a19;
+  --color-emerald-800:    #a8e8bd;
+  --color-emerald-700:    #a8e8bd;
+  --color-emerald-600:    #2ead4b;
+  --color-emerald-500:    #2ead4b;
+  --color-emerald-400:    #7fd99a;
+  --color-emerald-300:    #7fd99a;
+  --color-emerald-200:    #c5edab;
+  --color-emerald-100:    #102a19;
+  --color-emerald-50:     #102a19;
+
+  --color-teal-950:       #102a19;
+  --color-teal-900:       #102a19;
+  --color-teal-800:       #a8e8bd;
+  --color-teal-700:       #a8e8bd;
+  --color-teal-600:       #2ead4b;
+  --color-teal-500:       #2ead4b;
+  --color-teal-400:       #7fd99a;
+  --color-teal-300:       #7fd99a;
+  --color-teal-200:       #c5edab;
+  --color-teal-100:       #102a19;
+  --color-teal-50:        #102a19;
+
+
+  /* Negative family */
+  --color-red-950:        #2a1113;
+  --color-red-900:        #2a1113;
+  --color-red-800:        #ffa3a6;
+  --color-red-700:        #ffa3a6;
+  --color-red-600:        #d03238;
+  --color-red-500:        #d03238;
+  --color-red-400:        #f0787d;
+  --color-red-300:        #f0787d;
+  --color-red-200:        #f6cdcf;
+  --color-red-100:        #2a1113;
+  --color-red-50:         #2a1113;
+
+  --color-rose-950:       #2a1113;
+  --color-rose-900:       #2a1113;
+  --color-rose-800:       #ffa3a6;
+  --color-rose-700:       #ffa3a6;
+  --color-rose-600:       #d03238;
+  --color-rose-500:       #d03238;
+  --color-rose-400:       #f0787d;
+  --color-rose-300:       #f0787d;
+  --color-rose-200:       #f6cdcf;
+  --color-rose-100:       #2a1113;
+  --color-rose-50:        #2a1113;
+
+
+  /* Warning family */
+  --color-yellow-950:     #2a2411;
+  --color-yellow-900:     #2a2411;
+  --color-yellow-800:     #ffe89a;
+  --color-yellow-700:     #ffc35c;
+  --color-yellow-600:     #ffc35c;
+  --color-yellow-500:     #ffd11a;
+  --color-yellow-400:     #ffc35c;
+  --color-yellow-300:     #ffc35c;
+  --color-yellow-200:     #ffe89a;
+  --color-yellow-100:     #2a2411;
+  --color-yellow-50:      #2a2411;
+
+  --color-amber-950:      #2a2411;
+  --color-amber-900:      #2a2411;
+  --color-amber-800:      #ffe89a;
+  --color-amber-700:      #ffc35c;
+  --color-amber-600:      #ffc35c;
+  --color-amber-500:      #ffd11a;
+  --color-amber-400:      #ffc35c;
+  --color-amber-300:      #ffc35c;
+  --color-amber-200:      #ffe89a;
+  --color-amber-100:      #2a2411;
+  --color-amber-50:       #2a2411;
+
+
+  /* Accent orange */
+  --color-orange-950:     #2a1e14;
+  --color-orange-900:     #2a1e14;
+  --color-orange-800:     #ffdcc2;
+  --color-orange-700:     #ffc091;
+  --color-orange-600:     #ffc091;
+  --color-orange-500:     #ffc091;
+  --color-orange-400:     #ffc091;
+  --color-orange-300:     #ffc091;
+  --color-orange-200:     #ffdcc2;
+  --color-orange-100:     #2a1e14;
+  --color-orange-50:      #2a1e14;
+
+}
+
 /* ─────────────────────────────────────────
-   Base polish
+   Base
 ───────────────────────────────────────── */
 html {
   scroll-behavior: smooth;
   -webkit-tap-highlight-color: transparent;
+  background: var(--color-canvas-soft);
 }
 
 body {
   text-rendering: optimizeLegibility;
+  /* The canvas colour lives on <html>. Body stays transparent so the
+     negative-z icon backdrop paints above the page ground: a block-level
+     background would otherwise be painted after negative-z descendants
+     and cover it. */
+  background: transparent;
+  color: var(--color-ink);
 }
 
-/* Accessible, on-brand focus rings (keyboard only) */
-:focus-visible {
-  outline: 2px solid rgba(139, 92, 246, 0.7);
-  outline-offset: 2px;
-  border-radius: 6px;
+/* Accessible, on-brand focus ring (keyboard only).
+   Brand green rather than ink: ink inverts to near-white in dark mode, which
+   read as a white ring around every focused input.
+   In @layer base so a utility wins: fields wrapped in a focus-within container
+   set `outline-none` on the inner input and let the wrapper show the ring,
+   instead of drawing two. */
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    border-radius: 8px;
+  }
 }
 
-/* Brand-tinted text selection */
 ::selection {
-  background: rgba(139, 92, 246, 0.35);
-  color: #fff;
+  background: var(--color-primary);
+  color: var(--color-ink);
 }
 
 /* Respect users who prefer less motion */
@@ -39,8 +776,8 @@ body {
    Scrollbar
 ───────────────────────────────────────── */
 body {
-  --sb-track-color: #0a0a1b;
-  --sb-thumb-color: #555;
+  --sb-track-color: #e8ebe6;
+  --sb-thumb-color: #c3c9c0;
   --sb-size: 8px;
 }
 
@@ -50,12 +787,12 @@ body::-webkit-scrollbar {
 
 body::-webkit-scrollbar-track {
   background: var(--sb-track-color);
-  border-radius: 2px;
+  border-radius: 9999px;
 }
 
 body::-webkit-scrollbar-thumb {
   background: var(--sb-thumb-color);
-  border-radius: 2px;
+  border-radius: 9999px;
 }
 
 @supports not selector(::-webkit-scrollbar) {
@@ -65,7 +802,7 @@ body::-webkit-scrollbar-thumb {
 }
 
 /* ─────────────────────────────────────────
-   Font Variables
+   Font Variables — unchanged (Bricolage Grotesque)
 ───────────────────────────────────────── */
 :root {
   --font-heading: var(--font-bricolage), 'Bricolage Grotesque', sans-serif;
@@ -84,6 +821,10 @@ h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
 }
 
+/* Wise sets display type at the family's heaviest weight — never lighter. */
+h1, h2 { font-weight: 800; letter-spacing: -0.02em; }
+h3, h4 { font-weight: 700; letter-spacing: -0.01em; }
+
 .num,
 .amount,
 .balance,
@@ -101,7 +842,233 @@ h1, h2, h3, h4, h5, h6 {
 .font-body    { font-family: var(--font-body)    !important; }
 
 /* ─────────────────────────────────────────
-   Auth Page Animations
+   Wise component primitives
+   (prefer these in new markup)
+───────────────────────────────────────── */
+@layer components {
+  /* Cards — 24px radius, flat, surface contrast is the elevation */
+  .wise-card {
+    background: var(--color-canvas);
+    color: var(--color-ink);
+    border-radius: 24px;
+    padding: 24px;
+  }
+  .wise-card-sage {
+    background: var(--color-canvas-soft);
+    color: var(--color-ink);
+    border-radius: 24px;
+    padding: 24px;
+  }
+  .wise-card-green {
+    background: var(--color-primary-pale);
+    color: var(--color-ink);
+    border-radius: 24px;
+    padding: 24px;
+  }
+  .wise-card-dark {
+    background: var(--color-ink-surface);
+    color: var(--color-primary);
+    border-radius: 24px;
+    padding: 24px;
+  }
+  .wise-card-outline {
+    background: var(--color-canvas);
+    color: var(--color-ink);
+    border: 1px solid var(--color-ink);
+    border-radius: 24px;
+    padding: 24px;
+  }
+
+  /* Buttons — 24px pill-rectangle, 12/24 padding, 16/600 label */
+  .wise-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 24px;
+    border-radius: 24px;
+    padding: 12px 24px;
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    cursor: pointer;
+  }
+  .wise-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+  .wise-btn-primary {
+    background: var(--color-primary);
+    color: var(--color-on-primary);
+  }
+  .wise-btn-primary:hover:not(:disabled) { background: var(--color-primary-active); }
+
+  .wise-btn-secondary {
+    background: var(--color-canvas-soft);
+    color: var(--color-ink);
+  }
+  .wise-btn-secondary:hover:not(:disabled) { background: var(--color-primary-pale); }
+
+  .wise-btn-tertiary {
+    background: var(--color-canvas);
+    color: var(--color-ink);
+    border: 1px solid var(--color-ink);
+  }
+  .wise-btn-tertiary:hover:not(:disabled) { background: var(--color-canvas-soft); }
+
+  .wise-btn-danger {
+    background: var(--color-negative);
+    color: #ffffff;
+  }
+  .wise-btn-danger:hover:not(:disabled) { background: var(--color-negative-deep); }
+
+  .wise-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-canvas);
+    color: var(--color-ink);
+    border-radius: 9999px;
+    padding: 8px;
+    transition: background-color 0.15s ease;
+  }
+  .wise-icon-btn:hover { background: var(--color-canvas-soft); }
+
+  /* Inputs — 12px radius, 1px ink hairline */
+  .wise-input {
+    background: var(--color-canvas);
+    color: var(--color-ink);
+    border: 1px solid var(--color-ink);
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-size: 16px;
+    line-height: 24px;
+    width: 100%;
+  }
+  .wise-input::placeholder { color: var(--color-mute); }
+  .wise-input:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--color-primary);
+  }
+
+  /* Status pills */
+  .wise-badge-positive {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--color-primary-pale);
+    color: var(--color-positive-deep);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 20px;
+    border-radius: 9999px;
+    padding: 4px 12px;
+  }
+  .wise-badge-negative {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--color-negative-bg);
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 20px;
+    border-radius: 9999px;
+    padding: 4px 12px;
+  }
+  .wise-badge-warning {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #fff6d6;
+    color: var(--color-warning-content);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 20px;
+    border-radius: 9999px;
+    padding: 4px 12px;
+  }
+
+  /* Bands */
+  .wise-hero-band {
+    background: var(--color-canvas-soft);
+    color: var(--color-ink);
+    padding: 48px 24px;
+  }
+  .wise-hero-band-dark {
+    background: var(--color-ink-surface);
+    color: var(--color-primary);
+    padding: 48px 24px;
+  }
+  .wise-content-band {
+    background: var(--color-canvas);
+    color: var(--color-ink);
+    padding: 48px 24px;
+  }
+
+  /* Data table chrome */
+  .wise-table thead th {
+    background: var(--color-canvas-soft);
+    color: var(--color-body);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 16px;
+    text-align: left;
+    padding: 12px 16px;
+  }
+  .wise-table tbody td {
+    font-size: 14px;
+    line-height: 20px;
+    padding: 12px 16px;
+    border-top: 1px solid var(--color-canvas-soft);
+  }
+}
+
+/* ─────────────────────────────────────────
+   Themed illustrations
+   The landing-page unDraw scenes are drawn for a light ground
+   (near-white paper, ink line work). Inverting and rotating the
+   hue 180deg flips the paper to ink while leaving the hues
+   roughly where they were, so the green stays green.
+───────────────────────────────────────── */
+:root[data-theme="dark"] .themed-illustration {
+  filter: invert(1) hue-rotate(180deg);
+}
+
+/* The floating theme switch is only a fallback: on pages that mount a nav,
+   the nav carries its own inline switch and this one steps aside so the two
+   never both show. Menu.tsx sets the class while it is mounted. */
+html.has-nav-theme-toggle [data-theme-toggle="floating"] {
+  display: none;
+}
+
+/* ─────────────────────────────────────────
+   Static icon backdrop
+   A fixed, non-scrolling wash of money/budget glyphs sitting
+   between the body ground and the page content. Page roots are
+   transparent so it shows through everywhere.
+───────────────────────────────────────── */
+.money-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  color: var(--backdrop-ink);
+}
+
+.money-backdrop svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Theme changes shouldn't strobe. Colour-only, and only on the
+   surfaces that actually change. */
+html.theme-ready,
+html.theme-ready .money-backdrop {
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* ─────────────────────────────────────────
+   Motion
 ───────────────────────────────────────── */
 @keyframes blob {
   0%, 100% { transform: translate(0, 0) scale(1); }
@@ -150,30 +1117,21 @@ h1, h2, h3, h4, h5, h6 {
   animation: gradient-pan 6s ease infinite;
 }
 
-.auth-dot-grid {
-  background-image: radial-gradient(circle, rgba(255,255,255,0.055) 1px, transparent 1px);
-  background-size: 26px 26px;
-}
-
 /* ─────────────────────────────────────────
-   Text Gradients
+   Text treatment — the brand has one accent, so the old
+   gradient-text helpers resolve to flat ink.
 ───────────────────────────────────────── */
-.text-gradient-indigo {
-  background: linear-gradient(135deg, #fff 0%, #c7d2fe 50%, #a5b4fc 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
+.text-gradient-indigo,
 .text-gradient-violet {
-  background: linear-gradient(135deg, #fff 0%, #ddd6fe 50%, #c4b5fd 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  background: none;
+  -webkit-background-clip: border-box;
+  -webkit-text-fill-color: currentColor;
+  background-clip: border-box;
+  color: var(--color-ink);
 }
 
 /* ─────────────────────────────────────────
-   Skeleton shimmer (richer than pulse)
+   Skeleton shimmer
 ───────────────────────────────────────── */
 @keyframes shimmer {
   100% { transform: translateX(100%); }
@@ -192,8 +1150,8 @@ h1, h2, h3, h4, h5, h6 {
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(255, 255, 255, 0.06) 45%,
-    rgba(139, 92, 246, 0.10) 55%,
+    rgba(14, 15, 12, 0.04) 45%,
+    rgba(159, 232, 112, 0.20) 55%,
     transparent 100%
   );
   animation: shimmer 1.6s ease-in-out infinite;
@@ -218,7 +1176,7 @@ h1, h2, h3, h4, h5, h6 {
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(255, 255, 255, 0.07),
+    rgba(159, 232, 112, 0.16),
     transparent
   );
   transition: left 0.6s ease;

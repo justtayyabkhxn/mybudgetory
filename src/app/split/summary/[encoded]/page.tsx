@@ -48,7 +48,7 @@ export default function SummaryPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-white">
+      <div className="min-h-screen flex items-center justify-center text-ink">
         Invalid or Corrupt Link
       </div>
     );
@@ -56,7 +56,7 @@ export default function SummaryPage() {
 
   if (!data) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-white">
+      <div className="min-h-screen flex items-center justify-center text-ink">
         Loading...
       </div>
     );
@@ -66,11 +66,10 @@ export default function SummaryPage() {
   const members=total/share;
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white p-6 sm:p-10">
-      <div className="fixed inset-0 pointer-events-none auth-dot-grid opacity-[0.14]" />
-      <div className="fixed top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-violet-500/30 to-transparent pointer-events-none z-50" />
+    <div className="min-h-screen text-ink p-6 sm:p-10">
+      <div className="fixed top-0 inset-x-0 h-px bg-primary pointer-events-none z-50" />
       <Header />
-      <div className="max-w-xl mx-auto bg-[#111]/80 rounded-xl p-6 shadow-xl">
+      <div className="max-w-xl mx-auto bg-canvas/80 rounded-xl p-6 shadow-xl">
         <div className="flex items-center gap-2 mb-6">
           <WalletMinimal />
           <h1 className="text-3xl font-bold text-green-300">Shared Expense</h1>
@@ -94,7 +93,7 @@ export default function SummaryPage() {
         <Link
           href={`upi://pay?pa=tayyabk2002-1@oksbi&pn=Tayyab%20Khan&am=${share}&cu=INR`}
           target="_blank"
-          className="block w-full bg-green-300 text-black hover:bg-green-700 text-center px-4 py-3 rounded text-lg font-semibold"
+          className="block w-full bg-green-300 text-canvas hover:bg-green-700 text-center px-4 py-3 rounded text-lg font-semibold"
         >
           Pay Now
         </Link>

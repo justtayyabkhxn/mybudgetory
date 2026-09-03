@@ -41,7 +41,7 @@ interface Entry {
 
 function SkeletonEntry() {
   return (
-    <div className="animate-pulse flex items-center gap-4 p-4 bg-gray-900/60 border border-gray-800 rounded-2xl">
+    <div className="animate-pulse flex items-center gap-4 p-4 bg-gray-900/60 rounded-2xl">
       <div className="w-10 h-10 bg-gray-800 rounded-xl flex-shrink-0" />
       <div className="flex-1 space-y-2">
         <div className="h-4 w-32 bg-gray-700 rounded" />
@@ -189,16 +189,17 @@ export default function DebtLentPage() {
   const clearedEntries = entries.filter(e => e.status === "cleared");
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white p-4 sm:p-8 pb-28">
-      <div className="fixed inset-0 pointer-events-none auth-dot-grid opacity-[0.14]" />
-      <div className="fixed top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-violet-500/30 to-transparent pointer-events-none z-50" />
+    <div className="min-h-screen md:pt-20 text-ink p-4 sm:p-8 pb-28">
+      <div className="fixed top-0 inset-x-0 h-px bg-primary pointer-events-none z-50" />
       <div className="max-w-3xl mx-auto">
-        <Header />
+        <div className="md:hidden">
+          <Header />
+        </div>
 
         {/* Page Header */}
         <div className="flex items-center justify-between mt-4 mb-6">
           <div className="flex items-center gap-2">
-            <WalletMinimal className="text-amber-400" size={26} />
+            <WalletMinimal className="text-warning-deep" size={26} />
             <h1 className="text-3xl font-extrabold tracking-tight">Debt & Lent</h1>
           </div>
           <MenuButton />
@@ -207,13 +208,13 @@ export default function DebtLentPage() {
         {/* Summary cards */}
         {!loading && entries.length > 0 && (
           <div className="grid grid-cols-2 gap-3 mb-6">
-            <div className="bg-emerald-500/8 border border-emerald-500/20 rounded-2xl p-4">
+            <div className="bg-emerald-500/8 rounded-2xl p-4">
               <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-400 mb-1">
                 <TrendingUp size={12} /> You are owed
               </div>
               <p className="text-2xl font-black text-emerald-300">₹{totalLent.toLocaleString()}</p>
             </div>
-            <div className="bg-red-500/8 border border-red-500/20 rounded-2xl p-4">
+            <div className="bg-red-500/8 rounded-2xl p-4">
               <div className="flex items-center gap-1.5 text-xs font-bold text-red-400 mb-1">
                 <TrendingDown size={12} /> You owe
               </div>
@@ -226,7 +227,7 @@ export default function DebtLentPage() {
         <div className="mb-4">
           <button
             onClick={() => setShowForm(!showForm)}
-            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2.5 rounded-xl font-bold text-sm transition-colors cursor-pointer"
+            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-on-primary px-5 py-2.5 rounded-xl font-bold text-sm transition-colors cursor-pointer"
           >
             {showForm ? <ChevronUp size={16} /> : <Plus size={16} />}
             {showForm ? "Cancel" : "Add Entry"}
@@ -244,7 +245,7 @@ export default function DebtLentPage() {
             >
               <form
                 onSubmit={handleAdd}
-                className="bg-gray-900/80 border border-gray-700/60 rounded-2xl p-6 space-y-5"
+                className="bg-gray-900/80 rounded-2xl p-6 space-y-5"
               >
                 <h2 className="text-base font-bold text-gray-100">New Debt / Lent Entry</h2>
 
@@ -255,10 +256,10 @@ export default function DebtLentPage() {
                     <button
                       type="button"
                       onClick={() => setForm(f => ({ ...f, type: "lent" }))}
-                      className={`flex-1 py-2.5 rounded-xl text-sm font-bold border transition-all cursor-pointer ${
+                      className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer ${
                         form.type === "lent"
-                          ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-300"
-                          : "bg-gray-800/40 border-gray-700 text-gray-500 hover:border-gray-600"
+                          ? "bg-emerald-500/20 text-emerald-300"
+                          : "bg-gray-800/40 text-gray-500"
                       }`}
                     >
                       I Lent Money
@@ -266,10 +267,10 @@ export default function DebtLentPage() {
                     <button
                       type="button"
                       onClick={() => setForm(f => ({ ...f, type: "debt" }))}
-                      className={`flex-1 py-2.5 rounded-xl text-sm font-bold border transition-all cursor-pointer ${
+                      className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer ${
                         form.type === "debt"
-                          ? "bg-red-500/20 border-red-500/40 text-red-300"
-                          : "bg-gray-800/40 border-gray-700 text-gray-500 hover:border-gray-600"
+                          ? "bg-red-500/20 text-red-300"
+                          : "bg-gray-800/40 text-gray-500"
                       }`}
                     >
                       I Owe Money
@@ -290,7 +291,7 @@ export default function DebtLentPage() {
                         value={form.person}
                         onChange={e => setForm(f => ({ ...f, person: e.target.value }))}
                         placeholder="Person's name"
-                        className="w-full bg-gray-800/60 border border-gray-700 text-white placeholder-gray-600 rounded-xl pl-9 pr-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                        className="w-full bg-canvas-soft/80 text-ink placeholder-mute rounded-xl pl-9 pr-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                       />
                     </div>
                   </div>
@@ -306,7 +307,7 @@ export default function DebtLentPage() {
                         value={form.amount}
                         onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
                         placeholder="e.g. 500"
-                        className="w-full bg-gray-800/60 border border-gray-700 text-white placeholder-gray-600 rounded-xl pl-9 pr-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                        className="w-full bg-canvas-soft/80 text-ink placeholder-mute rounded-xl pl-9 pr-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                       />
                     </div>
                   </div>
@@ -319,7 +320,7 @@ export default function DebtLentPage() {
                         type="date"
                         value={form.dueDate}
                         onChange={e => setForm(f => ({ ...f, dueDate: e.target.value }))}
-                        className="w-full bg-gray-800/60 border border-gray-700 text-white rounded-xl pl-9 pr-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                        className="w-full bg-canvas-soft/80 text-ink rounded-xl pl-9 pr-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                       />
                     </div>
                   </div>
@@ -333,7 +334,7 @@ export default function DebtLentPage() {
                         value={form.reason}
                         onChange={e => setForm(f => ({ ...f, reason: e.target.value }))}
                         placeholder="e.g. dinner, travel..."
-                        className="w-full bg-gray-800/60 border border-gray-700 text-white placeholder-gray-600 rounded-xl pl-9 pr-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                        className="w-full bg-canvas-soft/80 text-ink placeholder-mute rounded-xl pl-9 pr-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                       />
                     </div>
                   </div>
@@ -342,7 +343,7 @@ export default function DebtLentPage() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-3 rounded-xl font-bold text-sm transition-colors cursor-pointer disabled:opacity-60"
+                  className="w-full bg-indigo-600 hover:bg-indigo-500 text-on-primary py-3 rounded-xl font-bold text-sm transition-colors cursor-pointer disabled:opacity-60"
                 >
                   {submitting ? "Adding..." : "Add Entry"}
                 </button>
@@ -358,8 +359,8 @@ export default function DebtLentPage() {
           </div>
         ) : entries.length === 0 ? (
           <div className="text-center py-20">
-            <div className="w-16 h-16 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <WalletMinimal size={28} className="text-amber-400" />
+            <div className="w-16 h-16 bg-amber-500/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <WalletMinimal size={28} className="text-warning-deep" />
             </div>
             <h2 className="text-xl font-bold text-gray-300 mb-2">No entries yet</h2>
             <p className="text-gray-500 text-sm">Track money you&apos;ve lent or borrowed.</p>
@@ -482,8 +483,8 @@ function EntryCard({
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25, delay: idx * 0.04 }}
-      className={`rounded-2xl border transition-all ${
-        isLent ? "bg-emerald-500/5 border-emerald-500/20" : "bg-red-500/5 border-red-500/20"
+      className={`rounded-2xl transition-all ${
+        isLent ? "bg-emerald-500/5" : "bg-red-500/5"
       }`}
     >
       <div className="flex items-center gap-4 p-4">
@@ -521,7 +522,7 @@ function EntryCard({
                 <span className="text-gray-500">Paid: <span className="text-emerald-400 font-semibold">₹{paid.toLocaleString()}</span></span>
                 <span className="text-gray-500">Remaining: <span className={`font-semibold ${isLent ? "text-emerald-300" : "text-red-300"}`}>₹{remaining.toLocaleString()}</span></span>
               </div>
-              <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+              <div className="h-1.5 rounded-full bg-canvas/80 overflow-hidden">
                 <div
                   className="h-full rounded-full bg-emerald-500/70 transition-all duration-500"
                   style={{ width: `${progressPct}%` }}
@@ -550,7 +551,7 @@ function EntryCard({
               {/* Log partial payment */}
               <button
                 onClick={() => setShowPayForm(v => !v)}
-                className="p-1.5 rounded-lg text-gray-600 hover:text-amber-400 hover:bg-amber-500/10 transition-all cursor-pointer"
+                className="p-1.5 rounded-lg text-gray-600 hover:text-warning-deep hover:bg-amber-500/10 transition-all cursor-pointer"
                 title="Log payment"
               >
                 <CreditCard size={15} />
@@ -597,7 +598,7 @@ function EntryCard({
             exit={{ opacity: 0, height: 0 }}
             className="overflow-hidden"
           >
-            <div className={`mx-4 mb-4 p-3 rounded-xl border ${isLent ? "bg-emerald-500/5 border-emerald-500/15" : "bg-red-500/5 border-red-500/15"}`}>
+            <div className={`mx-4 mb-4 p-3 rounded-xl ${isLent ? "bg-emerald-500/5" : "bg-red-500/5"}`}>
               <p className="text-xs font-semibold text-gray-400 mb-2">
                 Log payment — max ₹{remaining.toLocaleString()}
               </p>
@@ -611,13 +612,13 @@ function EntryCard({
                     value={payInput}
                     onChange={e => setPayInput(e.target.value)}
                     placeholder={`Amount (max ₹${remaining.toLocaleString()})`}
-                    className="w-full bg-gray-800/60 border border-gray-700 text-white placeholder-gray-600 rounded-lg pl-8 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                    className="w-full bg-canvas-soft/80 text-ink placeholder-mute rounded-lg pl-8 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
                 <button
                   onClick={handlePay}
                   disabled={paying || !payInput || Number(payInput) <= 0 || Number(payInput) > remaining}
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-lg text-sm font-bold transition-colors cursor-pointer"
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-on-primary rounded-lg text-sm font-bold transition-colors cursor-pointer"
                 >
                   {paying ? "..." : "Log"}
                 </button>

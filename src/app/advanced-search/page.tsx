@@ -33,7 +33,7 @@ const SORT_OPTIONS = [
   { value: "amount-asc", label: "Amount ↑" },
 ];
 
-const ALL_CATEGORIES = ["Food","Outing","Clothes","Travel","Vacation","Medical","Entertainment","Bills","SMM","Others"];
+const ALL_CATEGORIES = ["Food", "Outing", "Clothes", "Travel", "Vacation", "Medical", "Entertainment", "Bills", "SMM", "Others"];
 
 export default function AdvancedSearchPage() {
   const router = useRouter();
@@ -110,7 +110,7 @@ export default function AdvancedSearchPage() {
 
   const exportToCSV = () => {
     if (!filteredTxs.length) return;
-    const headers = ["Title","Comment","Amount","Date","Category","Type"];
+    const headers = ["Title", "Comment", "Amount", "Date", "Category", "Type"];
     const rows = filteredTxs.map(tx => [
       `"${tx.title}"`, `"${tx.comment||""}"`, tx.amount,
       new Date(tx.date).toLocaleDateString(), tx.category, tx.type,
@@ -127,14 +127,15 @@ export default function AdvancedSearchPage() {
   const totalExpense = filteredTxs.filter(t => t.type === "expense").reduce((s,t) => s+t.amount, 0);
   const netBalance   = totalIncome - totalExpense;
 
-  const inputClass = "w-full bg-gray-900/80 border border-gray-700 text-white placeholder-gray-600 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-indigo-500/70 focus:ring-2 focus:ring-indigo-500/10 transition-all duration-200";
+  const inputClass = "w-full bg-canvas-soft/80 text-ink placeholder-mute rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-200";
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white pb-28">
-      <div className="fixed inset-0 pointer-events-none auth-dot-grid opacity-[0.14]" />
-      <div className="fixed top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-violet-500/30 to-transparent pointer-events-none z-50" />
+    <div className="min-h-screen md:pt-20 text-ink pb-28">
+      <div className="fixed top-0 inset-x-0 h-px bg-primary pointer-events-none z-50" />
       <div className="max-w-5xl mx-auto p-4 sm:p-8">
-        <Header />
+        <div className="md:hidden">
+          <Header />
+        </div>
 
         {/* Page header */}
         <div className="flex items-center justify-between mt-4 mb-6">
@@ -143,10 +144,10 @@ export default function AdvancedSearchPage() {
             <h1 className="text-3xl font-extrabold tracking-tight">Advanced Search</h1>
             <button
               onClick={fetchTransactions}
-              className="ml-1 p-1.5 rounded-lg bg-white/5 hover:bg-white/10 cursor-pointer transition-colors"
+              className="ml-1 p-1.5 rounded-lg bg-canvas/80 hover:bg-canvas-soft/80 cursor-pointer transition-colors"
               title="Refresh"
             >
-              <RefreshCw className={`w-4 h-4 text-green-400 ${loading ? "animate-spin" : ""}`} />
+              <RefreshCw className={`w-4 h-4 text-green-400 ${loading ? "animate-spin" :""}`} />
             </button>
           </div>
           <Menu />
@@ -160,10 +161,10 @@ export default function AdvancedSearchPage() {
             placeholder="Search by title or comment..."
             value={searchText}
             onChange={e => setSearchText(e.target.value)}
-            className="w-full bg-gray-900/80 border border-gray-700 text-white placeholder-gray-500 rounded-xl pl-10 pr-10 py-3 text-sm focus:outline-none focus:border-fuchsia-500/60 focus:ring-2 focus:ring-fuchsia-500/10 transition-all duration-200"
+            className="w-full bg-canvas/80 text-ink placeholder-gray-500 rounded-xl pl-10 pr-10 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-200"
           />
           {searchText && (
-            <button onClick={() => setSearchText("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white cursor-pointer">
+            <button onClick={() => setSearchText("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-ink cursor-pointer">
               <X size={15} />
             </button>
           )}
@@ -173,16 +174,16 @@ export default function AdvancedSearchPage() {
         <div className="flex items-center gap-1 mb-4">
           <button
             onClick={() => setFiltersOpen(v => !v)}
-            className={`flex items-center gap-1 px-2 py-2 rounded-xl text-xs font-bold border transition-all duration-200 cursor-pointer ${
+            className={`flex items-center gap-1 px-2 py-2 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer ${
               filtersOpen || activeFilterCount > 0
-                ? "bg-fuchsia-500/15 text-fuchsia-400 border-fuchsia-500/30"
-                : "bg-white/5 text-gray-400 border-white/10 hover:bg-white/10"
+                ? "bg-fuchsia-500/15 text-fuchsia-400"
+                : "bg-canvas/80 text-gray-400 hover:bg-canvas-soft/80"
             }`}
           >
             <SlidersHorizontal size={10} />
             Filters
             {activeFilterCount > 0 && (
-              <span className="bg-fuchsia-500 text-white text-[10px] font-black w-4 h-4 rounded-full flex items-center justify-center">
+              <span className="bg-fuchsia-500 text-on-primary text-[10px] font-black w-4 h-4 rounded-full flex items-center justify-center">
                 {activeFilterCount}
               </span>
             )}
@@ -190,18 +191,18 @@ export default function AdvancedSearchPage() {
 
           {/* Type quick-filter pills */}
           <div className="flex gap-1">
-            {(["","income","expense"] as const).map(t => (
+            {(["", "income", "expense"] as const).map(t => (
               <button
                 key={t}
                 onClick={() => setSelectedType(t)}
-                className={`flex items-center gap-1 px-2 py-2 rounded-xl text-xs font-bold border transition-all duration-200 cursor-pointer ${
+                className={`flex items-center gap-1 px-2 py-2 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer ${
                   selectedType === t
                     ? t === "income"
-                      ? "bg-green-500/20 text-green-400 border-green-500/40"
-                      : t === "expense"
-                      ? "bg-red-500/20 text-red-400 border-red-500/40"
-                      : "bg-indigo-500/20 text-indigo-400 border-indigo-500/40"
-                    : "bg-white/5 text-gray-500 border-white/10 hover:bg-white/10 hover:text-gray-300"
+                    ? "bg-green-500/20 text-green-400"
+                    : t === "expense"
+                    ? "bg-red-500/20 text-red-400"
+                    : "bg-indigo-500/20 text-indigo-400"
+                    : "bg-canvas/80 text-gray-500 hover:bg-canvas-soft/80 hover:text-gray-300"
                 }`}
               >
                 {t === "income" && <ArrowDownCircle size={12} />}
@@ -217,7 +218,7 @@ export default function AdvancedSearchPage() {
               <select
                 value={sortBy}
                 onChange={e => setSortBy(e.target.value)}
-                className="appearance-none bg-gray-900/80 border border-gray-700 text-gray-300 text-xs font-bold rounded-xl pl-3 pr-8 py-2 focus:outline-none focus:border-indigo-500/70 cursor-pointer transition-colors"
+                className="appearance-none bg-canvas/80 text-body text-xs font-bold rounded-xl pl-3 pr-8 py-2 focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer transition-colors"
               >
                 {SORT_OPTIONS.map(o => (
                   <option key={o.value} value={o.value}>{o.label}</option>
@@ -238,7 +239,7 @@ export default function AdvancedSearchPage() {
               transition={{ duration: 0.25 }}
               className="overflow-hidden mb-4"
             >
-              <div className="bg-gray-900/80 border border-gray-700/60 rounded-2xl p-5 space-y-4">
+              <div className="bg-gray-900/80 rounded-2xl p-5 space-y-4">
                 <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">Filter by</p>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -274,10 +275,10 @@ export default function AdvancedSearchPage() {
                     <div className="flex flex-wrap gap-2">
                       <button
                         onClick={() => setSelectedCategory("")}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                           selectedCategory === ""
-                            ? "bg-indigo-500/20 text-indigo-400 border-indigo-500/40"
-                            : "bg-white/5 text-gray-500 border-white/10 hover:bg-white/10"
+                            ? "bg-indigo-500/20 text-indigo-400"
+                            : "bg-canvas/80 text-gray-500 hover:bg-canvas-soft/80"
                         }`}
                       >
                         <span>
@@ -293,10 +294,10 @@ export default function AdvancedSearchPage() {
                           <button
                             key={cat}
                             onClick={() => setSelectedCategory(active ? "" : cat)}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                               active
-                                ? `${colors.bg} ${colors.text} ${colors.border}`
-                                : "bg-white/5 text-gray-500 border-white/10 hover:bg-white/10 hover:text-gray-300"
+                                ? `${colors.bg} ${colors.text}`
+                                : "bg-canvas/80 text-gray-500 hover:bg-canvas-soft/80 hover:text-gray-300"
                             }`}
                           >
                             <Icon size={11} />
@@ -316,7 +317,7 @@ export default function AdvancedSearchPage() {
                   {activeFilterCount > 0 && (
                     <button
                       onClick={clearFilters}
-                      className="flex items-center gap-1.5 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                      className="flex items-center gap-1.5 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl text-xs font-bold transition-colors cursor-pointer"
                     >
                       <Trash2 size={12} /> <span>
                          Clear All </span>
@@ -324,7 +325,7 @@ export default function AdvancedSearchPage() {
                   )}
                   <button
                     onClick={() => setFiltersOpen(false)}
-                    className="px-4 py-2 bg-white/5 hover:bg-white/10 text-gray-400 border border-white/10 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                    className="px-4 py-2 bg-canvas/80 hover:bg-canvas-soft/80 text-gray-400 rounded-xl text-xs font-bold transition-colors cursor-pointer"
                   >
                     <span>
 
@@ -350,7 +351,7 @@ export default function AdvancedSearchPage() {
               <Chip label={selectedCategory} onRemove={() => setSelectedCategory("")} color={CATEGORY_COLORS[selectedCategory]?.text} />
             )}
             {selectedType && (
-              <Chip label={selectedType} onRemove={() => setSelectedType("")} color={selectedType === "income" ? "text-green-400" : "text-red-400"} />
+              <Chip label={selectedType} onRemove={() => setSelectedType("")} color={selectedType ==="income" ? "text-green-400" : "text-red-400"} />
             )}
             {fromDate && <Chip label={`From: ${fromDate}`} onRemove={() => setFromDate("")} />}
             {toDate   && <Chip label={`To: ${toDate}`}   onRemove={() => setToDate("")} />}
@@ -364,21 +365,21 @@ export default function AdvancedSearchPage() {
             animate={{ opacity: 1, y: 0 }}
             className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5"
           >
-            <div className="bg-gray-900/80 border border-gray-700 rounded-xl p-3 text-center">
+            <div className="bg-gray-900/80 rounded-xl p-3 text-center">
               <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">Results</p>
-              <p className="text-xl font-black text-white">{filteredTxs.length}</p>
+              <p className="text-xl font-black text-ink">{filteredTxs.length}</p>
             </div>
-            <div className="bg-green-900/20 border border-green-500/20 rounded-xl p-3 text-center">
+            <div className="bg-green-900/20 rounded-xl p-3 text-center">
               <p className="text-xs text-green-400/70 font-bold uppercase tracking-wider">Income</p>
               <p className="text-xl font-black text-green-400">₹{totalIncome.toLocaleString()}</p>
             </div>
-            <div className="bg-red-900/20 border border-red-500/20 rounded-xl p-3 text-center">
+            <div className="bg-red-900/20 rounded-xl p-3 text-center">
               <p className="text-xs text-red-400/70 font-bold uppercase tracking-wider">Expenses</p>
               <p className="text-xl font-black text-red-400">₹{totalExpense.toLocaleString()}</p>
             </div>
-            <div className={`${netBalance >= 0 ? "bg-emerald-900/20 border-emerald-500/20" : "bg-orange-900/20 border-orange-500/20"} border rounded-xl p-3 text-center`}>
-              <p className={`text-xs font-bold uppercase tracking-wider ${netBalance >= 0 ? "text-emerald-400/70" : "text-orange-400/70"}`}>Net</p>
-              <p className={`text-xl font-black ${netBalance >= 0 ? "text-emerald-400" : "text-orange-400"}`}>
+            <div className={`${netBalance >= 0 ? "bg-emerald-900/20" : "bg-orange-900/20"} rounded-xl p-3 text-center`}>
+              <p className={`text-xs font-bold uppercase tracking-wider ${netBalance >= 0 ? "text-emerald-400/70" : "text-warning-deep/70"}`}>Net</p>
+              <p className={`text-xl font-black ${netBalance >= 0 ? "text-emerald-400" : "text-warning-deep"}`}>
                 {netBalance >= 0 ? "+" : ""}₹{Math.abs(netBalance).toLocaleString()}
               </p>
             </div>
@@ -390,7 +391,7 @@ export default function AdvancedSearchPage() {
           <div className="flex justify-end mb-4">
             <button
               onClick={exportToCSV}
-              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold rounded-xl transition-colors cursor-pointer"
+              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-on-primary text-sm font-bold rounded-xl transition-colors cursor-pointer"
             >
               <Download size={14} />
               <span>
@@ -402,7 +403,7 @@ export default function AdvancedSearchPage() {
         )}
 
         {/* Results */}
-        <div className="bg-gray-900/60 border border-gray-800 rounded-2xl overflow-hidden">
+        <div className="bg-gray-900/60 rounded-2xl overflow-hidden">
           {loading ? (
             <div className="space-y-0 divide-y divide-gray-800">
               {[...Array(5)].map((_, i) => (
@@ -418,11 +419,11 @@ export default function AdvancedSearchPage() {
             </div>
           ) : filteredTxs.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-center px-4">
-              <Receipt size={52} className="text-gray-700 mb-4" />
+              <Receipt size={52} className="text-ink mb-4" />
               <p className="text-lg font-bold text-gray-400">No matching transactions</p>
               <p className="text-sm text-gray-600 mt-1">Try adjusting your filters or search terms</p>
               {activeFilterCount > 0 && (
-                <button onClick={clearFilters} className="mt-4 px-4 py-2 bg-white/5 hover:bg-white/10 text-gray-400 rounded-xl text-sm font-bold border border-white/10 cursor-pointer transition-colors">
+                <button onClick={clearFilters} className="mt-4 px-4 py-2 bg-canvas/80 hover:bg-canvas-soft/80 text-gray-400 rounded-xl text-sm font-bold cursor-pointer transition-colors">
                   <span>
 
                   Clear Filters
@@ -442,18 +443,18 @@ export default function AdvancedSearchPage() {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.2, delay: Math.min(idx * 0.03, 0.3) }}
                   >
-                    <Link href={`/transactions/${tx._id}`} className="flex items-center gap-4 p-4 hover:bg-white/4 transition-colors duration-150 cursor-pointer group">
+                    <Link href={`/transactions/${tx._id}`} className="flex items-center gap-4 p-4 hover:bg-canvas-soft/80 transition-colors duration-150 cursor-pointer group">
                       {/* Category icon */}
-                      <div className={`${colors.bg} border ${colors.border} p-2.5 rounded-xl flex-shrink-0`}>
+                      <div className={`${colors.bg} p-2.5 rounded-xl flex-shrink-0`}>
                         <Icon className={`w-4 h-4 ${colors.text}`} />
                       </div>
 
                       {/* Info */}
                       <div className="flex-1 min-w-0">
-                        <p className="font-bold text-gray-100 truncate group-hover:text-white transition-colors">{tx.title}</p>
+                        <p className="font-bold text-gray-100 truncate group-hover:text-ink transition-colors">{tx.title}</p>
                         <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                           <span className="text-xs text-gray-500">
-                            {new Date(tx.date).toLocaleDateString("en-IN", { day:"numeric", month:"short", year:"numeric" })}
+                            {new Date(tx.date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
                           </span>
                           <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${colors.bg} ${colors.text}`}>
                             {tx.category}
@@ -462,7 +463,7 @@ export default function AdvancedSearchPage() {
                             <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${
                               tx.paymentMode === "UPI"
                                 ? "bg-indigo-500/15 text-indigo-400"
-                                : "bg-yellow-500/15 text-yellow-400"
+                                : "bg-yellow-500/15 text-warning-deep"
                             }`}>
                               {tx.paymentMode}
                             </span>
@@ -492,7 +493,7 @@ export default function AdvancedSearchPage() {
       {/* Scroll to top */}
       <button
         onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-        className="fixed bottom-20 right-5 z-50 p-2.5 bg-white/10 hover:bg-white/20 text-white rounded-full shadow-lg backdrop-blur-sm border border-white/10 transition-all cursor-pointer"
+        className="fixed bottom-20 right-5 z-50 p-2.5 bg-canvas/80 hover:bg-canvas-soft/80 text-ink rounded-full shadow-lg backdrop-blur-sm transition-all cursor-pointer"
       >
         <ArrowUp className="w-4 h-4" />
       </button>
@@ -506,9 +507,9 @@ export default function AdvancedSearchPage() {
 // ─── Chip component ───────────────────────────────────────────────────────────
 function Chip({ label, onRemove, color }: { label: string; onRemove: () => void; color?: string }) {
   return (
-    <span className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full bg-white/8 border border-white/15 ${color || "text-gray-300"}`}>
+    <span className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full bg-canvas/80 ${color || "text-gray-300"}`}>
       {label}
-      <button onClick={onRemove} className="hover:text-white cursor-pointer transition-colors">
+      <button onClick={onRemove} className="hover:text-ink cursor-pointer transition-colors">
         <X size={11} />
       </button>
     </span>

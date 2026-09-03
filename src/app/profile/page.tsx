@@ -74,9 +74,9 @@ function Section({
       initial={{ opacity: 0, y: 18 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45, delay }}
-      className="bg-white/[0.03] border border-white/8 rounded-2xl overflow-hidden"
+      className="bg-canvas/80 rounded-2xl overflow-hidden"
     >
-      <div className={`flex items-center gap-2.5 px-5 py-4 border-b border-white/6 ${accent}`}>
+      <div className={`flex items-center gap-2.5 px-5 py-4 border-b border-hairline ${accent}`}>
         {icon}
         <h2 className="text-sm font-black uppercase tracking-widest">{title}</h2>
       </div>
@@ -104,7 +104,7 @@ function PasswordField({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         required
-        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 pr-11 text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/60 focus:border-indigo-500/40 transition"
+        className="w-full bg-canvas-soft/80 rounded-xl px-4 py-3 pr-11 text-sm text-ink placeholder-mute focus:outline-none focus:ring-2 focus:ring-primary transition"
       />
       <button
         type="button"
@@ -140,7 +140,7 @@ function DeleteModal({
       {open && (
         <>
           <motion.div
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50"
+            className="fixed inset-0 bg-scrim/70 backdrop-blur-sm z-50"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -154,7 +154,7 @@ function DeleteModal({
             transition={{ type: "spring", stiffness: 260, damping: 22 }}
           >
             <div
-              className="w-full max-w-sm bg-[#12121f] border border-red-500/20 rounded-2xl p-6 shadow-2xl"
+              className="w-full max-w-sm bg-canvas/80 rounded-2xl p-6 shadow-lg"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-4">
@@ -174,7 +174,7 @@ function DeleteModal({
 
               <p className="text-gray-300 text-sm leading-relaxed mb-1">
                 This will permanently delete{" "}
-                <span className="text-white font-bold">all your transactions</span>.
+                <span className="text-ink font-bold">all your transactions</span>.
                 This action cannot be undone.
               </p>
               <p className="text-gray-500 text-xs mb-4">
@@ -186,13 +186,13 @@ function DeleteModal({
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder='Type "delete"'
-                className="w-full bg-white/5 border border-red-500/30 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-red-500/50 transition mb-4"
+                className="w-full bg-canvas-soft/80 rounded-xl px-4 py-2.5 text-sm text-ink placeholder-mute focus:outline-none focus:ring-2 focus:ring-red-500/50 transition mb-4"
               />
 
               <div className="flex gap-3">
                 <button
                   onClick={onClose}
-                  className="flex-1 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 text-sm font-semibold transition"
+                  className="flex-1 py-2.5 rounded-xl bg-canvas-soft/80 hover:bg-primary-pale text-gray-300 text-sm font-semibold transition"
                 >
                   <span>
 
@@ -202,7 +202,7 @@ function DeleteModal({
                 <button
                   onClick={onConfirm}
                   disabled={input !== "delete" || isDeleting}
-                  className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-bold transition flex items-center justify-center gap-2"
+                  className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 disabled:opacity-40 disabled:cursor-not-allowed text-on-solid text-sm font-bold transition flex items-center justify-center gap-2"
                 >
                   {isDeleting ? (
                     <Loader2 size={15} className="animate-spin" />
@@ -381,17 +381,16 @@ export default function Profile() {
   const initials = user ? getInitials(user.name) : "?";
 
   return (
-    <main className="min-h-screen bg-[#0a0a0f] text-white pb-28">
-      <div className="fixed inset-0 pointer-events-none auth-dot-grid opacity-[0.14]" />
-      <div className="fixed top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-violet-500/30 to-transparent pointer-events-none z-50" />
+    <main className="min-h-screen md:pt-20 text-ink pb-28">
+      <div className="fixed top-0 inset-x-0 h-px bg-primary pointer-events-none z-50" />
 
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-[#0a0a0f]/80 backdrop-blur-xl border-b border-white/[0.06]">
+      <div className="md:hidden sticky top-0 z-40 bg-canvas-soft/80 backdrop-blur-xl border-b border-hairline">
         <div className="max-w-2xl mx-auto px-4 py-3">
           <p className="text-xs text-gray-500 font-semibold uppercase tracking-widest">
             MyBudgetory
           </p>
-          <h1 className="text-lg font-black text-white">Profile</h1>
+          <h1 className="text-lg font-black text-ink">Profile</h1>
         </div>
       </div>
 
@@ -411,24 +410,24 @@ export default function Profile() {
         >
           {/* Avatar ring */}
           <div className="relative mb-4">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-2xl font-black text-white shadow-lg shadow-indigo-900/40 ring-4 ring-indigo-500/20">
+            <div className="w-20 h-20 rounded-full bg-primary flex items-center justify-center text-2xl font-black text-on-primary shadow-lg">
               {loading ? (
                 <Loader2 size={24} className="animate-spin opacity-60" />
               ) : (
                 initials
               )}
             </div>
-            <div className="absolute bottom-0 right-0 w-5 h-5 rounded-full bg-green-500 border-2 border-[#080810]" />
+            <div className="absolute bottom-0 right-0 w-5 h-5 rounded-full bg-green-500 border-2 border-canvas" />
           </div>
 
           {loading ? (
             <div className="space-y-2 w-40 text-center">
-              <div className="h-5 bg-white/8 rounded-full animate-pulse mx-auto w-32" />
-              <div className="h-3.5 bg-white/5 rounded-full animate-pulse mx-auto w-44" />
+              <div className="h-5 bg-canvas/80 rounded-full animate-pulse mx-auto w-32" />
+              <div className="h-3.5 bg-canvas/80 rounded-full animate-pulse mx-auto w-44" />
             </div>
           ) : (
             <>
-              <h2 className="text-xl font-black text-white">{user?.name}</h2>
+              <h2 className="text-xl font-black text-ink">{user?.name}</h2>
               <p className="text-sm text-gray-500 mt-0.5">{user?.email}</p>
             </>
           )}
@@ -459,7 +458,7 @@ export default function Profile() {
             ].map((s) => (
               <div
                 key={s.label}
-                className="bg-white/[0.03] border border-white/8 rounded-2xl px-3 py-4 text-center"
+                className="bg-canvas/80 rounded-2xl px-3 py-4 text-center"
               >
                 <p className={`text-base font-black ${s.color}`}>
                   {s.maskable && hidden && !loading ? "******" : s.value}
@@ -483,9 +482,9 @@ export default function Profile() {
             <label className="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-1.5 block">
               Full Name
             </label>
-            <div className="w-full bg-white/4 border border-white/8 rounded-xl px-4 py-3 text-sm text-gray-300 font-semibold">
+            <div className="w-full bg-canvas-soft/80 rounded-xl px-4 py-3 text-sm text-body font-semibold">
               {loading ? (
-                <span className="block h-4 bg-white/8 rounded animate-pulse w-36" />
+                <span className="block h-4 bg-canvas/80 rounded animate-pulse w-36" />
               ) : (
                 user?.name || "—"
               )}
@@ -495,9 +494,9 @@ export default function Profile() {
             <label className="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-1.5 block">
               Email Address
             </label>
-            <div className="w-full bg-white/4 border border-white/8 rounded-xl px-4 py-3 text-sm text-gray-300 font-semibold">
+            <div className="w-full bg-canvas-soft/80 rounded-xl px-4 py-3 text-sm text-body font-semibold">
               {loading ? (
-                <span className="block h-4 bg-white/8 rounded animate-pulse w-48" />
+                <span className="block h-4 bg-canvas/80 rounded animate-pulse w-48" />
               ) : (
                 user?.email || "—"
               )}
@@ -509,7 +508,7 @@ export default function Profile() {
         <Section
           icon={<Download size={14} />}
           title="Data Management"
-          accent="text-sky-400"
+          accent="text-ink-deep"
           delay={0.18}
         >
           {/* Export */}
@@ -519,7 +518,7 @@ export default function Profile() {
             </p>
             <button
               onClick={handleExport}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-emerald-600/15 hover:bg-emerald-600/25 border border-emerald-500/20 text-emerald-400 text-sm font-bold transition"
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-emerald-600/15 hover:bg-emerald-600/25 text-emerald-400 text-sm font-bold transition"
             >
               {exportDone ? (
                 <>
@@ -542,7 +541,7 @@ export default function Profile() {
           </div>
 
           {/* Divider */}
-          <div className="border-t border-white/6" />
+          <div className="border-t border-hairline" />
 
           {/* Import */}
           <div>
@@ -553,15 +552,15 @@ export default function Profile() {
             {/* Drop zone / file picker */}
             <div
               onClick={() => fileInputRef.current?.click()}
-              className="w-full border-2 border-dashed border-white/10 hover:border-sky-500/40 rounded-xl p-5 flex flex-col items-center gap-2 cursor-pointer transition group mb-3"
+              className="w-full border-2 border-dashed hover:border-primary/40 rounded-xl p-5 flex flex-col items-center gap-2 cursor-pointer transition group mb-3"
             >
               <Upload
                 size={20}
-                className="text-gray-600 group-hover:text-sky-400 transition"
+                className="text-gray-600 group-hover:text-ink-deep transition"
               />
               {importFile ? (
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-sky-400 font-semibold">
+                  <span className="text-xs text-ink-deep font-semibold">
                     {importFile.name}
                   </span>
                   <button
@@ -596,7 +595,7 @@ export default function Profile() {
             <button
               onClick={handleImport}
               disabled={isImporting || !importFile}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-sky-600/15 hover:bg-sky-600/25 border border-sky-500/20 text-sky-400 text-sm font-bold transition disabled:opacity-40 disabled:cursor-not-allowed"
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-sky-600/15 hover:bg-sky-600/25 text-ink-deep text-sm font-bold transition disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {isImporting ? (
                 <Loader2 size={15} className="animate-spin" />
@@ -625,7 +624,7 @@ export default function Profile() {
           </div>
 
           {/* Divider */}
-          <div className="border-t border-white/6" />
+          <div className="border-t border-hairline" />
 
           {/* Delete all */}
           <div>
@@ -644,7 +643,7 @@ export default function Profile() {
 
             <button
               onClick={() => setShowDelete(true)}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-red-600/10 hover:bg-red-600/20 border border-red-500/20 text-red-400 text-sm font-bold transition"
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-red-600/10 hover:bg-red-600/20 text-red-400 text-sm font-bold transition"
             >
               <Trash2 size={15} />
               <span>
@@ -711,7 +710,7 @@ export default function Profile() {
             <button
               type="submit"
               disabled={pwLoading}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-sm font-black transition disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-indigo-900/30"
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-primary hover:bg-primary-active text-on-primary text-sm font-black transition disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
             >
               {pwLoading ? (
                 <Loader2 size={15} className="animate-spin" />

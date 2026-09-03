@@ -134,19 +134,20 @@ export default function Dashboard() {
     inflow > 0 ? Math.round(((inflow - expense) / inflow) * 100) : 0;
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white p-4 sm:p-8 pb-24">
-      <div className="fixed inset-0 pointer-events-none auth-dot-grid opacity-[0.14]" />
-      <div className="fixed top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-violet-500/30 to-transparent pointer-events-none z-50" />
+    <div className="min-h-screen md:pt-20 text-ink p-4 sm:p-8 pb-24">
+      <div className="fixed top-0 inset-x-0 h-px bg-primary pointer-events-none z-50" />
       <div className={menuOpen ? "overflow-hidden h-screen" : ""}>
         <div className="max-w-5xl mx-auto">
           {/* Header */}
-          <Header />
+          <div className="md:hidden">
+            <Header />
+          </div>
 
           {/* Dashboard Title Row */}
-          <div className="mb-5 mt-4 flex items-center justify-between">
+          <div className="mb-5 mt-4 flex items-start justify-between">
             <div className="mt-0">
               <div className="flex items-center gap-2">
-                <FileDigit color="#00d138" />
+                <FileDigit color="var(--color-positive)" />
                 <h1 className="text-4xl font-extrabold tracking-tight">
                   Dashboard
                 </h1>
@@ -170,18 +171,18 @@ export default function Dashboard() {
                 </button>
               </div>
               <p className="text-gray-400 mt-1 flex items-center font-bold gap-x-1">
-                Welcome back <HandMetal color="#ff9900" />,{" "}
+                Welcome back <HandMetal color="var(--color-warning-deep)" />,{" "}
                 <span className="text-green-300">{user?.name || "User"}</span>
               </p>
             </div>
 
-            <div className="mb-12">
-              <Menu />
-            </div>
+            {/* Top-aligned so the 40px button lines up with the title row —
+                the same header pattern the other pages use. */}
+            <Menu />
 
             {menuOpen && (
               <div
-                className="fixed inset-0 bg-black bg-opacity-50 z-40"
+                className="fixed inset-0 bg-scrim/50 z-40"
                 onClick={() => setMenuOpen(false)}
               />
             )}
@@ -194,7 +195,7 @@ export default function Dashboard() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="order-1 lg:order-1 h-full bg-gradient-to-br from-gray-900/90 via-indigo-950/40 to-gray-900/90 border border-indigo-500/20 rounded-2xl p-6 shadow-xl"
+            className="order-1 lg:order-1 h-full bg-canvas/80 rounded-2xl p-6 shadow-xl"
           >
             {/* Top row: month + savings badge */}
             <div className="flex items-center justify-between mb-5">
@@ -202,10 +203,10 @@ export default function Dashboard() {
                 {monthName} {now.getFullYear()}
               </span>
               <span
-                className={`text-xs font-bold px-3 py-1.5 rounded-full border ${
+                className={`text-xs font-bold px-3 py-1.5 rounded-full ${
                   savingsRate >= 0
-                    ? "bg-green-500/15 text-green-300 border-green-500/30"
-                    : "bg-red-500/15 text-red-400 border-red-500/30"
+                    ? "bg-green-500/15 text-green-300"
+                    : "bg-red-500/15 text-red-400"
                 }`}
               >
                 {savingsRate}% saved
@@ -216,7 +217,7 @@ export default function Dashboard() {
             <div className="grid grid-cols-3 gap-2.5 sm:gap-4 mb-5">
               <Link
                 href="/inflow"
-                className="bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.07] rounded-xl p-3 sm:p-4 transition-colors"
+                className="bg-canvas-soft/80 hover:bg-primary-pale rounded-xl p-3 sm:p-4 transition-colors"
               >
                 <div className="flex items-center gap-1.5 mb-2">
                   <ArrowDownCircle className="w-3.5 h-3.5 text-green-400 shrink-0" />
@@ -239,7 +240,7 @@ export default function Dashboard() {
 
               <Link
                 href="/expenses"
-                className="bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.07] rounded-xl p-3 sm:p-4 transition-colors"
+                className="bg-canvas-soft/80 hover:bg-primary-pale rounded-xl p-3 sm:p-4 transition-colors"
               >
                 <div className="flex items-center gap-1.5 mb-2">
                   <ArrowUpCircle className="w-3.5 h-3.5 text-red-400 shrink-0" />
@@ -265,7 +266,7 @@ export default function Dashboard() {
                 )}
               </Link>
 
-              <div className="bg-white/[0.03] border border-white/[0.07] rounded-xl p-3 sm:p-4">
+              <div className="bg-canvas-soft/80 rounded-xl p-3 sm:p-4">
                 <div className="flex items-center gap-1.5 mb-2">
                   <PiggyBank className="w-3.5 h-3.5 text-indigo-300 shrink-0" />
                   <p className="text-[10px] sm:text-xs font-semibold text-indigo-300 uppercase tracking-wider truncate">
@@ -296,17 +297,17 @@ export default function Dashboard() {
                 <p className="text-[11px] text-gray-500 font-semibold">
                   {Math.min(100, Math.round((expense / inflow) * 100))}% of this month&apos;s income spent
                 </p>
-                <div className="w-16 sm:w-20 h-1.5 rounded-full bg-white/[0.06] overflow-hidden shrink-0">
+                <div className="w-16 sm:w-20 h-1.5 rounded-full bg-canvas/80 overflow-hidden shrink-0">
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${Math.min(100, Math.round((expense / inflow) * 100))}%` }}
                     transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1], delay: 0.3 }}
                     className={`h-full rounded-full ${
                       expense / inflow > 0.9
-                        ? "bg-gradient-to-r from-red-500 to-rose-400"
+                        ? "bg-negative"
                         : expense / inflow > 0.65
-                        ? "bg-gradient-to-r from-amber-500 to-orange-400"
-                        : "bg-gradient-to-r from-emerald-500 to-green-400"
+                        ? "bg-warning"
+                        : "bg-positive"
                     }`}
                   />
                 </div>
@@ -329,9 +330,9 @@ export default function Dashboard() {
 
           {/* Recent Transactions + Spending Pace — side by side on desktop, matched height */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6 lg:items-stretch">
-          <div className="bg-[#111118] border border-white/[0.07] rounded-xl p-6 flex flex-col lg:h-full lg:min-h-0">
+          <div className="bg-canvas/80 rounded-xl p-6 flex flex-col lg:h-full lg:min-h-0">
             <div className="flex items-center gap-2 mb-4 shrink-0">
-              <RefreshCcwDot color="#ec4899" />
+              <RefreshCcwDot className="text-ink-deep" />
               <h2 className="text-xl font-semibold">Recent Transactions</h2>
             </div>
 
@@ -357,10 +358,10 @@ export default function Dashboard() {
                       key={tx._id}
                       className="block"
                     >
-                      <li className="group flex justify-between items-center p-4 bg-white/2 hover:bg-white/10 backdrop-blur-md border border-gray-800 rounded-xl transition-all duration-300 cursor-pointer shadow-md">
+                      <li className="group flex justify-between items-center p-4 bg-canvas-soft/80 hover:bg-primary-pale backdrop-blur-md rounded-xl transition-all duration-300 cursor-pointer shadow-md">
                         <div className="flex items-center gap-3">
                           <div
-                            className={`${colors.bg} border ${colors.border} p-2 rounded-full`}
+                            className={`${colors.bg} p-2 rounded-full`}
                           >
                             <Icon className={`w-5 h-5 ${colors.text}`} />
                           </div>
@@ -381,7 +382,7 @@ export default function Dashboard() {
                                 : "text-red-400"
                             }`}
                           >
-                            {hidden ? "₹ ******" : `${tx.type === "income" ? "+ " : "- "}₹ ${tx.amount}`}
+                            {hidden ? "₹ ******" : `${tx.type ==="income" ?"+ " :"- "}₹ ${tx.amount}`}
                           </p>
                           <button
                             onClick={(e) => {

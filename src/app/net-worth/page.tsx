@@ -43,22 +43,29 @@ import BottomNav from "@/components/BottomNav";
 import { useAuthGuard } from "@/hooks/useAuthGuard";
 import { apiFetch } from "@/utils/apiFetch";
 import { toast } from "@/lib/toast";
+import { alpha, chartChrome, cssVar } from "@/utils/themeColors";
+import { useTheme } from "@/hooks/useTheme";
 
 ChartJS.register(LineElement, PointElement, BarElement, LinearScale, CategoryScale, Filler, Tooltip);
 
 /* ── chart theme ─────────────────────────────────────────── */
 
+// Resolved from the live theme tokens on every read — Chart.js paints to a
+// canvas, so the colours have to be concrete at draw time and cannot be CSS
+// variables. Property getters keep every call site unchanged while letting the
+// values follow a theme switch.
 const CHART = {
-  up: "#34d399",
-  upDim: "rgba(52,211,153,0.8)",
-  down: "#f87171",
-  downDim: "rgba(248,113,113,0.8)",
-  proj: "rgba(148,163,184,0.55)",
-  grid: "rgba(148,163,184,0.07)",
-  gridZero: "rgba(148,163,184,0.25)",
-  tick: "#64748b",
-  surface: "#0e1117",
-  tooltipBg: "#0f172a",
+  get up() { return cssVar("--color-positive"); },
+  get upDim() { return alpha(cssVar("--color-positive"), 0.8); },
+  get down() { return cssVar("--color-negative"); },
+  get downDim() { return alpha(cssVar("--color-negative"), 0.8); },
+  get proj() { return alpha(cssVar("--color-mute"), 0.55); },
+  get grid() { return chartChrome().grid; },
+  get gridZero() { return chartChrome().gridStrong; },
+  get tick() { return chartChrome().tick; },
+  get surface() { return cssVar("--color-canvas"); },
+  get tooltipBg() { return chartChrome().tooltipBg; },
+  get tooltipText() { return chartChrome().tooltipText; },
 };
 
 // Soft drop shadow under the balance line stroke (dataset 0 only) — neutral so it
@@ -68,7 +75,7 @@ const lineGlowPlugin = {
   beforeDatasetDraw(chart: ChartJS, args: { index: number }) {
     if (args.index !== 0) return;
     chart.ctx.save();
-    chart.ctx.shadowColor = "rgba(0,0,0,0.45)";
+    chart.ctx.shadowColor = alpha(cssVar("--color-ink"), 0.45);
     chart.ctx.shadowBlur = 6;
     chart.ctx.shadowOffsetY = 4;
   },
@@ -98,11 +105,11 @@ const peakLabelPlugin = {
     const w = ctx.measureText(label).width;
     const x = Math.max(chartArea.left + 4, Math.min(pt.x - w / 2, chartArea.right - w - 4));
     const y = Math.max(chartArea.top + 10, pt.y - 12);
-    ctx.fillStyle = "rgba(148,163,184,0.9)";
+    ctx.fillStyle = alpha(cssVar("--color-mute"), 0.9);
     ctx.fillText(label, x, y);
     ctx.beginPath();
     ctx.arc(pt.x, pt.y, 3, 0, Math.PI * 2);
-    ctx.fillStyle = "#94a3b8";
+    ctx.fillStyle = cssVar("--color-mute");
     ctx.fill();
     ctx.strokeStyle = CHART.surface;
     ctx.lineWidth = 2;
@@ -120,7 +127,7 @@ const crosshairPlugin = {
     const { top, bottom } = chart.chartArea;
     const ctx = chart.ctx;
     ctx.save();
-    ctx.strokeStyle = "rgba(148,163,184,0.3)";
+    ctx.strokeStyle = alpha(cssVar("--color-mute"), 0.3);
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(active[0].element.x, top);
@@ -131,14 +138,14 @@ const crosshairPlugin = {
 };
 
 const baseTooltip = {
-  backgroundColor: CHART.tooltipBg,
-  borderColor: "rgba(148,163,184,0.2)",
+  get backgroundColor() { return CHART.tooltipBg; },
+  get borderColor() { return alpha(cssVar("--color-mute"), 0.2); },
   borderWidth: 1,
   cornerRadius: 10,
   padding: 12,
-  titleColor: "#94a3b8",
+  get titleColor() { return alpha(CHART.tooltipText, 0.7); },
   titleFont: { size: 11, weight: "bold" as const },
-  bodyColor: "#f1f5f9",
+  get bodyColor() { return CHART.tooltipText; },
   bodyFont: { size: 13, weight: "bold" as const },
   displayColors: false,
   // Glide between points instead of teleporting
@@ -213,11 +220,11 @@ function formatAmount(amount: number) {
 }
 
 function healthColor(score: number) {
-  if (score >= 80) return { text: "text-emerald-400", bg: "bg-emerald-500/15", border: "border-emerald-500/25", ring: "#34d399" };
-  if (score >= 60) return { text: "text-blue-400", bg: "bg-blue-500/15", border: "border-blue-500/25", ring: "#60a5fa" };
-  if (score >= 40) return { text: "text-yellow-400", bg: "bg-yellow-500/15", border: "border-yellow-500/25", ring: "#facc15" };
-  if (score >= 20) return { text: "text-orange-400", bg: "bg-orange-500/15", border: "border-orange-500/25", ring: "#fb923c" };
-  return { text: "text-red-400", bg: "bg-red-500/15", border: "border-red-500/25", ring: "#f87171" };
+  if (score >= 80) return { text: "text-emerald-400", bg: "bg-emerald-500/15", ring: "var(--color-positive)" };
+  if (score >= 60) return { text: "text-blue-400", bg: "bg-blue-500/15", ring: "var(--color-cat-outing)" };
+  if (score >= 40) return { text: "text-warning-deep", bg: "bg-yellow-500/15", ring: "var(--color-warning)" };
+  if (score >= 20) return { text: "text-warning-deep", bg: "bg-orange-500/15", ring: "var(--color-warning-deep)" };
+  return { text: "text-red-400", bg: "bg-red-500/15", ring: "var(--color-negative)" };
 }
 
 function SkeletonBar({ className = "h-24" }: { className?: string }) {
@@ -234,6 +241,10 @@ const cardMotion = (delay: number) => ({
 
 export default function NetWorthPage() {
   useAuthGuard();
+
+  // Chart.js bakes theme tokens into concrete colours at config-build time, so
+  // the canvases have to remount when the theme flips.
+  const { resolved: theme } = useTheme();
 
   const [bankBalance, setBankBalance] = useState<number>(0);
   const [history, setHistory] = useState<{ date: string; balance: number; estimated?: boolean }[]>([]);
@@ -456,23 +467,24 @@ export default function NetWorthPage() {
   const nextMilestone = MILESTONES.find(m => m > bankBalance) ?? null;
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white p-4 sm:p-8 pb-28">
-      <div className="fixed inset-0 pointer-events-none auth-dot-grid opacity-[0.14]" />
-      <div className="fixed top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-violet-500/30 to-transparent pointer-events-none z-50" />
+    <div key={theme} className="min-h-screen md:pt-20 text-ink p-4 sm:p-8 pb-28">
+      <div className="fixed top-0 inset-x-0 h-px bg-primary pointer-events-none z-50" />
       <div className="max-w-6xl mx-auto">
-        <Header />
+        <div className="md:hidden">
+          <Header />
+        </div>
 
         {/* Page header */}
         <div className="flex items-center justify-between mt-4 mb-8">
           <div className="flex items-center gap-2">
-            <PiggyBank className="text-amber-400" size={26} />
+            <PiggyBank className="text-warning-deep" size={26} />
             <h1 className="text-3xl font-extrabold tracking-tight">Net Worth</h1>
             <button
               onClick={refreshAll}
               className="ml-1 p-1.5 rounded-lg hover:bg-gray-800 transition-colors cursor-pointer"
               title="Refresh"
             >
-              <RefreshCw className={`w-4 h-4 text-green-400 ${loading ? "animate-spin" : ""}`} />
+              <RefreshCw className={`w-4 h-4 text-green-400 ${loading ? "animate-spin" :""}`} />
             </button>
           </div>
           <MenuButton />
@@ -487,13 +499,13 @@ export default function NetWorthPage() {
             ) : (
               <motion.div
                 {...cardMotion(0)}
-                className="bg-gradient-to-br from-amber-950/40 via-gray-900 to-gray-900 border border-amber-500/20 rounded-2xl p-6"
+                className="bg-canvas/80 rounded-2xl p-6"
               >
                 <div className="flex items-start justify-between">
                   <div>
                     <div className="flex items-center gap-2 mb-1">
                       <div className="w-7 h-7 bg-amber-500/20 rounded-lg flex items-center justify-center">
-                        <PiggyBank size={14} className="text-amber-400" />
+                        <PiggyBank size={14} className="text-warning-deep" />
                       </div>
                       <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Bank Balance</p>
                     </div>
@@ -505,19 +517,19 @@ export default function NetWorthPage() {
                           value={newBalance}
                           onChange={e => setNewBalance(e.target.value)}
                           placeholder={bankBalance.toString()}
-                          className="bg-gray-800/80 border border-amber-500/30 text-white rounded-xl px-3.5 py-2 text-xl font-black w-36 focus:outline-none focus:ring-2 focus:ring-amber-500/40"
-                          onKeyDown={e => { if (e.key === "Enter") handleUpdateBalance(); if (e.key === "Escape") handleCancelEdit(); }}
+                          className="bg-canvas/80 text-ink rounded-xl px-3.5 py-2 text-xl font-black w-36 focus:outline-none focus:ring-2 focus:ring-warning"
+                          onKeyDown={e => { if (e.key === "Enter") handleUpdateBalance(); if (e.key ==="Escape") handleCancelEdit(); }}
                         />
                         <button
                           onClick={handleUpdateBalance}
                           disabled={saving}
-                          className="p-2 rounded-xl bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/30 transition-all cursor-pointer disabled:opacity-50"
+                          className="p-2 rounded-xl bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 transition-all cursor-pointer disabled:opacity-50"
                         >
                           <Check size={16} />
                         </button>
                         <button
                           onClick={handleCancelEdit}
-                          className="p-2 rounded-xl bg-gray-800 border border-gray-700 text-gray-400 hover:text-white transition-all cursor-pointer"
+                          className="p-2 rounded-xl bg-gray-800 text-gray-400 hover:text-ink transition-all cursor-pointer"
                         >
                           <X size={16} />
                         </button>
@@ -531,7 +543,7 @@ export default function NetWorthPage() {
                   {!editMode && (
                     <button
                       onClick={() => { setEditMode(true); setNewBalance(bankBalance.toString()); }}
-                      className="p-2 rounded-xl bg-gray-800/60 border border-gray-700 text-gray-500 hover:text-amber-400 hover:border-amber-500/30 transition-all cursor-pointer"
+                      className="p-2 rounded-xl bg-gray-800/60 text-gray-500 hover:text-warning-deep transition-all cursor-pointer"
                       title="Edit balance"
                     >
                       <Pencil size={14} />
@@ -547,7 +559,7 @@ export default function NetWorthPage() {
             ) : (
               <motion.div
                 {...cardMotion(0.08)}
-                className="bg-gray-900/60 border border-gray-800 rounded-2xl p-6"
+                className="bg-gray-900/60 rounded-2xl p-6"
               >
                 <div className="flex items-center gap-2 mb-1">
                   <div className="w-7 h-7 bg-blue-500/20 rounded-lg flex items-center justify-center">
@@ -566,7 +578,7 @@ export default function NetWorthPage() {
             ) : (
               <motion.div
                 {...cardMotion(0.16)}
-                className="bg-gradient-to-br from-emerald-950/40 via-gray-900 to-gray-900 border border-emerald-500/20 rounded-2xl p-6"
+                className="bg-canvas/80 rounded-2xl p-6"
               >
                 <div className="flex items-center gap-2 mb-1">
                   <div className="w-7 h-7 bg-emerald-500/20 rounded-lg flex items-center justify-center">
@@ -597,11 +609,11 @@ export default function NetWorthPage() {
           ) : history.length > 0 && (
             <motion.div
               {...cardMotion(0.2)}
-              className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-gray-800 border border-gray-800 rounded-2xl overflow-hidden"
+              className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-gray-800 rounded-2xl overflow-hidden"
             >
               {[
                 {
-                  icon: <Trophy size={13} className="text-amber-400" />,
+                  icon: <Trophy size={13} className="text-warning-deep" />,
                   label: "All-time high",
                   value: formatAmount(allTimeHigh),
                   sub: allTimeHigh <= bankBalance ? "Right now 🎉" : `${formatAmount(allTimeHigh - bankBalance)} above today`,
@@ -609,7 +621,7 @@ export default function NetWorthPage() {
                 {
                   icon: <ArrowUpRight size={13} className={totalGrowth >= 0 ? "text-emerald-400" : "text-red-400"} />,
                   label: "Total growth",
-                  value: `${totalGrowth >= 0 ? "+" : ""}${formatAmount(totalGrowth)}`,
+                  value: `${totalGrowth >= 0 ? "+" :""}${formatAmount(totalGrowth)}`,
                   sub: "since first snapshot",
                 },
                 {
@@ -621,7 +633,7 @@ export default function NetWorthPage() {
                 {
                   icon: <Activity size={13} className="text-blue-400" />,
                   label: "Avg / month",
-                  value: `${avgDelta >= 0 ? "+" : ""}${formatAmount(avgDelta)}`,
+                  value: `${avgDelta >= 0 ? "+" :""}${formatAmount(avgDelta)}`,
                   sub: "monthly pace",
                 },
               ].map((s, i) => (
@@ -630,7 +642,7 @@ export default function NetWorthPage() {
                     {s.icon}
                     <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">{s.label}</p>
                   </div>
-                  <p className="text-lg font-black text-white leading-tight">{s.value}</p>
+                  <p className="text-lg font-black text-ink leading-tight">{s.value}</p>
                   <p className="text-[10px] text-gray-600 mt-0.5">{s.sub}</p>
                 </div>
               ))}
@@ -650,7 +662,7 @@ export default function NetWorthPage() {
                 {/* Health Score */}
                 <motion.div
                   {...cardMotion(0.24)}
-                  className="bg-gray-900/60 border border-gray-800 rounded-2xl p-5"
+                  className="bg-gray-900/60 rounded-2xl p-5"
                 >
                   <div className="flex items-center gap-2 mb-3">
                     <div className="w-7 h-7 bg-violet-500/20 rounded-lg flex items-center justify-center">
@@ -662,7 +674,7 @@ export default function NetWorthPage() {
                     <div className="flex items-center gap-4">
                       <div className="relative w-16 h-16 flex-shrink-0">
                         <svg viewBox="0 0 64 64" className="w-16 h-16 -rotate-90">
-                          <circle cx="32" cy="32" r="28" fill="none" stroke="rgba(148,163,184,0.15)" strokeWidth="4" />
+                          <circle cx="32" cy="32" r="28" fill="none" stroke="currentColor" className="text-hairline" strokeWidth="4" />
                           <circle
                             cx="32" cy="32" r="28" fill="none"
                             stroke={colors.ring} strokeWidth="4" strokeLinecap="round"
@@ -678,7 +690,7 @@ export default function NetWorthPage() {
                           {healthScore >= 80 ? "Excellent" : healthScore >= 60 ? "Good" : healthScore >= 40 ? "Fair" : healthScore >= 20 ? "Weak" : "Poor"}
                         </p>
                         <p className="text-xs text-gray-500 mt-0.5">{healthReason}</p>
-                        <p className="text-[10px] text-gray-700 mt-1">Score out of 100 · AI assessed</p>
+                        <p className="text-[10px] text-ink mt-1">Score out of 100 · AI assessed</p>
                       </div>
                     </div>
                   ) : (
@@ -689,15 +701,15 @@ export default function NetWorthPage() {
                 {/* Next Milestone */}
                 <motion.div
                   {...cardMotion(0.28)}
-                  className="bg-gray-900/60 border border-gray-800 rounded-2xl p-5"
+                  className="bg-gray-900/60 rounded-2xl p-5"
                 >
                   <div className="flex items-center gap-2 mb-3">
                     <div className="w-7 h-7 bg-amber-500/20 rounded-lg flex items-center justify-center">
-                      <Target size={14} className="text-amber-400" />
+                      <Target size={14} className="text-warning-deep" />
                     </div>
                     <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Next Milestone</p>
                     {milestonesReached > 0 && (
-                      <span className="ml-auto text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400/80 border border-amber-500/20">
+                      <span className="ml-auto text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 text-warning-deep">
                         {milestonesReached} reached
                       </span>
                     )}
@@ -707,14 +719,14 @@ export default function NetWorthPage() {
                       <p className="text-2xl font-black text-amber-300">{formatAmount(nextMilestone)}</p>
                       <div className="mt-2 w-full bg-gray-800 rounded-full h-1.5">
                         <div
-                          className="h-1.5 rounded-full bg-gradient-to-r from-amber-500 to-amber-300 transition-all"
+                          className="h-1.5 rounded-full bg-warning transition-all"
                           style={{ width: `${Math.min(100, Math.round((bankBalance / nextMilestone) * 100))}%` }}
                         />
                       </div>
                       <p className="text-[11px] text-gray-500 mt-1.5">
                         ₹{fmtINR(remaining)} away
                         {monthsToMilestone !== null && (
-                          <span className="text-amber-400 font-semibold ml-1">
+                          <span className="text-warning-deep font-semibold ml-1">
                             · ~{monthsToMilestone} month{monthsToMilestone !== 1 ? "s" : ""} at current pace
                           </span>
                         )}
@@ -777,14 +789,14 @@ export default function NetWorthPage() {
               <motion.div {...cardMotion(0.32)} className="space-y-4">
                 {/* Filter row — scopes the charts below */}
                 <div className="flex items-center justify-between gap-2 flex-wrap">
-                  <div className="flex gap-0.5 bg-gray-900/80 border border-gray-800 rounded-xl p-1">
+                  <div className="flex gap-0.5 bg-gray-900/80 rounded-xl p-1">
                     {RANGES.map(r => (
                       <button
                         key={r.key}
                         onClick={() => setRange(r.key)}
                         className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
                           range === r.key
-                            ? "bg-gray-700 text-white shadow-sm"
+                            ? "bg-gray-700 text-ink shadow-sm"
                             : "text-gray-500 hover:text-gray-300"
                         }`}
                       >
@@ -796,7 +808,7 @@ export default function NetWorthPage() {
                     <button
                       onClick={updateChart}
                       disabled={chartUpdating}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-[11px] font-semibold text-emerald-400 hover:bg-emerald-500/20 transition-all cursor-pointer disabled:opacity-40"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 text-[11px] font-semibold text-emerald-400 hover:bg-emerald-500/20 transition-all cursor-pointer disabled:opacity-40"
                       title="Record today's balance and fill any missing days"
                     >
                       <RefreshCw size={12} className={chartUpdating ? "animate-spin" : ""} />
@@ -804,10 +816,10 @@ export default function NetWorthPage() {
                     </button>
                     <button
                       onClick={() => setShowProjection(v => !v)}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[11px] font-semibold transition-all cursor-pointer ${
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-semibold transition-all cursor-pointer ${
                         showProjection
-                          ? "bg-gray-800/80 border-gray-700 text-gray-300"
-                          : "bg-transparent border-gray-800 text-gray-600 hover:text-gray-400"
+                          ? "bg-gray-800/80 text-gray-300"
+                          : "bg-transparent text-gray-600 hover:text-gray-400"
                       }`}
                     >
                       <span className="w-3.5 border-t-2 border-dashed border-slate-500" />
@@ -815,7 +827,7 @@ export default function NetWorthPage() {
                     </button>
                     <button
                       onClick={() => setTableView(v => !v)}
-                      className="p-1.5 rounded-xl border border-gray-800 bg-gray-900/80 text-gray-500 hover:text-gray-300 transition-all cursor-pointer"
+                      className="p-1.5 rounded-xl bg-gray-900/80 text-gray-500 hover:text-gray-300 transition-all cursor-pointer"
                       title={tableView ? "Show chart" : "Show table"}
                     >
                       {tableView ? <LineChart size={14} /> : <Table2 size={14} />}
@@ -823,7 +835,7 @@ export default function NetWorthPage() {
                     {!tableView && (
                       <button
                         onClick={() => setFullscreen(v => !v)}
-                        className="p-1.5 rounded-xl border border-gray-800 bg-gray-900/80 text-gray-500 hover:text-gray-300 transition-all cursor-pointer"
+                        className="p-1.5 rounded-xl bg-gray-900/80 text-gray-500 hover:text-gray-300 transition-all cursor-pointer"
                         title={fullscreen ? "Exit full screen" : "Full screen"}
                       >
                         {fullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
@@ -836,8 +848,8 @@ export default function NetWorthPage() {
                 <div
                   className={
                     fullscreen
-                      ? "fixed inset-0 z-50 bg-[#0e1117] border-0 rounded-none overflow-y-auto flex flex-col"
-                      : "bg-gray-900/60 border border-gray-800 rounded-2xl overflow-hidden"
+                      ? "fixed inset-0 z-50 bg-canvas/80 border-0 rounded-none overflow-y-auto flex flex-col"
+                      : "bg-gray-900/60 rounded-2xl overflow-hidden"
                   }
                 >
                   <div className="px-6 pt-5 pb-3 flex items-start justify-between">
@@ -846,7 +858,7 @@ export default function NetWorthPage() {
                         <TrendingUp size={14} className="text-emerald-400" />
                         <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Balance History</p>
                       </div>
-                      <p className="text-2xl font-black text-white">₹{fmtINR(bankBalance)}</p>
+                      <p className="text-2xl font-black text-ink">₹{fmtINR(bankBalance)}</p>
                     </div>
                     <div className="flex flex-col items-end gap-1">
                       {rangeChangePct !== null && visibleHistory.length > 1 && (
@@ -865,7 +877,7 @@ export default function NetWorthPage() {
                       {fullscreen && (
                         <button
                           onClick={() => setFullscreen(false)}
-                          className="mt-1 flex items-center gap-1 px-2 py-1 rounded-lg border border-gray-800 bg-gray-900/80 text-[10px] font-bold text-gray-400 hover:text-gray-200 transition-all cursor-pointer"
+                          className="mt-1 flex items-center gap-1 px-2 py-1 rounded-lg bg-gray-900/80 text-[10px] font-bold text-gray-400 hover:text-gray-200 transition-all cursor-pointer"
                           title="Exit full screen (Esc)"
                         >
                           <Minimize2 size={11} /> Exit
@@ -877,7 +889,7 @@ export default function NetWorthPage() {
                   {tableView ? (
                     <div className="px-6 pb-5 max-h-[280px] overflow-y-auto">
                       <table className="w-full text-sm">
-                        <thead className="sticky top-0 bg-[#12141c]">
+                        <thead className="sticky top-0 bg-canvas-soft/80">
                           <tr className="text-left text-[10px] text-gray-500 uppercase tracking-wider">
                             <th className="py-2 font-bold">Date</th>
                             <th className="py-2 font-bold text-right">Balance</th>
@@ -898,8 +910,8 @@ export default function NetWorthPage() {
                                 )}
                               </td>
                               <td className="py-2 text-right font-semibold text-gray-200">₹{fmtINR(h.balance)}</td>
-                              <td className={`py-2 text-right text-xs font-bold ${d === null ? "text-gray-700" : d >= 0 ? "text-emerald-400" : "text-red-400"}`}>
-                                {d === null ? "—" : `${d >= 0 ? "▲ +" : "▼ -"}₹${fmtINR(Math.abs(d))}`}
+                              <td className={`py-2 text-right text-xs font-bold ${d === null ? "text-ink" : d >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+                                {d === null ? "—" : `${d >= 0 ?"▲ +" :"▼ -"}₹${fmtINR(Math.abs(d))}`}
                               </td>
                             </tr>
                           ))}
@@ -1013,8 +1025,8 @@ export default function NetWorthPage() {
                               zoom: {
                                 drag: {
                                   enabled: zoomReady,
-                                  backgroundColor: "rgba(52,211,153,0.12)",
-                                  borderColor: "rgba(52,211,153,0.55)",
+                                  backgroundColor: alpha(cssVar("--color-positive"), 0.12),
+                                  borderColor: alpha(cssVar("--color-positive"), 0.55),
                                   borderWidth: 1,
                                 },
                                 wheel: { enabled: false },
@@ -1068,7 +1080,7 @@ export default function NetWorthPage() {
                   if (bars.length < 2) return null;
                   const recent = monthlyData.slice(-3);
                   return (
-                    <div className="bg-gray-900/60 border border-gray-800 rounded-2xl overflow-hidden">
+                    <div className="bg-gray-900/60 rounded-2xl overflow-hidden">
                       <div className="px-6 pt-5 pb-3 flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <Activity size={14} className="text-blue-400" />
@@ -1109,7 +1121,7 @@ export default function NetWorthPage() {
                                 callbacks: {
                                   label: (item) => {
                                     const v = Number(item.raw);
-                                    return ` ${v >= 0 ? "+" : "-"}₹${fmtINR(Math.abs(v))}`;
+                                    return ` ${v >= 0 ? "+" :"-"}₹${fmtINR(Math.abs(v))}`;
                                   },
                                 },
                               },
@@ -1141,7 +1153,7 @@ export default function NetWorthPage() {
                           return (
                             <div key={i} className="flex flex-col gap-0.5">
                               <p className="text-[11px] text-gray-500 font-semibold">{row.month}</p>
-                              <p className="text-sm font-black text-white tabular-nums">₹{fmtINR(row.balance)}</p>
+                              <p className="text-sm font-black text-ink tabular-nums">₹{fmtINR(row.balance)}</p>
                               {row.delta !== null ? (
                                 <span className={`text-[11px] font-bold ${rowUp ? "text-emerald-400" : "text-red-400"}`}>
                                   {rowUp ? "▲" : "▼"} {pct !== null ? `${Math.abs(Number(pct))}%` : ""}
@@ -1150,7 +1162,7 @@ export default function NetWorthPage() {
                                   </span>
                                 </span>
                               ) : (
-                                <span className="text-[11px] text-gray-700">— first entry</span>
+                                <span className="text-[11px] text-ink">— first entry</span>
                               )}
                             </div>
                           );
@@ -1167,9 +1179,9 @@ export default function NetWorthPage() {
           {!loading && history.length === 0 && (
             <motion.div
               {...cardMotion(0.32)}
-              className="bg-gray-900/60 border border-gray-800 border-dashed rounded-2xl p-10 text-center"
+              className="bg-gray-900/60 border-dashed rounded-2xl p-10 text-center"
             >
-              <TrendingUp size={28} className="text-gray-700 mx-auto mb-3" />
+              <TrendingUp size={28} className="text-ink mx-auto mb-3" />
               <p className="text-sm font-bold text-gray-400">No history yet</p>
               <p className="text-xs text-gray-600 mt-1 max-w-sm mx-auto">
                 Set your bank balance above, then record it — your growth chart appears
@@ -1178,7 +1190,7 @@ export default function NetWorthPage() {
               <button
                 onClick={updateChart}
                 disabled={chartUpdating}
-                className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-xs font-semibold text-emerald-400 hover:bg-emerald-500/20 transition-all cursor-pointer disabled:opacity-40"
+                className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-500/10 text-xs font-semibold text-emerald-400 hover:bg-emerald-500/20 transition-all cursor-pointer disabled:opacity-40"
               >
                 <RefreshCw size={12} className={chartUpdating ? "animate-spin" : ""} />
                 {chartUpdating ? "Updating…" : "Record today's balance"}
@@ -1190,17 +1202,17 @@ export default function NetWorthPage() {
           {!loading && (
             <motion.div
               {...cardMotion(0.36)}
-              className="rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-500/8 via-gray-900/60 to-gray-900/80 p-5"
+              className="rounded-2xl bg-canvas/80 p-5"
             >
               <div className="flex items-center gap-2.5 mb-3">
-                <div className="p-1.5 rounded-lg bg-violet-500/15 border border-violet-500/25">
+                <div className="p-1.5 rounded-lg bg-violet-500/15">
                   <Bot size={14} className="text-violet-400" />
                 </div>
                 <div>
                   <p className="text-xs font-black uppercase tracking-widest text-violet-400">AI Net Worth Advisor</p>
                   <p className="text-[10px] text-gray-600">Powered by Llama 3.3 · refreshes weekly</p>
                 </div>
-                <span className="ml-auto text-[10px] font-semibold px-2 py-0.5 rounded-full border bg-violet-500/15 text-violet-300 border-violet-500/25">
+                <span className="ml-auto text-[10px] font-semibold px-2 py-0.5 rounded-full bg-violet-500/15 text-violet-300">
                   AI
                 </span>
               </div>
@@ -1245,7 +1257,7 @@ export default function NetWorthPage() {
                   </p>
                   <button
                     onClick={() => fetchAIAdvice(bankBalance, history)}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-violet-500/15 border border-violet-500/25 text-violet-300 text-xs font-semibold hover:bg-violet-500/25 transition-all cursor-pointer"
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-violet-500/15 text-violet-300 text-xs font-semibold hover:bg-violet-500/25 transition-all cursor-pointer"
                   >
                     <Sparkles size={13} />
                     Generate AI Insights

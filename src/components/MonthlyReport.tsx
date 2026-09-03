@@ -74,7 +74,7 @@ export default function MonthlyReport({
       const dataUrl = await toPng(reportRef.current, {
         cacheBust: true,
         pixelRatio: 2,
-        backgroundColor: "#0f0f1a",
+        backgroundColor: "var(--color-canvas)",
       });
       const link = document.createElement("a");
       link.href = dataUrl;
@@ -96,7 +96,7 @@ export default function MonthlyReport({
         </h2>
         <button
           onClick={handleExport}
-          className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl font-bold text-sm transition-colors cursor-pointer"
+          className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-200 text-on-primary px-4 py-2 rounded-xl font-bold text-sm transition-colors cursor-pointer"
         >
           <Download size={15} />
           <span>
@@ -110,7 +110,7 @@ export default function MonthlyReport({
       <div
         ref={reportRef}
         id="monthly-report-card"
-        className="bg-gradient-to-br from-[#0f0f1a] via-[#12122a] to-[#0f1a2a] border border-indigo-500/20 rounded-2xl p-6 shadow-2xl"
+        className="bg-canvas/80 rounded-2xl p-6 shadow-lg"
       >
         {/* Header */}
         <div className="flex items-start justify-between mb-6">
@@ -118,7 +118,7 @@ export default function MonthlyReport({
             <p className="text-xs text-gray-500 uppercase tracking-widest font-bold mb-1">
               Monthly Financial Report
             </p>
-            <h3 className="text-2xl font-black bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+            <h3 className="text-ink text-2xl font-black">
               {monthName} {currentYear}
             </h3>
           </div>
@@ -131,7 +131,7 @@ export default function MonthlyReport({
 
         {/* Big numbers */}
         <div className="grid grid-cols-2 gap-4 mb-6">
-          <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-4">
+          <div className="bg-green-500/10 rounded-xl p-4">
             <div className="flex items-center gap-1.5 mb-1">
               <TrendingUp size={14} className="text-green-400" />
               <p className="text-xs font-bold text-green-400 uppercase tracking-wider">
@@ -142,7 +142,7 @@ export default function MonthlyReport({
               ₹{totalIncome.toLocaleString()}
             </p>
           </div>
-          <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4">
+          <div className="bg-red-500/10 rounded-xl p-4">
             <div className="flex items-center gap-1.5 mb-1">
               <TrendingDown size={14} className="text-red-400" />
               <p className="text-xs font-bold text-red-400 uppercase tracking-wider">
@@ -175,7 +175,7 @@ export default function MonthlyReport({
             <p className="text-xs text-gray-400 mb-1">Savings Rate</p>
             <p
               className={`text-2xl font-black ${
-                savingsRate >= 20 ? "text-green-400" : savingsRate > 0 ? "text-yellow-400" : "text-red-400"
+                savingsRate >= 20 ? "text-green-400" : savingsRate > 0 ? "text-warning-deep" : "text-red-400"
               }`}
             >
               {savingsRate}%
@@ -206,7 +206,7 @@ export default function MonthlyReport({
                         #{i + 1}
                       </span>
                       <span
-                        className={`text-xs font-bold px-2.5 py-1 rounded-full ${colors.bg} ${colors.text} border ${colors.border}`}
+                        className={`text-xs font-bold px-2.5 py-1 rounded-full ${colors.bg} ${colors.text}`}
                       >
                         {cat}
                       </span>
@@ -223,7 +223,7 @@ export default function MonthlyReport({
 
         {/* Biggest transaction */}
         {biggestTx && (
-          <div className="bg-white/3 border border-gray-700/40 rounded-xl p-4">
+          <div className="bg-canvas-soft/80 rounded-xl p-4">
             <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">
               Biggest Single Expense
             </p>

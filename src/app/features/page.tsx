@@ -33,13 +33,13 @@ const iconColors = [
   { bg: "bg-violet-500/10 border-violet-500/20", icon: "text-violet-400" },
   { bg: "bg-indigo-500/10 border-indigo-500/20", icon: "text-indigo-400" },
   { bg: "bg-emerald-500/10 border-emerald-500/20", icon: "text-emerald-400" },
-  { bg: "bg-amber-500/10 border-amber-500/20", icon: "text-amber-400" },
-  { bg: "bg-sky-500/10 border-sky-500/20", icon: "text-sky-400" },
+  { bg: "bg-amber-500/10 border-amber-500/20", icon: "text-warning-deep" },
+  { bg: "bg-primary/10 border-primary/20", icon: "text-ink-deep" },
   { bg: "bg-rose-500/10 border-rose-500/20", icon: "text-rose-400" },
   { bg: "bg-purple-500/10 border-purple-500/20", icon: "text-purple-400" },
   { bg: "bg-teal-500/10 border-teal-500/20", icon: "text-teal-400" },
-  { bg: "bg-orange-500/10 border-orange-500/20", icon: "text-orange-400" },
-  { bg: "bg-cyan-500/10 border-cyan-500/20", icon: "text-cyan-400" },
+  { bg: "bg-orange-500/10 border-orange-500/20", icon: "text-warning-deep" },
+  { bg: "bg-primary/10 border-primary/20", icon: "text-ink-deep" },
   { bg: "bg-fuchsia-500/10 border-fuchsia-500/20", icon: "text-fuchsia-400" },
 ];
 
@@ -240,22 +240,22 @@ const chartFeatures = [
   },
   {
     icon: Activity,
-    color: "text-amber-400",
+    color: "text-warning-deep",
     bg: "bg-amber-500/10 border-amber-500/20",
     title: "Weekly Rhythm Sparklines",
     desc: "Day-of-week sparklines expose habitual spending patterns — weekends, paydays, and more.",
   },
   {
     icon: CalendarDays,
-    color: "text-sky-400",
-    bg: "bg-sky-500/10 border-sky-500/20",
+    color: "text-ink-deep",
+    bg: "bg-primary/10 border-primary/20",
     title: "Calendar Heatmap",
     desc: "Full-month grid where color intensity shows heavy vs light spending days at a glance.",
   },
 ];
 
 const whyItems = [
-  { icon: Zap,         color: "text-amber-400",  bg: "bg-amber-500/10 border-amber-500/20",   title: "No fluff",    desc: "Every feature solves a real budgeting problem. No filler." },
+  { icon: Zap,         color: "text-warning-deep",  bg: "bg-amber-500/10 border-amber-500/20",   title: "No fluff",    desc: "Every feature solves a real budgeting problem. No filler." },
   { icon: Lock,        color: "text-violet-400", bg: "bg-violet-500/10 border-violet-500/20", title: "JWT secured", desc: "Auth-protected routes, encrypted tokens, no data leaks." },
   { icon: Download,    color: "text-emerald-400",bg: "bg-emerald-500/10 border-emerald-500/20",title: "Your data",  desc: "Export everything as JSON anytime. No lock-in, ever." },
   { icon: ShieldCheck, color: "text-indigo-400", bg: "bg-indigo-500/10 border-indigo-500/20", title: "Private",     desc: "Your transactions are never shared or sold. Period." },
@@ -275,32 +275,31 @@ const ImgPlaceholder = ({ label, src, aspect = "aspect-video" }: ImgPlaceholderP
 );
 
 const AppFrame = ({ label, src, aspect = "aspect-video" }: ImgPlaceholderProps) => (
-  <div className="rounded-2xl border border-white/[0.08] overflow-hidden bg-[#0d0d14]">
+  <div className="rounded-2xl overflow-hidden bg-canvas/80">
     {/* Browser chrome */}
-    <div className="flex items-center gap-2 px-3 py-2 border-b border-white/[0.06] bg-[#111118]">
+    <div className="flex items-center gap-2 px-3 py-2 border-b border-hairline bg-canvas/80">
       <div className="flex gap-1.5">
         <div className="w-2.5 h-2.5 rounded-full bg-rose-500/50" />
         <div className="w-2.5 h-2.5 rounded-full bg-amber-500/50" />
         <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/50" />
       </div>
-      <div className="flex-1 h-4 rounded-md bg-white/[0.05] border border-white/[0.06] mx-2" />
+      <div className="flex-1 h-4 rounded-md bg-canvas/80 mx-2" />
     </div>
     <ImgPlaceholder label={label} src={src} aspect={aspect} />
   </div>
 );
 
 const SectionDivider = () => (
-  <div className="h-px bg-gradient-to-r from-transparent via-white/[0.07] to-transparent my-12" />
+  <div className="h-px bg-hairline my-12" />
 );
 
 /* ─── Page ───────────────────────────────────────────────────── */
 export default function FeaturesPage() {
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white">
+    <div className="min-h-screen text-ink">
       {/* Dot grid */}
-      <div className="fixed inset-0 pointer-events-none auth-dot-grid opacity-[0.14]" />
       {/* Top accent line */}
-      <div className="fixed top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-violet-500/30 to-transparent pointer-events-none" />
+      <div className="fixed top-0 left-0 right-0 h-px bg-primary pointer-events-none" />
 
       <div className="relative max-w-6xl mx-auto px-4 sm:px-8 py-6 pb-24">
         <Header />
@@ -311,7 +310,7 @@ export default function FeaturesPage() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-2 bg-violet-500/[0.08] border border-violet-500/20 text-violet-400 px-4 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-widest mb-6"
+            className="inline-flex items-center gap-2 bg-violet-500/[0.08] text-violet-400 px-4 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-widest mb-6"
           >
             <Sparkles size={11} />
             Everything MyBudgetory can do
@@ -324,7 +323,7 @@ export default function FeaturesPage() {
             className="text-5xl md:text-6xl font-black tracking-tight leading-none mb-5"
           >
             Built for people who{" "}
-            <span className="bg-gradient-to-r from-violet-400 via-purple-400 to-indigo-400 bg-clip-text text-transparent">
+            <span className="text-ink">
               actually track money
             </span>
           </motion.h1>
@@ -347,8 +346,8 @@ export default function FeaturesPage() {
           >
             <Link
               href="/dashboard"
-              className="group flex items-center gap-2 px-7 py-3 rounded-xl font-bold text-sm text-white active:scale-95 transition-all duration-150"
-              style={{ background: "linear-gradient(135deg, #7c3aed, #6366f1)" }}
+              className="group flex items-center gap-2 px-7 py-3 rounded-xl font-bold text-sm text-ink active:scale-95 transition-all duration-150"
+              style={{ background: "var(--color-primary)" }}
             >
               Go to Dashboard
               <ArrowRight
@@ -358,7 +357,7 @@ export default function FeaturesPage() {
             </Link>
             <Link
               href="/login"
-              className="flex items-center gap-2 border border-white/[0.12] hover:border-violet-500/40 text-gray-400 hover:text-white px-7 py-3 rounded-xl font-bold text-sm transition-all duration-200"
+              className="flex items-center gap-2 bg-canvas-soft/80 hover:bg-primary-pale text-ink px-7 py-3 rounded-3xl font-semibold text-sm transition-all duration-200"
             >
               Sign In
             </Link>
@@ -380,7 +379,7 @@ export default function FeaturesPage() {
             <p className="text-[11px] font-bold uppercase tracking-widest text-violet-400 mb-2">
               All 11 Features
             </p>
-            <h2 className="text-3xl md:text-4xl font-black tracking-tight text-white">
+            <h2 className="text-3xl md:text-4xl font-black tracking-tight text-ink">
               One app. Every tool you need.
             </h2>
           </motion.div>
@@ -397,14 +396,14 @@ export default function FeaturesPage() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, margin: "-40px" }}
                   transition={{ duration: 0.4, delay: (idx % 3) * 0.07 }}
-                  className="group relative bg-[#111118] border border-white/[0.07] rounded-2xl p-6 hover:bg-[#16161f] hover:border-white/[0.13] transition-all duration-300 overflow-hidden flex flex-col"
+                  className="group relative bg-canvas/80 rounded-2xl p-6 hover:bg-canvas-soft/80 transition-all duration-300 overflow-hidden flex flex-col"
                 >
                   {/* Top edge accent */}
-                  <div className={`absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent ${accent} to-transparent`} />
+                  <div className={`absolute top-0 left-0 right-0 h-px bg-hairline`} />
 
                   {/* Icon + Open link */}
                   <div className="flex items-start justify-between mb-4">
-                    <div className={`${c.bg} border w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0`}>
+                    <div className={`${c.bg} w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0`}>
                       <Icon className={`w-5 h-5 ${c.icon}`} />
                     </div>
                     <Link
@@ -415,7 +414,7 @@ export default function FeaturesPage() {
                     </Link>
                   </div>
 
-                  <h2 className="text-base font-black text-white mb-0.5">
+                  <h2 className="text-base font-black text-ink mb-0.5">
                     {feature.name}
                   </h2>
                   <p className={`text-[11px] font-semibold mb-3 ${c.icon}`}>
@@ -460,7 +459,7 @@ export default function FeaturesPage() {
             <p className="text-[11px] font-bold uppercase tracking-widest text-violet-400 mb-2">
               Charts & Analytics
             </p>
-            <h2 className="text-3xl md:text-4xl font-black tracking-tight text-white mb-3">
+            <h2 className="text-3xl md:text-4xl font-black tracking-tight text-ink mb-3">
               Five views. Total financial clarity.
             </h2>
             <p className="text-gray-500 text-sm max-w-xl mx-auto">
@@ -497,13 +496,13 @@ export default function FeaturesPage() {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.3, delay: idx * 0.06 }}
-                    className="flex gap-3 bg-[#111118] border border-white/[0.07] rounded-xl p-4 hover:border-white/[0.13] transition-colors duration-200"
+                    className="flex gap-3 bg-canvas/80 rounded-xl p-4 transition-colors duration-200"
                   >
-                    <div className={`${cf.bg} border w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5`}>
+                    <div className={`${cf.bg} w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5`}>
                       <Icon size={15} className={cf.color} />
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-white mb-0.5">{cf.title}</p>
+                      <p className="text-sm font-bold text-ink mb-0.5">{cf.title}</p>
                       <p className="text-xs text-gray-500 leading-relaxed">{cf.desc}</p>
                     </div>
                   </motion.div>
@@ -512,7 +511,7 @@ export default function FeaturesPage() {
 
               <Link
                 href="/charts"
-                className="group flex items-center justify-center gap-2 mt-2 border border-violet-500/30 hover:border-violet-500/60 bg-violet-500/[0.06] hover:bg-violet-500/[0.12] text-violet-400 hover:text-violet-300 px-5 py-3 rounded-xl font-bold text-sm transition-all duration-200"
+                className="group flex items-center justify-center gap-2 mt-2 bg-violet-500/[0.06] hover:bg-violet-500/[0.12] text-violet-400 hover:text-violet-300 px-5 py-3 rounded-xl font-bold text-sm transition-all duration-200"
               >
                 Open Charts
                 <ArrowRight size={13} className="group-hover:translate-x-1 transition-transform" />
@@ -535,7 +534,7 @@ export default function FeaturesPage() {
             <p className="text-[11px] font-bold uppercase tracking-widest text-violet-400 mb-2">
               Categories
             </p>
-            <h2 className="text-3xl font-black tracking-tight text-white mb-2">
+            <h2 className="text-3xl font-black tracking-tight text-ink mb-2">
               10 spending categories
             </h2>
             <p className="text-gray-600 text-sm">
@@ -557,7 +556,7 @@ export default function FeaturesPage() {
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.3, delay: idx * 0.04 }}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#111118] border border-white/[0.07] hover:border-violet-500/30 hover:bg-violet-500/[0.05] transition-all duration-200"
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-canvas/80 hover:bg-violet-500/[0.05] transition-all duration-200"
               >
                 <Icon className="w-4 h-4 text-violet-400" />
                 <span className="text-xs font-semibold text-gray-400">
@@ -582,7 +581,7 @@ export default function FeaturesPage() {
             <p className="text-[11px] font-bold uppercase tracking-widest text-violet-400 mb-2">
               Our Promise
             </p>
-            <h2 className="text-3xl font-black tracking-tight text-white mb-2">
+            <h2 className="text-3xl font-black tracking-tight text-ink mb-2">
               Why MyBudgetory?
             </h2>
             <p className="text-gray-600 text-sm">
@@ -600,12 +599,12 @@ export default function FeaturesPage() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.35, delay: idx * 0.07 }}
-                  className="bg-[#111118] border border-white/[0.07] rounded-2xl p-5 text-center hover:border-white/[0.13] transition-colors duration-200"
+                  className="bg-canvas/80 rounded-2xl p-5 text-center transition-colors duration-200"
                 >
-                  <div className={`w-9 h-9 ${item.bg} border rounded-xl flex items-center justify-center mx-auto mb-3`}>
+                  <div className={`w-9 h-9 ${item.bg} rounded-xl flex items-center justify-center mx-auto mb-3`}>
                     <Icon size={16} className={item.color} />
                   </div>
-                  <p className="font-black text-sm text-white mb-1">
+                  <p className="font-black text-sm text-ink mb-1">
                     {item.title}
                   </p>
                   <p className="text-xs text-gray-600 leading-relaxed">
@@ -625,13 +624,13 @@ export default function FeaturesPage() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
-          className="text-center bg-[#111118] border border-white/[0.07] rounded-3xl p-12 relative overflow-hidden"
+          className="text-center bg-canvas/80 rounded-3xl p-12 relative overflow-hidden"
         >
-          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-violet-500/40 to-transparent" />
-          <div className="w-10 h-10 bg-violet-500/10 border border-violet-500/20 rounded-xl flex items-center justify-center mx-auto mb-6">
+          <div className="absolute top-0 left-0 right-0 h-px bg-primary" />
+          <div className="w-10 h-10 bg-violet-500/10 rounded-xl flex items-center justify-center mx-auto mb-6">
             <BarChart3 size={18} className="text-violet-400" />
           </div>
-          <h2 className="text-3xl md:text-4xl font-black tracking-tight text-white mb-3">
+          <h2 className="text-3xl md:text-4xl font-black tracking-tight text-ink mb-3">
             Ready to take control?
           </h2>
           <p className="text-gray-600 mb-8 text-sm">
@@ -640,8 +639,8 @@ export default function FeaturesPage() {
           <div className="flex items-center justify-center gap-3 flex-wrap">
             <Link
               href="/dashboard"
-              className="group flex items-center gap-2 px-8 py-3.5 rounded-xl font-bold text-sm text-white active:scale-95 transition-all duration-150"
-              style={{ background: "linear-gradient(135deg, #7c3aed, #6366f1)" }}
+              className="group flex items-center gap-2 px-8 py-3.5 rounded-xl font-bold text-sm text-ink active:scale-95 transition-all duration-150"
+              style={{ background: "var(--color-primary)" }}
             >
               Open Dashboard
               <ArrowRight
@@ -651,7 +650,7 @@ export default function FeaturesPage() {
             </Link>
             <Link
               href="/signup"
-              className="flex items-center gap-2 border border-white/[0.12] hover:border-violet-500/40 text-gray-400 hover:text-white px-8 py-3.5 rounded-xl font-bold text-sm transition-all duration-200"
+              className="flex items-center gap-2 bg-canvas-soft/80 hover:bg-primary-pale text-ink px-8 py-3.5 rounded-3xl font-semibold text-sm transition-all duration-200"
             >
               Create Account
             </Link>

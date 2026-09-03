@@ -44,7 +44,7 @@ const FREQUENCIES: { value: "daily" | "weekly" | "monthly"; label: string }[] = 
 
 function SkeletonCard() {
   return (
-    <div className="animate-pulse bg-gray-900/60 border border-gray-800 rounded-2xl p-5 flex gap-4">
+    <div className="animate-pulse bg-gray-900/60 rounded-2xl p-5 flex gap-4">
       <div className="w-1 h-12 bg-gray-700 rounded-full" />
       <div className="w-11 h-11 bg-gray-800 rounded-xl flex-shrink-0" />
       <div className="flex-1 space-y-2">
@@ -195,15 +195,16 @@ export default function RecurringPage() {
 
   const activeCount = items.filter(i => i.isActive).length;
   const monthlyTotal = items
-    .filter(i => i.isActive && i.type === "expense" && i.frequency === "monthly")
+    .filter(i => i.isActive && i.type === "expense" && i.frequency ==="monthly")
     .reduce((s, i) => s + i.amount, 0);
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white p-4 sm:p-8 pb-28">
-      <div className="fixed inset-0 pointer-events-none auth-dot-grid opacity-[0.14]" />
-      <div className="fixed top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-violet-500/30 to-transparent pointer-events-none z-50" />
+    <div className="min-h-screen md:pt-20 text-ink p-4 sm:p-8 pb-28">
+      <div className="fixed top-0 inset-x-0 h-px bg-primary pointer-events-none z-50" />
       <div className="max-w-3xl mx-auto">
-        <Header />
+        <div className="md:hidden">
+          <Header />
+        </div>
 
         {/* Page Header */}
         <div className="flex items-center justify-between mt-4 mb-6">
@@ -217,11 +218,11 @@ export default function RecurringPage() {
         {/* Summary chips */}
         {!loading && items.length > 0 && (
           <div className="flex flex-wrap gap-3 mb-6">
-            <div className="flex items-center gap-2 px-4 py-2 bg-violet-500/10 border border-violet-500/20 rounded-xl text-sm font-bold text-violet-300">
+            <div className="flex items-center gap-2 px-4 py-2 bg-violet-500/10 rounded-xl text-sm font-bold text-violet-300">
               <RefreshCcw size={13} />
               {activeCount} active
             </div>
-            <div className="flex items-center gap-2 px-4 py-2 bg-red-500/10 border border-red-500/20 rounded-xl text-sm font-bold text-red-300">
+            <div className="flex items-center gap-2 px-4 py-2 bg-red-500/10 rounded-xl text-sm font-bold text-red-300">
               Monthly outflow: ₹{monthlyTotal.toLocaleString()}
             </div>
           </div>
@@ -231,7 +232,7 @@ export default function RecurringPage() {
         <div className="mb-4">
           <button
             onClick={() => setShowForm(!showForm)}
-            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2.5 rounded-xl font-bold text-sm transition-colors cursor-pointer"
+            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-on-primary px-5 py-2.5 rounded-xl font-bold text-sm transition-colors cursor-pointer"
           >
             {showForm ? <ChevronUp size={16} /> : <Plus size={16} />}
             {showForm ? "Cancel" : "Add New Recurring"}
@@ -249,7 +250,7 @@ export default function RecurringPage() {
             >
               <form
                 onSubmit={handleAddRecurring}
-                className="bg-gray-900/80 border border-gray-700/60 rounded-2xl p-6 space-y-5"
+                className="bg-gray-900/80 rounded-2xl p-6 space-y-5"
               >
                 <h2 className="text-base font-bold text-gray-100">New Recurring Transaction</h2>
 
@@ -262,7 +263,7 @@ export default function RecurringPage() {
                       value={form.title}
                       onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
                       placeholder="e.g. Netflix, Rent..."
-                      className="w-full bg-gray-800/60 border border-gray-700 text-white placeholder-gray-600 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50"
+                      className="w-full bg-canvas-soft/80 text-ink placeholder-mute rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                     />
                   </div>
 
@@ -275,7 +276,7 @@ export default function RecurringPage() {
                       value={form.amount}
                       onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
                       placeholder="e.g. 500"
-                      className="w-full bg-gray-800/60 border border-gray-700 text-white placeholder-gray-600 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50"
+                      className="w-full bg-canvas-soft/80 text-ink placeholder-mute rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                     />
                   </div>
                 </div>
@@ -289,12 +290,12 @@ export default function RecurringPage() {
                         key={t}
                         type="button"
                         onClick={() => setForm(f => ({ ...f, type: t }))}
-                        className={`flex-1 py-2 rounded-xl text-sm font-bold border transition-all cursor-pointer capitalize ${
+                        className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all cursor-pointer capitalize ${
                           form.type === t
                             ? t === "expense"
-                              ? "bg-red-500/20 border-red-500/40 text-red-300"
-                              : "bg-emerald-500/20 border-emerald-500/40 text-emerald-300"
-                            : "bg-gray-800/40 border-gray-700 text-gray-500 hover:border-gray-600"
+                            ? "bg-red-500/20 text-red-300"
+                            : "bg-emerald-500/20 text-emerald-300"
+                            : "bg-gray-800/40 text-gray-500"
                         }`}
                       >
                         {t}
@@ -312,10 +313,10 @@ export default function RecurringPage() {
                         key={m}
                         type="button"
                         onClick={() => setForm(f => ({ ...f, paymentMode: m }))}
-                        className={`flex-1 py-2 rounded-xl text-sm font-bold border transition-all cursor-pointer ${
+                        className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all cursor-pointer ${
                           form.paymentMode === m
-                            ? "bg-indigo-500/20 border-indigo-500/40 text-indigo-300"
-                            : "bg-gray-800/40 border-gray-700 text-gray-500 hover:border-gray-600"
+                            ? "bg-indigo-500/20 text-indigo-300"
+                            : "bg-gray-800/40 text-gray-500"
                         }`}
                       >
                         {m}
@@ -333,10 +334,10 @@ export default function RecurringPage() {
                         key={f.value}
                         type="button"
                         onClick={() => setForm(prev => ({ ...prev, frequency: f.value }))}
-                        className={`flex-1 py-2 rounded-xl text-sm font-bold border transition-all cursor-pointer ${
+                        className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all cursor-pointer ${
                           form.frequency === f.value
-                            ? "bg-violet-500/20 border-violet-500/40 text-violet-300"
-                            : "bg-gray-800/40 border-gray-700 text-gray-500 hover:border-gray-600"
+                            ? "bg-violet-500/20 text-violet-300"
+                            : "bg-gray-800/40 text-gray-500"
                         }`}
                       >
                         {f.label}
@@ -357,10 +358,10 @@ export default function RecurringPage() {
                           key={name}
                           type="button"
                           onClick={() => setForm(f => ({ ...f, category: name }))}
-                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                             selected
-                              ? `${c.bg} ${c.border} ${c.text}`
-                              : "bg-gray-800/40 border-gray-700 text-gray-500 hover:border-gray-600"
+                              ? `${c.bg} ${c.text}`
+                              : "bg-gray-800/40 text-gray-500"
                           }`}
                         >
                           <Icon size={12} />
@@ -379,14 +380,14 @@ export default function RecurringPage() {
                     required
                     value={form.nextDate}
                     onChange={e => setForm(f => ({ ...f, nextDate: e.target.value }))}
-                    className="w-full bg-gray-800/60 border border-gray-700 text-white rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                    className="w-full bg-canvas-soft/80 text-ink rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-3 rounded-xl font-bold text-sm transition-colors cursor-pointer disabled:opacity-60"
+                  className="w-full bg-indigo-600 hover:bg-indigo-500 text-on-primary py-3 rounded-xl font-bold text-sm transition-colors cursor-pointer disabled:opacity-60"
                 >
                   {submitting ? "Adding..." : "Add Recurring Transaction"}
                 </button>
@@ -402,7 +403,7 @@ export default function RecurringPage() {
           </div>
         ) : items.length === 0 ? (
           <div className="text-center py-20">
-            <div className="w-16 h-16 bg-violet-500/10 border border-violet-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <div className="w-16 h-16 bg-violet-500/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <RefreshCcw size={28} className="text-violet-400" />
             </div>
             <h2 className="text-xl font-bold text-gray-300 mb-2">No recurring transactions</h2>
@@ -420,14 +421,14 @@ export default function RecurringPage() {
                   initial={{ opacity: 0, y: 16 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3, delay: idx * 0.05 }}
-                  className={`bg-gray-900/70 border rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 transition-opacity ${
-                    item.isActive ? colors.border : "border-gray-800 opacity-55"
+                  className={`bg-canvas/80 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 transition-opacity ${
+                    item.isActive ? "" : "opacity-55"
                   }`}
                 >
                   {/* Left */}
                   <div className="flex items-center gap-3">
                     <div className={`w-1 h-12 rounded-full flex-shrink-0 ${item.type === "income" ? "bg-emerald-500" : "bg-red-500"}`} />
-                    <div className={`${colors.bg} border ${colors.border} p-2.5 rounded-xl flex-shrink-0`}>
+                    <div className={`${colors.bg} p-2.5 rounded-xl flex-shrink-0`}>
                       <Icon className={`${colors.text} w-5 h-5`} />
                     </div>
                     <div>
@@ -450,7 +451,7 @@ export default function RecurringPage() {
 
                     <button
                       onClick={() => handleLogNow(item)}
-                      className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl bg-indigo-600/20 border border-indigo-500/30 text-indigo-400 hover:bg-indigo-600/30 transition-colors cursor-pointer"
+                      className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl bg-indigo-600/20 text-indigo-400 hover:bg-indigo-600/30 transition-colors cursor-pointer"
                     >
                       <CheckCircle size={13} />
                       Log Now
@@ -458,10 +459,10 @@ export default function RecurringPage() {
 
                     <button
                       onClick={() => handleToggle(item)}
-                      className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl border cursor-pointer transition-colors ${
+                      className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl cursor-pointer transition-colors ${
                         item.isActive
-                          ? "bg-yellow-500/10 border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/20"
-                          : "bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20"
+                          ? "bg-yellow-500/10 text-warning-deep hover:bg-yellow-500/20"
+                          : "bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20"
                       }`}
                     >
                       {item.isActive ? <><PauseCircle size={13} /> Pause</> : <><PlayCircle size={13} /> Resume</>}
@@ -469,7 +470,7 @@ export default function RecurringPage() {
 
                     <button
                       onClick={() => setDeleteId(item._id)}
-                      className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 transition-colors cursor-pointer"
+                      className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors cursor-pointer"
                     >
                       <Trash2 size={13} />
                       Delete

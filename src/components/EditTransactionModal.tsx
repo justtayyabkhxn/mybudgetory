@@ -3,8 +3,15 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  X, ArrowUpCircle, ArrowDownCircle, CreditCard, Banknote,
-  Calendar, MessageSquare, Loader2, Check,
+  X,
+  ArrowUpCircle,
+  ArrowDownCircle,
+  CreditCard,
+  Banknote,
+  Calendar,
+  MessageSquare,
+  Loader2,
+  Check,
 } from "lucide-react";
 import { CATEGORY_COLORS, CATEGORIES } from "@/lib/categoryConfig";
 import { apiFetch } from "@/utils/apiFetch";
@@ -50,7 +57,9 @@ export default function EditTransactionModal({ tx, onClose, onSave }: Props) {
         amount: tx.amount.toString(),
         category: tx.category,
         type: tx.type,
-        date: tx.date ? tx.date.split("T")[0] : new Date().toISOString().split("T")[0],
+        date: tx.date
+          ? tx.date.split("T")[0]
+          : new Date().toISOString().split("T")[0],
         comment: tx.comment || "",
         paymentMode: tx.paymentMode || "UPI",
       });
@@ -60,14 +69,18 @@ export default function EditTransactionModal({ tx, onClose, onSave }: Props) {
   }, [tx]);
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
     if (open) window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
-    return () => { document.body.style.overflow = ""; };
+    return () => {
+      document.body.style.overflow = "";
+    };
   }, [open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -90,7 +103,10 @@ export default function EditTransactionModal({ tx, onClose, onSave }: Props) {
       onSave(data.transaction);
       onClose();
     } catch (err) {
-      toast(err instanceof Error ? err.message : "Something went wrong", "error");
+      toast(
+        err instanceof Error ? err.message : "Something went wrong",
+        "error",
+      );
     } finally {
       setLoading(false);
     }
@@ -103,7 +119,7 @@ export default function EditTransactionModal({ tx, onClose, onSave }: Props) {
       {open && (
         <>
           <motion.div
-            className="fixed inset-0 z-[120] bg-black/70 backdrop-blur-sm"
+            className="fixed inset-0 z-[120] bg-scrim/70 backdrop-blur-sm"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -117,19 +133,23 @@ export default function EditTransactionModal({ tx, onClose, onSave }: Props) {
             transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
           >
             <div
-              className="relative w-full max-w-md bg-[#0e0e1c] border border-white/10 rounded-2xl shadow-2xl overflow-y-auto max-h-[90dvh]"
-              onClick={e => e.stopPropagation()}
+              className="relative w-full max-w-md bg-canvas/80 rounded-2xl shadow-lg overflow-y-auto max-h-[90dvh]"
+              onClick={(e) => e.stopPropagation()}
             >
               {/* Accent strip */}
-              <div className={`h-1 w-full ${isExpense ? "bg-gradient-to-r from-red-500 via-pink-500 to-rose-500" : "bg-gradient-to-r from-green-400 via-emerald-400 to-teal-400"}`} />
+              <div
+                className={`h-1 w-full ${isExpense ? "bg-negative" : "bg-positive"}`}
+              />
 
               <div className="p-5">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-5">
-                  <h2 className="text-lg font-black text-white">Edit Transaction</h2>
+                  <h2 className="text-lg font-black text-ink">
+                    Edit Transaction
+                  </h2>
                   <button
                     onClick={onClose}
-                    className="p-1.5 rounded-full bg-white/8 hover:bg-white/15 text-gray-400 hover:text-white transition-colors cursor-pointer"
+                    className="p-1.5 rounded-full bg-canvas/80 hover:bg-canvas-soft/80 text-gray-400 hover:text-ink transition-colors cursor-pointer"
                     aria-label="Close"
                   >
                     <X size={16} />
@@ -138,23 +158,41 @@ export default function EditTransactionModal({ tx, onClose, onSave }: Props) {
 
                 {/* Type + Payment toggles */}
                 <div className="flex flex-wrap items-center gap-2 mb-5">
-                  <div className="flex bg-black/40 rounded-xl p-1 border border-white/10">
-                    <button type="button" onClick={() => setForm(p => ({ ...p, type: "expense" }))}
-                      className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold transition-all duration-200 cursor-pointer ${isExpense ? "bg-red-500/20 text-red-400 border border-red-500/40" : "text-gray-500 hover:text-gray-300"}`}>
+                  <div className="flex bg-canvas-soft/80 rounded-3xl p-1">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setForm((p) => ({ ...p, type: "expense" }))
+                      }
+                      className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold transition-all duration-200 cursor-pointer ${isExpense ? "bg-red-500/20 text-red-400" : "text-gray-500 hover:text-gray-300"}`}
+                    >
                       <ArrowUpCircle size={14} /> Expense
                     </button>
-                    <button type="button" onClick={() => setForm(p => ({ ...p, type: "income" }))}
-                      className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold transition-all duration-200 cursor-pointer ${!isExpense ? "bg-green-500/20 text-green-400 border border-green-500/40" : "text-gray-500 hover:text-gray-300"}`}>
+                    <button
+                      type="button"
+                      onClick={() => setForm((p) => ({ ...p, type: "income" }))}
+                      className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold transition-all duration-200 cursor-pointer ${!isExpense ? "bg-green-500/20 text-green-400" : "text-gray-500 hover:text-gray-300"}`}
+                    >
                       <ArrowDownCircle size={14} /> Income
                     </button>
                   </div>
-                  <div className="flex bg-black/40 rounded-xl p-1 border border-white/10 ml-auto">
-                    <button type="button" onClick={() => setForm(p => ({ ...p, paymentMode: "UPI" }))}
-                      className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-all duration-200 cursor-pointer ${form.paymentMode === "UPI" ? "bg-indigo-500/20 text-indigo-400 border border-indigo-500/40" : "text-gray-500 hover:text-gray-300"}`}>
+                  <div className="flex bg-canvas-soft/80 rounded-3xl p-1 ml-auto">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setForm((p) => ({ ...p, paymentMode: "UPI" }))
+                      }
+                      className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-all duration-200 cursor-pointer ${form.paymentMode === "UPI" ? "bg-indigo-500/20 text-indigo-400" : "text-gray-500 hover:text-gray-300"}`}
+                    >
                       <CreditCard size={13} /> UPI
                     </button>
-                    <button type="button" onClick={() => setForm(p => ({ ...p, paymentMode: "Cash" }))}
-                      className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-all duration-200 cursor-pointer ${form.paymentMode === "Cash" ? "bg-yellow-500/20 text-yellow-400 border border-yellow-500/40" : "text-gray-500 hover:text-gray-300"}`}>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setForm((p) => ({ ...p, paymentMode: "Cash" }))
+                      }
+                      className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-all duration-200 cursor-pointer ${form.paymentMode === "Cash" ? "bg-yellow-500/20 text-warning-deep" : "text-gray-500 hover:text-gray-300"}`}
+                    >
                       <Banknote size={13} /> Cash
                     </button>
                   </div>
@@ -162,15 +200,21 @@ export default function EditTransactionModal({ tx, onClose, onSave }: Props) {
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                   {/* Amount */}
-                  <div className="flex items-center gap-2 bg-black/50 border border-white/10 rounded-xl px-4 py-3 focus-within:border-indigo-500/60 focus-within:ring-2 focus-within:ring-indigo-500/10 transition-all duration-200">
-                    <span className={`text-2xl font-black ${isExpense ? "text-red-400" : "text-green-400"}`}>₹</span>
+                  <div className="flex items-center gap-2 bg-canvas-soft/80 rounded-xl px-4 py-3 focus-within:ring-2 focus-within:ring-primary transition-all duration-200">
+                    <span
+                      className={`text-2xl font-black ${isExpense ? "text-red-400" : "text-green-400"}`}
+                    >
+                      ₹
+                    </span>
                     <input
                       ref={firstInputRef}
                       type="number"
                       value={form.amount}
-                      onChange={e => setForm(p => ({ ...p, amount: e.target.value }))}
+                      onChange={(e) =>
+                        setForm((p) => ({ ...p, amount: e.target.value }))
+                      }
                       required
-                      className="flex-1 bg-transparent text-3xl font-black text-white placeholder-gray-700 outline-none w-full"
+                      className="flex-1 bg-transparent text-3xl font-black text-ink placeholder-mute outline-none w-full"
                       placeholder="0"
                     />
                   </div>
@@ -179,26 +223,33 @@ export default function EditTransactionModal({ tx, onClose, onSave }: Props) {
                   <input
                     type="text"
                     value={form.title}
-                    onChange={e => setForm(p => ({ ...p, title: e.target.value }))}
+                    onChange={(e) =>
+                      setForm((p) => ({ ...p, title: e.target.value }))
+                    }
                     required
                     placeholder="What was this for?"
-                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-indigo-500/60 focus:ring-2 focus:ring-indigo-500/10 transition-all duration-200 font-medium"
+                    className="w-full bg-canvas-soft/80 rounded-xl px-4 py-3 text-ink placeholder-mute focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-200 font-medium"
                   />
 
                   {/* Category pills — only for expense */}
                   {isExpense && (
                     <div>
-                      <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Category</p>
+                      <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">
+                        Category
+                      </p>
                       <div className="flex flex-wrap gap-2">
                         {CATEGORIES.map(({ name, icon: Icon }) => {
-                          const colors = CATEGORY_COLORS[name] || CATEGORY_COLORS["Others"];
+                          const colors =
+                            CATEGORY_COLORS[name] || CATEGORY_COLORS["Others"];
                           const isActive = form.category === name;
                           return (
                             <button
                               key={name}
                               type="button"
-                              onClick={() => setForm(p => ({ ...p, category: name }))}
-                              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all duration-200 cursor-pointer ${isActive ? `${colors.bg} ${colors.text} ${colors.border} shadow-lg` : "bg-white/5 text-gray-500 border-white/10 hover:bg-white/10 hover:text-gray-300"}`}
+                              onClick={() =>
+                                setForm((p) => ({ ...p, category: name }))
+                              }
+                              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer ${isActive ? `${colors.bg} ${colors.text} shadow-lg` : "bg-canvas/80 text-gray-500  hover:bg-canvas-soft/80 hover:text-gray-300"}`}
                             >
                               <Icon size={12} />
                               {name}
@@ -216,15 +267,17 @@ export default function EditTransactionModal({ tx, onClose, onSave }: Props) {
                       <input
                         type="date"
                         value={form.date}
-                        onChange={e => setForm(p => ({ ...p, date: e.target.value }))}
+                        onChange={(e) =>
+                          setForm((p) => ({ ...p, date: e.target.value }))
+                        }
                         required
-                        className="w-full bg-black/40 border border-white/10 rounded-xl pl-9 pr-4 py-3 text-white focus:outline-none focus:border-indigo-500/60 focus:ring-2 focus:ring-indigo-500/10 transition-all duration-200 text-sm"
+                        className="w-full bg-canvas-soft/80 rounded-xl pl-9 pr-4 py-3 text-ink focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-200 text-sm"
                       />
                     </div>
                     <button
                       type="button"
-                      onClick={() => setShowComment(v => !v)}
-                      className={`flex items-center gap-1.5 px-3 py-3 rounded-xl border text-xs font-bold transition-all duration-200 cursor-pointer ${showComment ? "bg-purple-500/15 text-purple-400 border-purple-500/30" : "bg-white/5 text-gray-500 border-white/10 hover:bg-white/10"}`}
+                      onClick={() => setShowComment((v) => !v)}
+                      className={`flex items-center gap-1.5 px-3 py-3 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer ${showComment ? "bg-purple-500/15 text-purple-400" : "bg-canvas/80 text-gray-500 hover:bg-canvas-soft/80"}`}
                     >
                       <MessageSquare size={14} /> Note
                     </button>
@@ -234,8 +287,10 @@ export default function EditTransactionModal({ tx, onClose, onSave }: Props) {
                     <input
                       placeholder="Add a note (optional)..."
                       value={form.comment}
-                      onChange={e => setForm(p => ({ ...p, comment: e.target.value }))}
-                      className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-purple-500/60 focus:ring-2 focus:ring-purple-500/10 transition-all duration-200 text-sm"
+                      onChange={(e) =>
+                        setForm((p) => ({ ...p, comment: e.target.value }))
+                      }
+                      className="w-full bg-canvas-soft/80 rounded-xl px-4 py-3 text-ink placeholder-mute focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-200 text-sm"
                     />
                   )}
 
@@ -247,11 +302,19 @@ export default function EditTransactionModal({ tx, onClose, onSave }: Props) {
                       loading
                         ? "bg-gray-700 text-gray-400 cursor-not-allowed"
                         : isExpense
-                          ? "bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white"
-                          : "bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white"
+                          ? "bg-primary hover:bg-primary-active text-on-primary"
+                          : "bg-primary hover:bg-primary-active text-on-primary"
                     }`}
                   >
-                    {loading ? <><Loader2 size={18} className="animate-spin" /> Saving...</> : <><Check size={18} /> Save Changes</>}
+                    {loading ? (
+                      <>
+                        <Loader2 size={18} className="animate-spin" /> Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Check size={18} /> Save Changes
+                      </>
+                    )}
                   </button>
                 </form>
               </div>

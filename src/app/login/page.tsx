@@ -19,7 +19,7 @@ const FEATURES = [
   { icon: TrendingUp, color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20', label: 'Real-time expense tracking'  },
   { icon: BarChart3,  color: 'text-blue-400',    bg: 'bg-blue-500/10 border-blue-500/20',       label: 'Visual spending analytics'  },
   { icon: Shield,     color: 'text-violet-400',  bg: 'bg-violet-500/10 border-violet-500/20',   label: 'Secure & private data'      },
-  { icon: Zap,        color: 'text-amber-400',   bg: 'bg-amber-500/10 border-amber-500/20',     label: 'Instant bill splitting'     },
+  { icon: Zap,        color: 'text-warning-deep',   bg: 'bg-amber-500/10 border-amber-500/20',     label: 'Instant bill splitting'     },
 ];
 
 export default function LoginPage() {
@@ -61,18 +61,17 @@ export default function LoginPage() {
   const inputCls = (name: string) =>
     `flex items-center gap-3 rounded-xl border px-4 py-3 transition-all duration-200 ${
       focused === name
-        ? 'border-indigo-500/60 bg-indigo-500/[0.09] shadow-[0_0_0_3px_rgba(99,102,241,0.15),inset_0_1px_0_rgba(255,255,255,0.06)]'
-        : 'border-white/[0.07] bg-white/[0.03] hover:border-white/[0.14] hover:bg-white/[0.05]'
+        ? 'border-indigo-500/60 bg-indigo-500/[0.09] shadow-[0_0_0_3px_rgba(159,232,112,0.20)]'
+        : 'bg-canvas-soft/80 hover:bg-primary-pale'
     }`;
 
   const iconCls = (name: string) =>
     `shrink-0 transition-colors duration-200 ${focused === name ? 'text-indigo-400' : 'text-gray-600'}`;
 
   return (
-    <div className="relative min-h-screen flex flex-col bg-[#030307] text-white overflow-hidden">
+    <div className="relative min-h-screen flex flex-col text-ink overflow-hidden">
 
       {/* Dot grid */}
-      <div className="pointer-events-none absolute inset-0 auth-dot-grid opacity-100" />
 
 
       <Header />
@@ -80,32 +79,32 @@ export default function LoginPage() {
       <main className="relative flex-1 flex items-center justify-center px-4 py-10 z-10">
         <div className="w-full max-w-5xl">
 
-          {/* Outer shell with gradient border */}
+          {/* Outer shell — flat canvas with a hairline */}
           <div
-            className="flex rounded-[28px] overflow-hidden shadow-[0_40px_120px_rgba(0,0,0,0.8)]"
+            className="flex rounded-[28px] overflow-hidden"
             style={{
-              background: 'linear-gradient(rgba(3,3,7,0.95), rgba(3,3,7,0.95)) padding-box, linear-gradient(135deg, rgba(99,102,241,0.6) 0%, rgba(139,92,246,0.2) 40%, rgba(59,130,246,0.3) 100%) border-box',
-              border: '1px solid transparent',
+              background: 'var(--color-canvas)',
+              border: '1px solid var(--color-hairline)',
             }}
           >
 
             {/* ── LEFT PANEL — branding ── */}
             <div
               className="hidden lg:flex flex-col w-[46%] relative overflow-hidden p-10"
-              style={{ background: 'linear-gradient(145deg, rgba(99,102,241,0.12) 0%, rgba(139,92,246,0.06) 50%, rgba(3,3,7,0) 100%)' }}
+              style={{ background: 'var(--color-primary-pale)' }}
             >
               {/* Vertical separator */}
-              <div className="absolute top-8 bottom-8 right-0 w-px bg-gradient-to-b from-transparent via-white/[0.08] to-transparent" />
+              <div className="absolute top-8 bottom-8 right-0 w-px bg-hairline" />
 
               <div className="relative flex flex-col h-full">
                 {/* Logo mark with spinning rings */}
                 <div className="relative w-16 h-16 mb-7">
                   <div className="animate-spin-slow absolute inset-0 rounded-full"
-                    style={{ border: '1px dashed rgba(99,102,241,0.35)' }} />
+                    style={{ border: '1px dashed rgba(159,232,112,0.35)' }} />
                   <div className="animate-spin-slow-r absolute inset-[5px] rounded-full"
-                    style={{ border: '1px solid rgba(139,92,246,0.25)' }} />
-                  <div className="absolute inset-[11px] rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center">
-                    <BarChart3 size={16} className="text-white" />
+                    style={{ border: '1px solid rgba(159,232,112,0.25)' }} />
+                  <div className="absolute inset-[11px] rounded-full bg-primary flex items-center justify-center">
+                    <BarChart3 size={16} className="text-ink" />
                   </div>
                 </div>
 
@@ -123,28 +122,28 @@ export default function LoginPage() {
                 {/* Floating dashboard preview */}
                 <div className="animate-float flex-1 flex items-center">
                   <div
-                    className="w-full rounded-2xl border border-white/[0.09] backdrop-blur-xl p-4 shadow-[0_16px_50px_rgba(0,0,0,0.5)]"
-                    style={{ background: 'rgba(255,255,255,0.04)' }}
+                    className="w-full rounded-2xl backdrop-blur-xl p-4"
+                    style={{ background: 'color-mix(in srgb, var(--color-ink) 4%, transparent)' }}
                   >
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-[11px] font-medium text-gray-400">March 2026</span>
-                      <span className="text-[10px] font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 rounded-full px-2 py-0.5">
+                      <span className="text-[10px] font-semibold bg-emerald-500/15 text-emerald-400 rounded-full px-2 py-0.5">
                         ▲ +12%
                       </span>
                     </div>
 
                     <p className="text-[10px] text-gray-600 mb-0.5">Net Balance</p>
-                    <p className="text-xl font-extrabold text-white mb-3">₹ 24,800</p>
+                    <p className="text-xl font-extrabold text-ink mb-3">₹ 24,800</p>
 
                     <div className="flex gap-2 mb-3">
-                      <div className="flex-1 rounded-xl bg-emerald-500/[0.08] border border-emerald-500/15 p-2.5">
+                      <div className="flex-1 rounded-xl bg-emerald-500/[0.08] p-2.5">
                         <div className="flex items-center gap-1 mb-1">
                           <ArrowUpRight size={10} className="text-emerald-400" />
                           <span className="text-[9px] text-gray-500">Income</span>
                         </div>
                         <p className="text-xs font-bold text-emerald-400">₹ 42,000</p>
                       </div>
-                      <div className="flex-1 rounded-xl bg-rose-500/[0.08] border border-rose-500/15 p-2.5">
+                      <div className="flex-1 rounded-xl bg-rose-500/[0.08] p-2.5">
                         <div className="flex items-center gap-1 mb-1">
                           <ArrowDownRight size={10} className="text-rose-400" />
                           <span className="text-[9px] text-gray-500">Expenses</span>
@@ -170,7 +169,7 @@ export default function LoginPage() {
                 {/* Feature chips */}
                 <div className="mt-6 grid grid-cols-2 gap-2">
                   {FEATURES.map(({ icon: Icon, color, bg, label }) => (
-                    <div key={label} className={`flex items-center gap-2 rounded-xl border ${bg} px-2.5 py-2`}>
+                    <div key={label} className={`flex items-center gap-2 rounded-xl ${bg} px-2.5 py-2`}>
                       <Icon size={12} className={`${color} shrink-0`} />
                       <span className="text-[11px] text-gray-400 leading-none">{label}</span>
                     </div>
@@ -182,19 +181,19 @@ export default function LoginPage() {
             {/* ── RIGHT PANEL — form ── */}
             <div
               className="flex-1 flex flex-col justify-center p-8 lg:p-12"
-              style={{ background: 'rgba(255,255,255,0.015)' }}
+              style={{ background: 'color-mix(in srgb, var(--color-ink) 2%, transparent)' }}
             >
               {/* Top shine */}
-              <div className="absolute top-0 right-[10%] left-[54%] h-px bg-gradient-to-r from-transparent via-indigo-400/40 to-transparent hidden lg:block" />
+              <div className="absolute top-0 right-[10%] left-[54%] h-px bg-hairline hidden lg:block" />
 
               {/* Icon + heading */}
               <div className="animate-fade-up mb-8">
                 <div className="inline-flex items-center justify-center mb-5">
-                  <div className="flex items-center justify-center w-12 h-12 rounded-2xl border border-indigo-400/20 bg-indigo-500/[0.08]">
+                  <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-indigo-500/[0.08]">
                     <LogIn size={19} className="text-indigo-300" />
                   </div>
                 </div>
-                <h1 className="text-2xl font-extrabold tracking-tight mb-1.5 text-white">
+                <h1 className="text-2xl font-extrabold tracking-tight mb-1.5 text-ink">
                   Welcome back
                 </h1>
                 <p className="text-sm text-gray-500">Sign in to your account to continue</p>
@@ -214,7 +213,7 @@ export default function LoginPage() {
                       onChange={handleChange}
                       onFocus={() => setFocused('email')} onBlur={() => setFocused(null)}
                       required autoComplete="email"
-                      className="flex-1 bg-transparent text-sm text-white placeholder:text-gray-600 outline-none"
+                      className="flex-1 bg-transparent text-sm text-ink placeholder:text-gray-600 outline-none"
                     />
                   </div>
                 </div>
@@ -238,7 +237,7 @@ export default function LoginPage() {
                       onChange={handleChange}
                       onFocus={() => setFocused('password')} onBlur={() => setFocused(null)}
                       required autoComplete="current-password"
-                      className="flex-1 bg-transparent text-sm text-white placeholder:text-gray-600 outline-none"
+                      className="flex-1 bg-transparent text-sm text-ink placeholder:text-gray-600 outline-none"
                     />
                     <button
                       type="button" tabIndex={-1}
@@ -252,7 +251,7 @@ export default function LoginPage() {
 
                 {/* Error */}
                 {error && (
-                  <div className="rounded-xl border border-red-500/25 bg-red-500/[0.08] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+                  <div className="rounded-xl bg-red-500/[0.08] px-4 py-3">
                     <p className="text-xs text-red-400 text-center">{error}</p>
                   </div>
                 )}
@@ -261,16 +260,15 @@ export default function LoginPage() {
                 <div className="animate-fade-up-d3 pt-1">
                   <button
                     type="submit" disabled={loading}
-                    className="group relative w-full overflow-hidden flex items-center justify-center gap-2 rounded-xl px-4 py-[13px] text-sm font-semibold text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
+                    className="group relative w-full overflow-hidden flex items-center justify-center gap-2 rounded-xl px-4 py-[13px] text-sm font-semibold text-on-primary transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
                     style={{
-                      background: 'linear-gradient(180deg, #6366f1 0%, #4f46e5 100%)',
-                      boxShadow: '0 1px 0 rgba(255,255,255,0.18) inset, 0 6px 28px rgba(99,102,241,0.5), 0 1px 4px rgba(0,0,0,0.4)',
+                      background: 'var(--color-primary)',
                     }}
                   >
-                    <span className="pointer-events-none absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-[800ms] bg-gradient-to-r from-transparent via-white/[0.12] to-transparent skew-x-12" />
+                    <span className="pointer-events-none absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-[800ms] bg-hairline skew-x-12" />
                     {loading ? (
                       <>
-                        <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                        <span className="w-4 h-4 rounded-full border-2 border-t-white animate-spin" />
                         <span>Signing in…</span>
                       </>
                     ) : (
@@ -285,9 +283,9 @@ export default function LoginPage() {
 
               <div className="animate-fade-up-d4">
                 <div className="flex items-center gap-3 my-6">
-                  <div className="flex-1 h-px bg-white/[0.06]" />
-                  <span className="text-[11px] text-gray-700 uppercase tracking-widest">or</span>
-                  <div className="flex-1 h-px bg-white/[0.06]" />
+                  <div className="flex-1 h-px bg-canvas/80" />
+                  <span className="text-[11px] text-ink uppercase tracking-widest">or</span>
+                  <div className="flex-1 h-px bg-canvas/80" />
                 </div>
 
                 <p className="text-center text-sm text-gray-500">

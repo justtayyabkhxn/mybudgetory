@@ -40,7 +40,7 @@ export default function ConfirmDialog({
       {open && (
         <>
           <motion.div
-            className="fixed inset-0 z-[180] bg-black/70 backdrop-blur-sm"
+            className="fixed inset-0 z-[180] bg-scrim/70 backdrop-blur-sm"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -54,24 +54,24 @@ export default function ConfirmDialog({
             transition={{ type: "spring", stiffness: 340, damping: 26 }}
           >
             <div
-              className="bg-[#0e0e1c]/95 backdrop-blur-xl border border-white/10 rounded-2xl p-6 max-w-sm w-full shadow-[0_24px_64px_rgba(0,0,0,0.6)]"
+              className="bg-canvas/95 backdrop-blur-xl rounded-2xl p-6 max-w-sm w-full"
               onClick={e => e.stopPropagation()}
             >
               <div className="flex items-start gap-3 mb-4">
                 {danger && (
-                  <div className="flex-shrink-0 w-9 h-9 rounded-full bg-red-500/15 border border-red-500/30 flex items-center justify-center">
+                  <div className="flex-shrink-0 w-9 h-9 rounded-full bg-red-500/15 flex items-center justify-center">
                     <AlertTriangle size={16} className="text-red-400" />
                   </div>
                 )}
                 <div>
-                  <h3 className="font-bold text-white text-base">{title}</h3>
+                  <h3 className="font-bold text-ink text-base">{title}</h3>
                   <p className="text-sm text-gray-400 mt-1 leading-relaxed">{message}</p>
                 </div>
               </div>
               <div className="flex gap-2 justify-end">
                 <button
                   onClick={onCancel}
-                  className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-gray-700 text-gray-300 text-sm font-bold transition-colors cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-canvas/80 hover:bg-canvas-soft/80 text-gray-300 text-sm font-bold transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -80,8 +80,8 @@ export default function ConfirmDialog({
                   onClick={onConfirm}
                   className={`px-4 py-2 rounded-xl text-sm font-bold transition-colors cursor-pointer ${
                     danger
-                      ? "bg-red-600 hover:bg-red-500 text-white"
-                      : "bg-indigo-600 hover:bg-indigo-500 text-white"
+                      ? "bg-red-600 hover:bg-red-500 text-on-solid"
+                      : "bg-indigo-600 hover:bg-indigo-500 text-on-primary"
                   }`}
                 >
                   {confirmLabel}

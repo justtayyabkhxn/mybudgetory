@@ -28,8 +28,8 @@ interface Transaction {
 
 const DAYS   = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTHS = [
-  "January","February","March","April","May","June",
-  "July","August","September","October","November","December",
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
 ];
 
 function heatColor(expense: number): { bg: string; bar: string; intensity: number } {
@@ -65,14 +65,14 @@ function WeeklyRhythm({ txs }: { txs: Transaction[] }) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45, delay: 0.15 }}
-      className="mt-5 bg-gray-900/60 border border-gray-700/40 rounded-2xl p-5"
+      className="mt-5 bg-gray-900/60 rounded-2xl p-5"
     >
       <div className="flex items-center gap-2.5 mb-5">
-        <div className="w-8 h-8 rounded-xl bg-purple-500/15 border border-purple-500/25 flex items-center justify-center">
+        <div className="w-8 h-8 rounded-xl bg-purple-500/15 flex items-center justify-center">
           <Activity size={15} className="text-purple-400" />
         </div>
         <div>
-          <h2 className="text-sm font-black text-white">Weekly Rhythm</h2>
+          <h2 className="text-sm font-black text-ink">Weekly Rhythm</h2>
           <p className="text-[10px] text-gray-500">avg spend by day of week</p>
         </div>
       </div>
@@ -87,10 +87,10 @@ function WeeklyRhythm({ txs }: { txs: Transaction[] }) {
           return (
             <div
               key={dow}
-              className={`flex flex-col items-center gap-2 p-2.5 rounded-xl border transition-all ${
+              className={`flex flex-col items-center gap-2 p-2.5 rounded-xl transition-all ${
                 isToday
-                  ? "bg-indigo-500/10 border-indigo-500/30"
-                  : "bg-white/[0.02] border-white/5"
+                  ? "bg-indigo-500/10"
+                  : "bg-canvas/80"
               }`}
             >
               <span className={`text-[9px] font-black uppercase tracking-wider ${isToday ? "text-indigo-400" : "text-gray-600"}`}>
@@ -101,8 +101,8 @@ function WeeklyRhythm({ txs }: { txs: Transaction[] }) {
                 <svg width="100%" height={H} viewBox={`-4 -4 ${(recent.length - 1) * W + 8} ${H + 8}`} preserveAspectRatio="none" className="overflow-visible">
                   <defs>
                     <linearGradient id={`grad-${dow}`} x1="0" y1="0" x2="1" y2="0">
-                      <stop offset="0%" stopColor={isToday ? "#818cf8" : "#7c3aed"} stopOpacity="0.3" />
-                      <stop offset="100%" stopColor={isToday ? "#818cf8" : "#7c3aed"} stopOpacity="1" />
+                      <stop offset="0%" stopColor={isToday ? "var(--color-primary)" : "var(--color-ink-deep)"} stopOpacity="0.3" />
+                      <stop offset="100%" stopColor={isToday ? "var(--color-primary)" : "var(--color-ink-deep)"} stopOpacity="1" />
                     </linearGradient>
                   </defs>
                   <polyline
@@ -114,16 +114,16 @@ function WeeklyRhythm({ txs }: { txs: Transaction[] }) {
                     strokeLinejoin="round"
                   />
                   {recent.map((v, i) => i === recent.length - 1 && (
-                    <circle key={i} cx={i * W} cy={H - (v / maxR) * H} r="3.5" fill={isToday ? "#818cf8" : "#7c3aed"} />
+                    <circle key={i} cx={i * W} cy={H - (v / maxR) * H} r="3.5" fill={isToday ? "var(--color-primary)" : "var(--color-ink-deep)"} />
                   ))}
                 </svg>
               ) : (
                 <div className="h-6 w-full flex items-center justify-center">
-                  <div className="w-full h-px bg-white/6" />
+                  <div className="w-full h-px bg-canvas/80" />
                 </div>
               )}
 
-              <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
+              <div className="w-full h-1.5 bg-canvas/80 rounded-full overflow-hidden">
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${barPct}%` }}
@@ -132,10 +132,10 @@ function WeeklyRhythm({ txs }: { txs: Transaction[] }) {
                 />
               </div>
 
-              <span className={`text-[9px] font-bold tabular-nums ${avg > 0 ? (isToday ? "text-indigo-300" : "text-gray-400") : "text-gray-700"}`}>
+              <span className={`text-[9px] font-bold tabular-nums ${avg > 0 ? (isToday ? "text-indigo-300" : "text-gray-400") : "text-ink"}`}>
                 {avg > 0 ? `₹${Math.round(avg) >= 1000 ? `${(Math.round(avg) / 1000).toFixed(1)}k` : Math.round(avg)}` : "—"}
               </span>
-              {count > 0 && <span className="text-[8px] text-gray-700">{count}×</span>}
+              {count > 0 && <span className="text-[8px] text-ink">{count}×</span>}
             </div>
           );
         })}
@@ -213,17 +213,18 @@ export default function CalendarPage() {
   const maxDayExpense  = Math.max(...Array.from({ length: daysInMonth }, (_, i) => getExpenseForDay(i + 1)), 1);
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white p-4 sm:p-6 pb-28">
-      <div className="fixed inset-0 pointer-events-none auth-dot-grid opacity-[0.14]" />
-      <div className="fixed top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-violet-500/30 to-transparent pointer-events-none z-50" />
+    <div className="min-h-screen md:pt-20 text-ink p-4 sm:p-6 pb-28">
+      <div className="fixed top-0 inset-x-0 h-px bg-primary pointer-events-none z-50" />
       <div className="max-w-3xl mx-auto">
-        <Header />
+        <div className="md:hidden">
+          <Header />
+        </div>
 
         {/* Page title */}
         <div className="flex items-center justify-between mt-4 mb-6">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-sky-500/15 border border-sky-500/25 flex items-center justify-center">
-              <CalendarDays size={18} className="text-sky-400" />
+            <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center">
+              <CalendarDays size={18} className="text-ink-deep" />
             </div>
             <h1 className="text-2xl font-extrabold tracking-tight">Calendar</h1>
           </div>
@@ -234,7 +235,7 @@ export default function CalendarPage() {
         <div className="flex items-center gap-3 mb-4">
           <button
             onClick={prevMonth}
-            className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 hover:bg-white/10 border border-white/8 transition-all cursor-pointer flex-shrink-0"
+            className="w-10 h-10 flex items-center justify-center rounded-xl bg-canvas/80 hover:bg-canvas-soft/80 transition-all cursor-pointer flex-shrink-0"
           >
             <ChevronLeft size={18} className="text-gray-400" />
           </button>
@@ -247,7 +248,7 @@ export default function CalendarPage() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 6 }}
                 transition={{ duration: 0.15 }}
-                className="text-xl font-black tracking-tight text-white"
+                className="text-xl font-black tracking-tight text-ink"
               >
                 {MONTHS[viewMonth]} <span className="text-gray-500">{viewYear}</span>
               </motion.p>
@@ -255,7 +256,7 @@ export default function CalendarPage() {
             {!isCurrentMonth && (
               <button
                 onClick={goToday}
-                className="text-[10px] font-bold text-sky-400 hover:text-sky-300 transition-colors cursor-pointer mt-0.5"
+                className="text-[10px] font-bold text-ink-deep hover:text-ink-deep transition-colors cursor-pointer mt-0.5"
               >
                 ← Back to today
               </button>
@@ -264,7 +265,7 @@ export default function CalendarPage() {
 
           <button
             onClick={nextMonth}
-            className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 hover:bg-white/10 border border-white/8 transition-all cursor-pointer flex-shrink-0"
+            className="w-10 h-10 flex items-center justify-center rounded-xl bg-canvas/80 hover:bg-canvas-soft/80 transition-all cursor-pointer flex-shrink-0"
           >
             <ChevronRight size={18} className="text-gray-400" />
           </button>
@@ -279,26 +280,26 @@ export default function CalendarPage() {
             transition={{ duration: 0.3 }}
             className="grid grid-cols-3 gap-3 mb-5"
           >
-            <div className="bg-emerald-950/40 border border-emerald-500/20 rounded-2xl p-4">
+            <div className="bg-emerald-950/40 rounded-2xl p-4">
               <div className="flex items-center gap-1.5 mb-2">
                 <TrendingUp size={12} className="text-emerald-400" />
                 <p className="text-[10px] font-bold text-emerald-400/70 uppercase tracking-wider">Income</p>
               </div>
               <p className="text-lg font-black text-emerald-400 tabular-nums leading-none">₹{monthIncome.toLocaleString()}</p>
             </div>
-            <div className="bg-red-950/40 border border-red-500/20 rounded-2xl p-4">
+            <div className="bg-red-950/40 rounded-2xl p-4">
               <div className="flex items-center gap-1.5 mb-2">
                 <TrendingDown size={12} className="text-red-400" />
                 <p className="text-[10px] font-bold text-red-400/70 uppercase tracking-wider">Expenses</p>
               </div>
               <p className="text-lg font-black text-red-400 tabular-nums leading-none">₹{monthExpense.toLocaleString()}</p>
             </div>
-            <div className={`border rounded-2xl p-4 ${monthNet >= 0 ? "bg-indigo-950/40 border-indigo-500/20" : "bg-orange-950/40 border-orange-500/20"}`}>
+            <div className={`rounded-2xl p-4 ${monthNet >= 0 ? "bg-indigo-950/40" : "bg-orange-950/40"}`}>
               <div className="flex items-center gap-1.5 mb-2">
-                <Wallet size={12} className={monthNet >= 0 ? "text-indigo-400" : "text-orange-400"} />
-                <p className={`text-[10px] font-bold uppercase tracking-wider ${monthNet >= 0 ? "text-indigo-400/70" : "text-orange-400/70"}`}>Net</p>
+                <Wallet size={12} className={monthNet >= 0 ? "text-indigo-400" : "text-warning-deep"} />
+                <p className={`text-[10px] font-bold uppercase tracking-wider ${monthNet >= 0 ? "text-indigo-400/70" : "text-warning-deep/70"}`}>Net</p>
               </div>
-              <p className={`text-lg font-black tabular-nums leading-none ${monthNet >= 0 ? "text-indigo-400" : "text-orange-400"}`}>
+              <p className={`text-lg font-black tabular-nums leading-none ${monthNet >= 0 ? "text-indigo-400" : "text-warning-deep"}`}>
                 {monthNet >= 0 ? "+" : "−"}₹{Math.abs(monthNet).toLocaleString()}
               </p>
             </div>
@@ -306,11 +307,11 @@ export default function CalendarPage() {
         )}
 
         {/* Calendar grid */}
-        <div className="bg-gray-900/50 border border-gray-700/40 rounded-2xl p-4 mb-3">
+        <div className="bg-gray-900/50 rounded-2xl p-4 mb-3">
           {/* Day headers */}
           <div className="grid grid-cols-7 mb-3">
             {DAYS.map((d, i) => (
-              <div key={d} className={`text-center text-[10px] font-black uppercase tracking-widest py-1 ${i === 0 || i === 6 ? "text-gray-700" : "text-gray-500"}`}>
+              <div key={d} className={`text-center text-[10px] font-black uppercase tracking-widest py-1 ${i === 0 || i === 6 ? "text-ink" : "text-gray-500"}`}>
                 {d.slice(0, 2)}
               </div>
             ))}
@@ -340,21 +341,21 @@ export default function CalendarPage() {
                     onClick={() => setSelectedDay(isSelected ? null : day)}
                     whileHover={{ scale: 1.04 }}
                     whileTap={{ scale: 0.96 }}
-                    className={`h-16 rounded-xl flex flex-col items-start justify-between p-2 cursor-pointer transition-all duration-200 relative overflow-hidden border ${
+                    className={`h-16 rounded-xl flex flex-col items-start justify-between p-2 cursor-pointer transition-all duration-200 relative overflow-hidden ${
                       isSelected
-                        ? "ring-2 ring-indigo-500 border-indigo-500/50 bg-indigo-500/15 shadow-lg shadow-indigo-500/10"
+                        ? "ring-2 ring-primary bg-indigo-500/15 shadow-lg"
                         : todayCell
-                          ? "border-sky-400/40 bg-sky-500/6"
-                          : hasTxs
-                            ? `${heat.bg} border-white/6`
-                            : "border-gray-800/50 hover:border-gray-700/60 bg-transparent"
+                        ? " bg-primary/6"
+                        : hasTxs
+                        ? `${heat.bg} `
+                        : " bg-transparent"
                     }`}
                   >
                     {/* Day number */}
                     <div className="flex items-start justify-between w-full">
                       <span className={`text-xs font-black leading-none flex items-center justify-center ${
                         todayCell
-                          ? "bg-sky-500 text-white w-5 h-5 rounded-full text-[10px]"
+                          ? "bg-primary text-on-primary w-5 h-5 rounded-full text-[10px]"
                           : isSelected
                             ? "text-indigo-300"
                             : "text-gray-400"
@@ -362,7 +363,7 @@ export default function CalendarPage() {
                         {day}
                       </span>
                       {income > 0 && (
-                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-sm shadow-emerald-400/50" />
+                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-sm" />
                       )}
                     </div>
 
@@ -371,8 +372,8 @@ export default function CalendarPage() {
                       {expense > 0 && (
                         <p className={`text-[9px] font-black tabular-nums mb-1 ${
                           heat.intensity >= 1 ? "text-red-400" :
-                          heat.intensity >= 0.75 ? "text-orange-400" :
-                          heat.intensity >= 0.5 ? "text-yellow-400" :
+                          heat.intensity >= 0.75 ? "text-warning-deep" :
+                          heat.intensity >= 0.5 ? "text-warning-deep" :
                           "text-emerald-400"
                         }`}>
                           ₹{expense >= 1000 ? `${(expense / 1000).toFixed(1)}k` : expense}
@@ -385,7 +386,7 @@ export default function CalendarPage() {
                       )}
                       {/* Spend bar */}
                       {expense > 0 && (
-                        <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
+                        <div className="w-full h-1 bg-canvas/80 rounded-full overflow-hidden">
                           <motion.div
                             initial={{ width: 0 }}
                             animate={{ width: `${barWidth}%` }}
@@ -431,7 +432,7 @@ export default function CalendarPage() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 12, scale: 0.99 }}
               transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-              className="mb-5 overflow-hidden rounded-2xl border border-indigo-500/20 bg-gray-900/90 backdrop-blur-sm"
+              className="mb-5 overflow-hidden rounded-2xl bg-gray-900/90 backdrop-blur-sm"
             >
               {/* Panel header */}
               <div className="flex items-center justify-between px-5 py-4 border-b border-gray-800/50">
@@ -439,24 +440,24 @@ export default function CalendarPage() {
                   <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-0.5">
                     {DAYS[new Date(viewYear, viewMonth, selectedDay).getDay()]}
                   </p>
-                  <h3 className="text-base font-black text-white">
+                  <h3 className="text-base font-black text-ink">
                     {MONTHS[viewMonth]} {selectedDay}, {viewYear}
                   </h3>
                 </div>
                 <div className="flex items-center gap-2">
                   {selectedExp > 0 && (
-                    <span className="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-red-500/15 text-red-400 border border-red-500/20">
+                    <span className="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-red-500/15 text-red-400">
                       <TrendingDown size={10} /> ₹{selectedExp.toLocaleString()}
                     </span>
                   )}
                   {selectedInc > 0 && (
-                    <span className="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
+                    <span className="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-400">
                       <TrendingUp size={10} /> ₹{selectedInc.toLocaleString()}
                     </span>
                   )}
                   <button
                     onClick={() => setSelectedDay(null)}
-                    className="w-8 h-8 flex items-center justify-center rounded-xl bg-white/5 hover:bg-white/10 text-gray-500 hover:text-white transition-colors cursor-pointer"
+                    className="w-8 h-8 flex items-center justify-center rounded-xl bg-canvas/80 hover:bg-canvas-soft/80 text-gray-500 hover:text-ink transition-colors cursor-pointer"
                   >
                     <X size={14} />
                   </button>
@@ -467,7 +468,7 @@ export default function CalendarPage() {
               <div className="px-4 py-3">
                 {selectedTxs.length === 0 ? (
                   <div className="text-center py-8">
-                    <CalendarDays size={28} className="text-gray-700 mx-auto mb-2" />
+                    <CalendarDays size={28} className="text-ink mx-auto mb-2" />
                     <p className="text-sm text-gray-500 font-semibold">No transactions</p>
                     <p className="text-xs text-gray-600 mt-0.5">Nothing recorded on this day</p>
                   </div>
@@ -485,16 +486,16 @@ export default function CalendarPage() {
                         >
                           <Link
                             href={`/transactions/${tx._id}`}
-                            className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] hover:bg-white/6 border border-gray-800/50 hover:border-gray-700/60 transition-all duration-150"
+                            className="flex items-center gap-3 p-3 rounded-xl bg-canvas/80 hover:bg-canvas-soft/80 transition-all duration-150"
                           >
-                            <div className={`${colors.bg} border ${colors.border} p-2 rounded-lg flex-shrink-0`}>
+                            <div className={`${colors.bg} p-2 rounded-lg flex-shrink-0`}>
                               <Icon className={`${colors.text} w-3.5 h-3.5`} />
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="font-bold text-sm text-gray-100 truncate">{tx.title}</p>
                               <div className="flex items-center gap-1.5 mt-0.5">
                                 <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md ${colors.bg} ${colors.text}`}>{tx.category}</span>
-                                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md ${tx.paymentMode === "UPI" ? "bg-indigo-500/15 text-indigo-400" : "bg-yellow-500/15 text-yellow-400"}`}>{tx.paymentMode}</span>
+                                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md ${tx.paymentMode === "UPI" ? "bg-indigo-500/15 text-indigo-400" : "bg-yellow-500/15 text-warning-deep"}`}>{tx.paymentMode}</span>
                               </div>
                             </div>
                             <span className={`font-black text-sm flex-shrink-0 ${tx.type === "income" ? "text-emerald-400" : "text-red-400"}`}>

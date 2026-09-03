@@ -96,7 +96,7 @@ export default function FilteredTransactionsPage({ type }: Props) {
   const monthName = now.toLocaleString("default", { month: "long" });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 text-white p-4 sm:p-8 pb-24">
+    <div className="min-h-screen text-ink p-4 sm:p-8 pb-24">
       <div className="max-w-5xl mx-auto">
         <Header />
 
@@ -110,7 +110,7 @@ export default function FilteredTransactionsPage({ type }: Props) {
 
         {/* Summary bar */}
         {!loading && (
-          <div className={`mb-5 rounded-2xl border px-5 py-4 flex items-center justify-between ${isExpense ? "bg-red-900/10 border-red-500/20" : "bg-green-900/10 border-green-500/20"}`}>
+          <div className={`mb-5 rounded-2xl px-5 py-4 flex items-center justify-between ${isExpense ? "bg-red-900/10" : "bg-green-900/10"}`}>
             <div>
               <p className={`text-xs font-bold uppercase tracking-wider mb-1 ${isExpense ? "text-red-400/70" : "text-green-400/70"}`}>
                 {monthName} Total
@@ -123,7 +123,7 @@ export default function FilteredTransactionsPage({ type }: Props) {
           </div>
         )}
 
-        <div className="bg-gray-900/60 border border-gray-800 rounded-2xl overflow-hidden">
+        <div className="bg-gray-900/60 rounded-2xl overflow-hidden">
           <div className="flex items-center justify-between px-5 py-4 border-b border-gray-800">
             <h2 className="text-base font-bold text-gray-300">This Month</h2>
           </div>
@@ -134,9 +134,9 @@ export default function FilteredTransactionsPage({ type }: Props) {
             </div>
           ) : filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center px-6">
-              <Icon size={44} className="text-gray-700 mb-3" />
+              <Icon size={44} className="text-ink mb-3" />
               <p className="text-base font-bold text-gray-500 mb-1">No {title.toLowerCase()} this month</p>
-              <Link href="/dashboard" className="mt-3 flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-sm font-bold transition-colors">
+              <Link href="/dashboard" className="mt-3 flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-on-primary rounded-xl text-sm font-bold transition-colors">
                 <PlusCircle size={14} /> Add Transaction
               </Link>
             </div>
@@ -146,15 +146,15 @@ export default function FilteredTransactionsPage({ type }: Props) {
                 const colors = CATEGORY_COLORS[tx.category] || CATEGORY_COLORS["Others"];
                 const CatIcon = CATEGORY_ICONS[tx.category] || CATEGORY_ICONS["Others"];
                 return (
-                  <li key={tx._id} className="group flex items-center gap-3 px-4 py-3.5 hover:bg-white/4 transition-colors duration-150">
-                    <div className={`${colors.bg} border ${colors.border} p-2.5 rounded-xl flex-shrink-0`}>
+                  <li key={tx._id} className="group flex items-center gap-3 px-4 py-3.5 hover:bg-canvas-soft/80 transition-colors duration-150">
+                    <div className={`${colors.bg} p-2.5 rounded-xl flex-shrink-0`}>
                       <CatIcon className={`w-4 h-4 ${colors.text}`} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-bold text-gray-100 text-sm truncate">{tx.title}</p>
                       <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                         <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${colors.bg} ${colors.text}`}>{tx.category}</span>
-                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${tx.paymentMode === "UPI" ? "bg-indigo-500/15 text-indigo-400" : "bg-yellow-500/15 text-yellow-400"}`}>{tx.paymentMode}</span>
+                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${tx.paymentMode === "UPI" ? "bg-indigo-500/15 text-indigo-400" : "bg-yellow-500/15 text-warning-deep"}`}>{tx.paymentMode}</span>
                         <span className="text-[10px] text-gray-500">{new Date(tx.date).toLocaleDateString()}</span>
                         {tx.comment && <span className="text-[10px] text-gray-500 italic truncate max-w-[120px]">{tx.comment}</span>}
                       </div>
@@ -165,7 +165,7 @@ export default function FilteredTransactionsPage({ type }: Props) {
                       </p>
                       <button
                         onClick={() => setEditingTx(tx)}
-                        className="p-2 rounded-lg text-gray-700 hover:text-indigo-400 hover:bg-indigo-500/10 opacity-0 group-hover:opacity-100 transition-all duration-200 cursor-pointer"
+                        className="p-2 rounded-lg text-on-primary hover:text-indigo-400 hover:bg-indigo-500/10 opacity-0 group-hover:opacity-100 transition-all duration-200 cursor-pointer"
                         aria-label="Edit transaction"
                       >
                         <Pencil size={13} />
@@ -173,7 +173,7 @@ export default function FilteredTransactionsPage({ type }: Props) {
                       <button
                         onClick={() => setConfirmId(tx._id)}
                         disabled={deletingId === tx._id}
-                        className="p-2 rounded-lg text-gray-700 hover:text-red-400 hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition-all duration-200 cursor-pointer disabled:opacity-50"
+                        className="p-2 rounded-lg text-on-solid hover:text-red-400 hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition-all duration-200 cursor-pointer disabled:opacity-50"
                         aria-label="Delete transaction"
                       >
                         <Trash2 size={13} />

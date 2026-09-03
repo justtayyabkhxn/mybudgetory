@@ -149,7 +149,7 @@ export default function MonthEndReview({ transactions, userName }: Props) {
     autopsyLines.push(`Your 3 biggest hits were: ${names}.`);
   }
   if (stats.zeroSpendDays > 0) {
-    autopsyLines.push(`You had ${stats.zeroSpendDays} zero-spend day${stats.zeroSpendDays > 1 ? "s" : ""} — ${stats.zeroSpendDays >= 10 ? "impressive discipline." : "every one counts."}`);
+    autopsyLines.push(`You had ${stats.zeroSpendDays} zero-spend day${stats.zeroSpendDays > 1 ? "s" :""} — ${stats.zeroSpendDays >= 10 ? "impressive discipline." : "every one counts."}`);
   }
   if (stats.totalIncome > 0) {
     const saved = stats.totalIncome - stats.totalExpense;
@@ -165,7 +165,7 @@ export default function MonthEndReview({ transactions, userName }: Props) {
   const cards = [
     {
       icon: Trophy,
-      color: "text-yellow-400",
+      color: "text-warning-deep",
       bg: "from-yellow-500/10 border-yellow-500/20",
       label: "Biggest Win",
       headline:
@@ -213,8 +213,8 @@ export default function MonthEndReview({ transactions, userName }: Props) {
     },
     {
       icon: TrendingDown,
-      color: "text-cyan-400",
-      bg: "from-cyan-500/10 border-cyan-500/20",
+      color: "text-ink-deep",
+      bg: "from-cyan-500/10 border-primary/20",
       label: "Streak",
       headline:
         stats.streak > 0
@@ -257,7 +257,7 @@ export default function MonthEndReview({ transactions, userName }: Props) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8, scale: 0.97 }}
             transition={{ duration: 0.35 }}
-            className="relative rounded-2xl border border-indigo-500/20 bg-gradient-to-br from-indigo-500/10 via-gray-900/60 to-gray-900/80 p-5 shadow-xl"
+            className="relative rounded-2xl bg-primary-pale p-5 shadow-xl"
           >
             <button
               onClick={() => setShowAutopsy(false)}
@@ -266,7 +266,7 @@ export default function MonthEndReview({ transactions, userName }: Props) {
               <X size={16} />
             </button>
             <div className="flex items-center gap-2 mb-3">
-              <div className="p-1.5 rounded-lg bg-indigo-500/15 border border-indigo-500/25">
+              <div className="p-1.5 rounded-lg bg-indigo-500/15">
                 <FileText size={14} className="text-indigo-400" />
               </div>
               <p className="text-xs font-black text-indigo-400 uppercase tracking-widest">
@@ -293,7 +293,7 @@ export default function MonthEndReview({ transactions, userName }: Props) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8, scale: 0.97 }}
             transition={{ duration: 0.35 }}
-            className="relative rounded-2xl border border-white/10 bg-gray-900/80 p-5 shadow-xl overflow-hidden"
+            className="relative rounded-2xl bg-gray-900/80 p-5 shadow-xl overflow-hidden"
           >
             <button
               onClick={() => setShowReview(false)}
@@ -311,7 +311,7 @@ export default function MonthEndReview({ transactions, userName }: Props) {
                   <button
                     key={i}
                     onClick={() => { setDirection(i > cardIndex ? 1 : -1); setCardIndex(i); }}
-                    className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${i === cardIndex ? "w-5 bg-white/60" : "w-1.5 bg-white/15"}`}
+                    className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${i === cardIndex ? "w-5 bg-canvas/80" : "w-1.5 bg-canvas/80"}`}
                   />
                 ))}
               </div>
@@ -335,7 +335,7 @@ export default function MonthEndReview({ transactions, userName }: Props) {
                       animate="center"
                       exit="exit"
                       transition={{ duration: 0.28, ease: "easeInOut" }}
-                      className={`rounded-xl border bg-gradient-to-br ${card.bg} via-transparent to-transparent p-4`}
+                      className={`rounded-xl bg-canvas-soft/80 p-4`}
                     >
                       <div className="flex items-center gap-2 mb-2">
                         <Icon size={15} className={card.color} />
@@ -343,7 +343,7 @@ export default function MonthEndReview({ transactions, userName }: Props) {
                           {card.label}
                         </span>
                       </div>
-                      <p className="text-lg font-black text-white leading-none mb-1">
+                      <p className="text-lg font-black text-ink leading-none mb-1">
                         {card.headline}
                       </p>
                       <p className="text-xs text-gray-500 leading-relaxed">

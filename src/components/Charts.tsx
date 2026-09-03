@@ -39,6 +39,9 @@ import {
   getIncomeExpenseLineConfig,
 } from "@/utils/chartOptions";
 import SlideUp from "./SlideUp";
+import { useTheme } from "@/hooks/useTheme";
+import { alpha, cssVar } from "@/utils/themeColors";
+import { getCatColor } from "@/utils/chartOptions";
 
 ChartJS.register(
   CategoryScale, LinearScale, BarElement, PointElement,
@@ -105,23 +108,14 @@ function ChartCard({
   delay?: number;
   accent?: "indigo" | "green" | "red" | "orange" | "purple" | "cyan" | "yellow";
 }) {
-  const accentMap: Record<string, string> = {
-    indigo: "from-indigo-500/10",
-    green:  "from-green-500/10",
-    red:    "from-red-500/10",
-    orange: "from-orange-500/10",
-    purple: "from-purple-500/10",
-    cyan:   "from-cyan-500/10",
-    yellow: "from-yellow-500/10",
-  };
   const badgeMap: Record<string, string> = {
     indigo: "bg-indigo-500/15 text-indigo-400 border-indigo-500/30",
     green:  "bg-green-500/15 text-green-400 border-green-500/30",
     red:    "bg-red-500/15 text-red-400 border-red-500/30",
-    orange: "bg-orange-500/15 text-orange-400 border-orange-500/30",
+    orange: "bg-orange-500/15 text-warning-deep border-orange-500/30",
     purple: "bg-purple-500/15 text-purple-400 border-purple-500/30",
-    cyan:   "bg-cyan-500/15 text-cyan-400 border-cyan-500/30",
-    yellow: "bg-yellow-500/15 text-yellow-400 border-yellow-500/30",
+    cyan:   "bg-primary/15 text-ink-deep border-primary/30",
+    yellow: "bg-yellow-500/15 text-warning-deep border-yellow-500/30",
   };
 
   const [fullscreen, setFullscreen] = useState(false);
@@ -146,8 +140,8 @@ function ChartCard({
       transition={{ duration: 0.5, delay }}
       className={
         fullscreen
-          ? "fixed inset-0 z-50 bg-[#0a0a0f] p-5 flex flex-col"
-          : `rounded-2xl bg-gradient-to-br ${accentMap[accent]} via-gray-900/60 to-gray-900/80 backdrop-blur-sm p-5 shadow-xl hover:shadow-2xl transition-shadow duration-300`
+          ? "fixed inset-0 z-50 bg-canvas-soft/80 p-5 flex flex-col"
+          : `rounded-3xl bg-canvas/80 p-5`
       }
     >
       <div className="flex items-start justify-between mb-4">
@@ -157,13 +151,13 @@ function ChartCard({
         </div>
         <div className="flex items-center gap-2">
           {badge && !fullscreen && (
-            <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${badgeMap[accent]}`}>
+            <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${badgeMap[accent]}`}>
               {badge}
             </span>
           )}
           <button
             onClick={() => setFullscreen(v => !v)}
-            className="p-1.5 rounded-lg border border-white/10 bg-white/[0.04] text-gray-500 hover:text-gray-200 transition-colors cursor-pointer"
+            className="p-1.5 rounded-lg bg-canvas/80 text-gray-500 hover:text-gray-200 transition-colors cursor-pointer"
             title={fullscreen ? "Exit full screen (Esc)" : "Full screen"}
           >
             {fullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
@@ -208,14 +202,14 @@ function ChartTabs({
         <span className="text-[10px] font-bold text-gray-600 uppercase tracking-widest mr-1">
           {label}
         </span>
-        <div className="flex gap-0.5 bg-gray-900/80 border border-gray-800 rounded-xl p-1 overflow-x-auto max-w-full">
+        <div className="flex gap-0.5 bg-gray-900/80 rounded-xl p-1 overflow-x-auto max-w-full">
           {tabs.map(t => (
             <button
               key={t.key}
               onClick={() => setActive(t.key)}
               className={`px-3 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap transition-all cursor-pointer ${
                 current.key === t.key
-                  ? "bg-gray-700 text-white shadow-sm"
+                  ? "bg-gray-700 text-ink shadow-sm"
                   : "text-gray-500 hover:text-gray-300"
               }`}
             >
@@ -246,6 +240,10 @@ const Charts: React.FC<Props> = ({
   // Drag-to-zoom on the cumulative line. No "is zoomed" state on purpose — a
   // re-render mid-zoom rebuilds the options and reverts the zoom that just happened.
   const zoomReady = useZoomPlugin();
+
+  // Chart.js resolves theme tokens to concrete colours when a config is built,
+  // so a theme switch has to remount the canvases to repaint them.
+  const { resolved: theme } = useTheme();
   const cumChartRef = useRef<ChartJS<"line", (number | null)[], string> | null>(null);
 
   const now = viewDate ?? new Date();
@@ -325,15 +323,10 @@ const Charts: React.FC<Props> = ({
   const allExpenseCats = Array.from(
     new Set(transactions.filter((t) => t.type === "expense").map((t) => t.category))
   );
-  const CAT_HEX_LOCAL: Record<string, string> = {
-    Food: "#f97316", Outing: "#3b82f6", Clothes: "#a855f7", Medical: "#ef4444",
-    Bills: "#eab308", Entertainment: "#ec4899", Travel: "#06b6d4", SMM: "#10b981",
-    Others: "#6b7280", Other: "#6b7280",
-  };
-  const fallbackColors = ["#6366f1","#ec4899","#f97316","#10b981","#f59e0b","#06b6d4","#a855f7","#ef4444"];
+  // Shared, theme-aware category scale — see getCatColor in chartOptions.
   const categoryTrendSeries = allExpenseCats.map((cat, idx) => ({
     name: cat,
-    color: CAT_HEX_LOCAL[cat] || fallbackColors[idx % 8],
+    color: getCatColor(cat, idx),
     data: Array.from({ length: totalMonths }, (_, i) => {
       const d = new Date(earliestYear, earliestMon + i, 1);
       const m = d.getMonth(), y = d.getFullYear();
@@ -363,7 +356,11 @@ const Charts: React.FC<Props> = ({
   // Income sources
   const incomeSourceKey = (t: Transaction) => t.title?.trim() || t.category;
   const allIncomeSources = Array.from(new Set(transactions.filter((t) => t.type === "income").map(incomeSourceKey)));
-  const incomeColors = ["#34d399","#6366f1","#f97316","#06b6d4","#a855f7","#fbbf24","#f87171","#10b981"];
+  const incomeColors = [
+    cssVar("--color-positive"), cssVar("--color-cat-food"), cssVar("--color-cat-outing"),
+    cssVar("--color-cat-smm"), cssVar("--color-warning"), cssVar("--color-negative"),
+    cssVar("--color-cat-vacation"), cssVar("--color-ink-deep"),
+  ];
   const incomeSourcesSeries = allIncomeSources.map((src, idx) => ({
     name: src,
     color: incomeColors[idx % incomeColors.length],
@@ -381,12 +378,12 @@ const Charts: React.FC<Props> = ({
   const cashTrend = Array.from({ length: totalMonths }, (_, i) => {
     const d = new Date(earliestYear, earliestMon + i, 1);
     const m = d.getMonth(), y = d.getFullYear();
-    return transactions.filter((t) => t.type === "expense" && t.paymentMode === "Cash" && new Date(t.date).getMonth() === m && new Date(t.date).getFullYear() === y).reduce((s, t) => s + t.amount, 0);
+    return transactions.filter((t) => t.type === "expense" && t.paymentMode ==="Cash" && new Date(t.date).getMonth() === m && new Date(t.date).getFullYear() === y).reduce((s, t) => s + t.amount, 0);
   });
   const upiTrend = Array.from({ length: totalMonths }, (_, i) => {
     const d = new Date(earliestYear, earliestMon + i, 1);
     const m = d.getMonth(), y = d.getFullYear();
-    return transactions.filter((t) => t.type === "expense" && t.paymentMode === "UPI" && new Date(t.date).getMonth() === m && new Date(t.date).getFullYear() === y).reduce((s, t) => s + t.amount, 0);
+    return transactions.filter((t) => t.type === "expense" && t.paymentMode ==="UPI" && new Date(t.date).getMonth() === m && new Date(t.date).getFullYear() === y).reduce((s, t) => s + t.amount, 0);
   });
 
   // Week-of-month
@@ -434,7 +431,7 @@ const Charts: React.FC<Props> = ({
   });
 
   return (
-    <div className="grid grid-cols-1 gap-6 mt-2">
+    <div key={theme} className="grid grid-cols-1 gap-6 mt-2">
 
       {/* Row 1: Donut + Payment Mode */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -514,8 +511,8 @@ const Charts: React.FC<Props> = ({
                       zoom: {
                         drag: {
                           enabled: zoomReady,
-                          backgroundColor: "rgba(74,222,128,0.12)",
-                          borderColor: "rgba(74,222,128,0.55)",
+                          backgroundColor: alpha(cssVar("--color-positive"), 0.12),
+                          borderColor: alpha(cssVar("--color-positive"), 0.55),
                           borderWidth: 1,
                         },
                         wheel: { enabled: false },
@@ -680,7 +677,7 @@ const Charts: React.FC<Props> = ({
                   plugins: {
                     legend: {
                       position: "bottom",
-                      labels: { color: "#9ca3af", font: { size: 11 }, padding: 12 },
+                      labels: { color: cssVar("--color-mute"), font: { size: 11 }, padding: 12 },
                     },
                     tooltip: {
                       callbacks: {

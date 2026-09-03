@@ -127,7 +127,7 @@ export default function CreateEvent({ onEventCreated }: { onEventCreated?: () =>
   };
 
   return (
-    <div className="max-w-5xl mt-10 mx-auto px-5 py-6 text-white bg-white/5 shadow-xl rounded-2xl border border-gray-600">
+    <div className="max-w-5xl mt-10 mx-auto px-5 py-6 text-ink bg-canvas/80 shadow-xl rounded-2xl">
       <h1 className="text-xl font-bold mb-5">Create New Event</h1>
 
       {step === 1 && (
@@ -138,7 +138,7 @@ export default function CreateEvent({ onEventCreated }: { onEventCreated?: () =>
               value={eventData.name}
               onChange={handleEventChange}
               type="text"
-              className="w-full p-3 bg-black rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full p-3 bg-ink rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
               placeholder="Event Name"
             />
 
@@ -146,7 +146,7 @@ export default function CreateEvent({ onEventCreated }: { onEventCreated?: () =>
               name="type"
               value={eventData.type}
               onChange={handleEventChange}
-              className="w-full p-3 bg-black rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full p-3 bg-ink rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
             >
               {eventTypes.map((et) => (
                 <option key={et} value={et}>
@@ -161,14 +161,14 @@ export default function CreateEvent({ onEventCreated }: { onEventCreated?: () =>
             value={eventData.date}
             onChange={handleEventChange}
             type="date"
-            className="w-full p-3 bg-black rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full p-3 bg-ink rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
           />
 
           <textarea
             name="description"
             value={eventData.description}
             onChange={handleEventChange}
-            className="w-full p-3 bg-black rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full p-3 bg-ink rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
             rows={3}
             placeholder="Write a short description..."
           />
@@ -179,7 +179,7 @@ export default function CreateEvent({ onEventCreated }: { onEventCreated?: () =>
           <button
             onClick={submitEvent}
             disabled={loading}
-            className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 rounded-xl font-semibold transition-all duration-200 disabled:opacity-50"
+            className="w-full py-3 bg-primary hover:bg-primary-active text-on-primary rounded-3xl font-semibold transition-all duration-200 disabled:opacity-50"
           >
             {loading ? "Creating..." : "Next: Add Participants"}
           </button>
@@ -197,7 +197,7 @@ export default function CreateEvent({ onEventCreated }: { onEventCreated?: () =>
               min={1}
               value={numParticipants}
               onChange={handleNumParticipantsChange}
-              className="w-24 p-3 bg-gray-950 border border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-24 p-3 bg-canvas-soft/80 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
 
@@ -211,7 +211,7 @@ export default function CreateEvent({ onEventCreated }: { onEventCreated?: () =>
                   type="text"
                   value={name}
                   onChange={(e) => handleParticipantNameChange(idx, e.target.value)}
-                  className="w-full p-3 bg-gray-950 border border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full p-3 bg-canvas-soft/80 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
                   placeholder={`Name of Person ${idx + 1}`}
                 />
               </div>
@@ -223,7 +223,7 @@ export default function CreateEvent({ onEventCreated }: { onEventCreated?: () =>
           <button
             onClick={submitParticipants}
             disabled={loading}
-            className="w-full py-3 bg-green-600 hover:bg-green-700 rounded-xl font-semibold transition-all duration-200 disabled:opacity-50"
+            className="w-full py-3 bg-primary hover:bg-primary-active text-on-primary rounded-3xl font-semibold transition-all duration-200 disabled:opacity-50"
           >
             {loading ? "Saving..." : "Finish & Save Event"}
           </button>

@@ -7,7 +7,7 @@ interface SkeletonCardProps {
 export function SkeletonCard({ className = "" }: SkeletonCardProps) {
   return (
     <div
-      className={`skeleton-shimmer bg-gradient-to-br from-gray-800/60 via-gray-900/60 to-gray-800/60 border border-white/[0.05] rounded-xl p-4 shadow-lg ${className}`}
+      className={`skeleton-shimmer bg-canvas/80 rounded-xl p-4 shadow-lg ${className}`}
     >
       <div className="flex items-center justify-between mb-3">
         <div className="h-5 w-32 bg-gray-700/60 rounded-md" />
@@ -21,7 +21,7 @@ export function SkeletonCard({ className = "" }: SkeletonCardProps) {
 export function SkeletonTransactionRow({ className = "" }: { className?: string }) {
   return (
     <div
-      className={`skeleton-shimmer flex justify-between items-center p-4 bg-white/2 border border-gray-800 rounded-xl ${className}`}
+      className={`skeleton-shimmer flex justify-between items-center p-4 bg-canvas/80 rounded-xl ${className}`}
     >
       <div className="flex items-center gap-3">
         <div className="h-9 w-9 bg-gray-700/60 rounded-full" />
