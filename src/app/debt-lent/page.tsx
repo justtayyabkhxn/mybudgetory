@@ -1,5 +1,6 @@
 "use client";
 
+import DatePicker from "@/components/DatePicker";
 import { useEffect, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -10,7 +11,6 @@ import {
   CheckCircle2,
   UserRound,
   Banknote,
-  CalendarDays,
   MessageSquare,
   TrendingDown,
   TrendingUp,
@@ -313,15 +313,13 @@ export default function DebtLentPage() {
 
                   <div>
                     <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Due Date (optional)</label>
-                    <div className="relative">
-                      <CalendarDays size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
-                      <input
-                        type="date"
-                        value={form.dueDate}
-                        onChange={e => setForm(f => ({ ...f, dueDate: e.target.value }))}
-                        className="w-full bg-canvas-soft/80 text-ink rounded-xl pl-9 pr-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                      />
-                    </div>
+                    <DatePicker
+                      value={form.dueDate}
+                      onChange={v => setForm(f => ({ ...f, dueDate: v }))}
+                      clearable
+                      placeholder="No due date"
+                      className="w-full bg-canvas-soft/80 text-ink rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
                   </div>
 
                   <div>

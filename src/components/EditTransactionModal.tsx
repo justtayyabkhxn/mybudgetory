@@ -1,5 +1,6 @@
 "use client";
 
+import DatePicker from "@/components/DatePicker";
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -8,7 +9,6 @@ import {
   ArrowDownCircle,
   CreditCard,
   Banknote,
-  Calendar,
   MessageSquare,
   Loader2,
   Check,
@@ -262,16 +262,12 @@ export default function EditTransactionModal({ tx, onClose, onSave }: Props) {
 
                   {/* Date + Note toggle */}
                   <div className="flex items-center gap-2">
-                    <div className="flex-1 relative">
-                      <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
-                      <input
-                        type="date"
+                    <div className="flex-1 min-w-0">
+                      <DatePicker
                         value={form.date}
-                        onChange={(e) =>
-                          setForm((p) => ({ ...p, date: e.target.value }))
-                        }
+                        onChange={(v) => setForm((p) => ({ ...p, date: v }))}
                         required
-                        className="w-full bg-canvas-soft/80 rounded-xl pl-9 pr-4 py-3 text-ink focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-200 text-sm"
+                        className="w-full bg-canvas-soft/80 rounded-xl px-3 py-3 text-ink focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-200 text-sm"
                       />
                     </div>
                     <button

@@ -1,4 +1,5 @@
 "use client";
+import DatePicker from "@/components/DatePicker";
 import { useState } from "react";
 import axios from "axios";
 
@@ -156,11 +157,11 @@ export default function CreateEvent({ onEventCreated }: { onEventCreated?: () =>
             </select>
           </div>
 
-          <input
+          <DatePicker
             name="date"
             value={eventData.date}
-            onChange={handleEventChange}
-            type="date"
+            onChange={(v) => setEventData({ ...eventData, date: v })}
+            placeholder="Event date"
             className="w-full p-3 bg-ink rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
           />
 

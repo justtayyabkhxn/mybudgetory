@@ -206,6 +206,7 @@ const SectionHeader = ({ tag, tagIcon, title, subtitle, center = true }: Section
 export default function LandingPage() {
   return (
     <main className="min-h-screen text-ink">
+      <div className="fixed top-0 inset-x-0 h-1 bg-primary z-50" />
 
       <div className="relative max-w-6xl mx-auto px-6 py-5">
         <Header />

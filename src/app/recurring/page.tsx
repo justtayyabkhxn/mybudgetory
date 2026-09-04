@@ -1,5 +1,6 @@
 "use client";
 
+import DatePicker from "@/components/DatePicker";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -374,11 +375,10 @@ export default function RecurringPage() {
                 {/* Next date */}
                 <div>
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Next Date</label>
-                  <input
-                    type="date"
+                  <DatePicker
                     required
                     value={form.nextDate}
-                    onChange={e => setForm(f => ({ ...f, nextDate: e.target.value }))}
+                    onChange={v => setForm(f => ({ ...f, nextDate: v }))}
                     className="w-full bg-canvas-soft/80 text-ink rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>

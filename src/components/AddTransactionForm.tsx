@@ -1,10 +1,11 @@
 "use client";
+import DatePicker from "@/components/DatePicker";
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowDownCircle,
   ArrowUpCircle,
-  Calendar,
   MessageSquare,
   CreditCard,
   Banknote,
@@ -19,16 +20,51 @@ import { getQueue, enqueue } from "@/lib/offlineQueue";
 
 export function AddTransactionForm({ onAdd }: { onAdd: () => void }) {
   const [categoryOpen, setCategoryOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
   const categoryRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  // Viewport coordinates for the portal-rendered menu (escapes overflow clipping)
+  const [menuPos, setMenuPos] = useState<{ top: number; left: number; width: number; above: boolean }>({
+    top: 0, left: 0, width: 0, above: false,
+  });
 
   useEffect(() => {
-    function onClickOutside(e: MouseEvent) {
-      if (categoryRef.current && !categoryRef.current.contains(e.target as Node)) {
-        setCategoryOpen(false);
-      }
+    if (!categoryOpen) return;
+
+    function place() {
+      const el = categoryRef.current;
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      const menuH = 240; // approx height of the 2-column grid
+      const above = r.bottom + menuH + 8 > window.innerHeight && r.top > menuH + 8;
+      setMenuPos({
+        top: above ? r.top - 8 : r.bottom + 8,
+        left: r.left,
+        width: r.width,
+        above,
+      });
     }
-    if (categoryOpen) document.addEventListener("mousedown", onClickOutside);
-    return () => document.removeEventListener("mousedown", onClickOutside);
+    place();
+
+    function onClickOutside(e: MouseEvent) {
+      const t = e.target as Node;
+      if (categoryRef.current?.contains(t) || menuRef.current?.contains(t)) return;
+      setCategoryOpen(false);
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setCategoryOpen(false);
+    }
+    document.addEventListener("mousedown", onClickOutside);
+    document.addEventListener("keydown", onKey);
+    window.addEventListener("resize", place);
+    window.addEventListener("scroll", place, true);
+    return () => {
+      document.removeEventListener("mousedown", onClickOutside);
+      document.removeEventListener("keydown", onKey);
+      window.removeEventListener("resize", place);
+      window.removeEventListener("scroll", place, true);
+    };
   }, [categoryOpen]);
 
   const [form, setForm] = useState({
@@ -213,8 +249,8 @@ export function AddTransactionForm({ onAdd }: { onAdd: () => void }) {
           )}
         </AnimatePresence>
 
-        {/* Type + Payment toggles */}
-        <div className="flex flex-nowrap items-center justify-between gap-2 mb-6">
+        {/* Type toggle + Date + Payment toggle */}
+        <div className="flex flex-nowrap items-center gap-2 mb-6">
           {/* Type toggle */}
           <div className="flex bg-canvas-soft/80 rounded-3xl p-1 shrink-0">
             <button
@@ -241,6 +277,15 @@ export function AddTransactionForm({ onAdd }: { onAdd: () => void }) {
               <ArrowDownCircle size={14} />
               <span className="hidden sm:inline">Income</span>
             </button>
+          </div>
+
+          {/* Date — sits between the type and payment toggles */}
+          <div className="flex-1 min-w-0">
+            <DatePicker
+              value={form.date}
+              onChange={(v) => setForm((p) => ({ ...p, date: v || new Date().toISOString().split("T")[0] }))}
+              className="w-full bg-canvas-soft/80 rounded-xl px-2.5 py-2 text-ink text-[11px] sm:text-xs font-bold focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-200"
+            />
           </div>
 
           {/* Payment mode toggle */}
@@ -346,14 +391,25 @@ export function AddTransactionForm({ onAdd }: { onAdd: () => void }) {
                     );
                   })()}
 
+                  {mounted && createPortal(
                   <AnimatePresence>
                     {categoryOpen && (
                       <motion.div
-                        initial={{ opacity: 0, y: -6, scale: 0.98 }}
+                        ref={menuRef}
+                        initial={{ opacity: 0, y: menuPos.above ? 6 : -6, scale: 0.98 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: -6, scale: 0.98 }}
+                        exit={{ opacity: 0, y: menuPos.above ? 6 : -6, scale: 0.98 }}
                         transition={{ duration: 0.15 }}
-                        className="absolute z-20 mt-2 w-full bg-canvas/80 rounded-xl shadow-lg p-2 grid grid-cols-2 gap-1.5"
+                        style={{
+                          position: "fixed",
+                          // Anchor to the trigger's bottom edge normally; flip above it near the viewport bottom.
+                          top: menuPos.above ? undefined : menuPos.top,
+                          bottom: menuPos.above ? window.innerHeight - menuPos.top : undefined,
+                          left: menuPos.left,
+                          width: menuPos.width,
+                          zIndex: 9999,
+                        }}
+                        className="bg-canvas rounded-xl shadow-2xl border border-canvas-soft p-2 grid grid-cols-2 gap-1.5"
                       >
                         {CATEGORIES.map(({ name, icon: Icon }) => {
                           const colors =
@@ -370,7 +426,7 @@ export function AddTransactionForm({ onAdd }: { onAdd: () => void }) {
                               className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition-colors duration-150 cursor-pointer ${
                                 isActive
                                   ? `${colors.bg} ${colors.text}`
-                                  : "text-gray-400 hover:bg-canvas-soft/80 hover:text-gray-200"
+                                  : "text-ink/60 hover:bg-canvas-soft hover:text-ink"
                               }`}
                             >
                               <Icon size={14} />
@@ -381,28 +437,16 @@ export function AddTransactionForm({ onAdd }: { onAdd: () => void }) {
                         })}
                       </motion.div>
                     )}
-                  </AnimatePresence>
+                  </AnimatePresence>,
+                  document.body
+                  )}
                 </div>
                 </motion.div>
               )}
             </AnimatePresence>
 
-            {/* Date + Note */}
-            <div className="flex gap-2">
-              <div className="flex-1 min-w-0 relative">
-                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
-                <input
-                  type="date"
-                  name="date"
-                  value={form.date}
-                  onChange={(e) =>
-                    setForm((p) => ({ ...p, date: e.target.value }))
-                  }
-                  required
-                  className="w-full bg-canvas-soft/80 rounded-xl pl-9 pr-2 py-3 text-ink focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-200 text-sm"
-                />
-              </div>
-
+            {/* Note + Submit */}
+            <div className="flex gap-2 w-full sm:flex-1 sm:min-w-0">
               {/* Comment toggle */}
               <button
                 type="button"
@@ -416,6 +460,39 @@ export function AddTransactionForm({ onAdd }: { onAdd: () => void }) {
                 <MessageSquare size={14} />
                 <span className="hidden sm:inline">Note</span>
               </button>
+
+              {/* Submit */}
+              <motion.button
+                type="submit"
+                disabled={loading}
+                whileTap={{ scale: 0.98 }}
+                className={`flex-1 min-w-0 py-3 px-3 rounded-xl font-bold text-sm transition-colors duration-200 flex items-center justify-center gap-2 cursor-pointer ${
+                  loading
+                    ? "bg-canvas-soft/80 text-mute cursor-not-allowed"
+                    : "bg-primary hover:bg-primary-active text-on-primary"
+                }`}
+              >
+                {loading ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    Adding...
+                  </>
+                ) : success ? (
+                  <>
+                    <Check size={16} />
+                    Added!
+                  </>
+                ) : (
+                  <>
+                    {isExpense ? (
+                      <ArrowUpCircle size={16} />
+                    ) : (
+                      <ArrowDownCircle size={16} />
+                    )}
+                    <span className="truncate">Add {isExpense ? "Expense" : "Income"}</span>
+                  </>
+                )}
+              </motion.button>
             </div>
           </div>
 
@@ -441,38 +518,6 @@ export function AddTransactionForm({ onAdd }: { onAdd: () => void }) {
             )}
           </AnimatePresence>
 
-          {/* Submit */}
-          <motion.button
-            type="submit"
-            disabled={loading}
-            whileTap={{ scale: 0.98 }}
-            className={`w-full py-3.5 rounded-3xl font-semibold text-base transition-colors duration-200 flex items-center justify-center gap-2 cursor-pointer ${
-              loading
-                ? "bg-canvas-soft/80 text-mute cursor-not-allowed"
-                : "bg-primary hover:bg-primary-active text-on-primary"
-            }`}
-          >
-            {loading ? (
-              <>
-                <Loader2 size={18} className="animate-spin" />
-                Adding...
-              </>
-            ) : success ? (
-              <>
-                <Check size={18} />
-                Added!
-              </>
-            ) : (
-              <>
-                {isExpense ? (
-                  <ArrowUpCircle size={18} />
-                ) : (
-                  <ArrowDownCircle size={18} />
-                )}
-                Add {isExpense ? "Expense" : "Income"}
-              </>
-            )}
-          </motion.button>
         </form>
 
         {error && (

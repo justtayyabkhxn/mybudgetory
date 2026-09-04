@@ -1,5 +1,6 @@
 "use client";
 
+import DatePicker from "@/components/DatePicker";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -255,7 +256,7 @@ export default function AdvancedSearchPage() {
                     <label className="flex items-center gap-1.5 text-xs font-bold text-gray-400 mb-1.5">
                       <CalendarDays size={12} /> From Date
                     </label>
-                    <input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)} className={inputClass} />
+                    <DatePicker value={fromDate} onChange={setFromDate} clearable hideIcon placeholder="Any" className={inputClass} />
                   </div>
 
                   {/* To date */}
@@ -263,7 +264,7 @@ export default function AdvancedSearchPage() {
                     <label className="flex items-center gap-1.5 text-xs font-bold text-gray-400 mb-1.5">
                       <CalendarDays size={12} /> To Date
                     </label>
-                    <input type="date" value={toDate} onChange={e => setToDate(e.target.value)} className={inputClass} />
+                    <DatePicker value={toDate} onChange={setToDate} clearable hideIcon placeholder="Any" className={inputClass} />
                   </div>
 
                   {/* Category */}

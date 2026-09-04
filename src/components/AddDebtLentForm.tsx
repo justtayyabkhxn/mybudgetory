@@ -1,4 +1,5 @@
 "use client";
+import DatePicker from "@/components/DatePicker";
 import { useState } from "react";
 import {
   HandCoins,
@@ -113,13 +114,13 @@ export function AddDebtLentForm({ onAdd }: { onAdd: () => void }) {
 
         <div className="flex items-center gap-2">
           <CalendarDays className="w-5 h-5 text-gray-400" />
-          <input
-            type="date"
+          <DatePicker
             name="date"
             value={form.date}
-            onChange={handleChange}
+            onChange={v => setForm({ ...form, date: v })}
             required
-            className="p-2 rounded bg-canvas-soft/80 text-ink flex-1"
+            hideIcon
+            className="p-2 rounded bg-canvas-soft/80 text-ink w-full"
           />
         </div>
 
