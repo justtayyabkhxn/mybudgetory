@@ -8,6 +8,8 @@ import Header from "@/components/Header";
 import FloatingTransactionButton from "@/components/FloatingTransactionButton";
 import BottomNav from "@/components/BottomNav";
 import CountUp from "@/components/CountUp";
+import PrivacyToggle from "@/components/PrivacyToggle";
+import { usePrivacyMode, MASKED } from "@/hooks/usePrivacyMode";
 import { TrendingUp, TrendingDown, BarChartBig, Wallet, Sparkles, Flame, ChevronLeft, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -26,7 +28,7 @@ function getHeatColor(amount: number): string {
   return                     "bg-negative";
 }
 
-function SpendingHeatmap({ txs }: { txs: Transaction[] }) {
+function SpendingHeatmap({ txs, hidden }: { txs: Transaction[]; hidden: boolean }) {
   const year = new Date().getFullYear();
 
   // Build date → expense map
@@ -96,7 +98,7 @@ function SpendingHeatmap({ txs }: { txs: Transaction[] }) {
         </div>
         <div className="flex gap-4 text-xs">
           <div className="text-center">
-            <p className="font-black text-warning-deep">₹{totalSpent >= 1000 ? `${(totalSpent/1000).toFixed(1)}k` : totalSpent}</p>
+            <p className="font-black text-warning-deep">{hidden ? MASKED : `₹${totalSpent >= 1000 ? `${(totalSpent/1000).toFixed(1)}k` : totalSpent}`}</p>
             <p className="text-gray-600 text-[10px] uppercase tracking-wider">total</p>
           </div>
           <div className="text-center">
@@ -139,7 +141,7 @@ function SpendingHeatmap({ txs }: { txs: Transaction[] }) {
                   {week.map((cell, di) => (
                     <div
                       key={di}
-                      title={cell && cell.amount > 0 ? `${cell.date}  ₹${cell.amount.toLocaleString()}` : cell?.date || ""}
+                      title={cell && cell.amount > 0 ? `${cell.date}  ${hidden ? MASKED : `₹${cell.amount.toLocaleString()}`}` : cell?.date || ""}
                       className={`w-[12px] h-[12px] rounded-[2px] transition-all duration-200 cursor-default
                         ${cell ? getHeatColor(cell.amount) : "opacity-0"}
                         ${cell && cell.amount > 0 ? "hover:ring-1 hover:ring-primary hover:scale-125" : ""}
@@ -176,6 +178,7 @@ type Transaction = {
 };
 
 const ChartsPage = () => {
+  const { hidden } = usePrivacyMode();
   const [inflow, setInflow] = useState(0);
   const [expense, setExpense] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -344,6 +347,7 @@ const ChartsPage = () => {
           <div className="flex items-center gap-3">
             <BarChartBig className="w-7 h-7 text-indigo-400" />
             <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">Charts</h1>
+            <PrivacyToggle className="mt-1" />
           </div>
           <Menu />
         </div>
@@ -368,7 +372,11 @@ const ChartsPage = () => {
               </div>
               <div>
                 <p className="text-xs font-bold text-green-400/70 uppercase tracking-wider">Income</p>
-                <CountUp end={inflow} prefix="₹" className="text-xl font-black text-green-400" />
+                {hidden ? (
+                  <p className="text-xl font-black text-green-400">{MASKED}</p>
+                ) : (
+                  <CountUp end={inflow} prefix="₹" className="text-xl font-black text-green-400" />
+                )}
               </div>
             </div>
             <div className="bg-red-50 rounded-2xl p-4 flex items-center gap-3">
@@ -377,7 +385,11 @@ const ChartsPage = () => {
               </div>
               <div>
                 <p className="text-xs font-bold text-red-400/70 uppercase tracking-wider">Expenses</p>
-                <CountUp end={expense} prefix="₹" className="text-xl font-black text-red-400" />
+                {hidden ? (
+                  <p className="text-xl font-black text-red-400">{MASKED}</p>
+                ) : (
+                  <CountUp end={expense} prefix="₹" className="text-xl font-black text-red-400" />
+                )}
               </div>
             </div>
             {/* Month selector chip — sits between the two pairs of stat chips */}
@@ -416,7 +428,11 @@ const ChartsPage = () => {
               </div>
               <div>
                 <p className={`text-xs font-bold uppercase tracking-wider ${savings >= 0 ? "text-emerald-400/70" : "text-warning-deep/70"}`}>Savings</p>
-                <CountUp end={Math.abs(savings)} prefix={savings >= 0 ? "₹" : "-₹"} className={`text-xl font-black ${savings >= 0 ? "text-emerald-400" : "text-warning-deep"}`} />
+                {hidden ? (
+                  <p className={`text-xl font-black ${savings >= 0 ? "text-emerald-400" : "text-warning-deep"}`}>{MASKED}</p>
+                ) : (
+                  <CountUp end={Math.abs(savings)} prefix={savings >= 0 ? "₹" : "-₹"} className={`text-xl font-black ${savings >= 0 ? "text-emerald-400" : "text-warning-deep"}`} />
+                )}
               </div>
             </div>
             <div className={`${savingsRate >= 20 ? "bg-primary-pale" : "bg-canvas-soft/80"} rounded-2xl p-4 flex items-center gap-3`}>
@@ -432,7 +448,7 @@ const ChartsPage = () => {
         )}
 
         {/* Spending Heatmap */}
-        {!loading && <SpendingHeatmap txs={allTxs} />}
+        {!loading && <SpendingHeatmap txs={allTxs} hidden={hidden} />}
 
         {/* Charts */}
         {loading ? (
@@ -454,6 +470,7 @@ const ChartsPage = () => {
             upiAmount={upiStats.expense}
             transactions={allTxs}
             viewDate={viewDate}
+            hidden={hidden}
           />
         )}
       </div>

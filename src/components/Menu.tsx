@@ -10,10 +10,12 @@ import {
   CircleUserRound,
   Divide,
   FileDigit,
+  Gem,
   LogOut,
   Menu,
   PiggyBank,
   RefreshCcw,
+  ShieldCheck,
   Target,
   TextSearch,
   Wallet,
@@ -42,11 +44,6 @@ const sections: Section[] = [
     title: "Finance",
     items: [
       { href: "/dashboard", icon: <FileDigit size={15} />, label: "Dashboard" },
-      // {
-      //   href: "/screen-share",
-      //   icon: <FileDigit size={15} />,
-      //   label: "ScreenShare",
-      // },
       {
         href: "/transactions",
         icon: <BadgeIndianRupee size={15} />,
@@ -59,6 +56,7 @@ const sections: Section[] = [
       },
       { href: "/inflow", icon: <Wallet size={15} />, label: "Income" },
       { href: "/net-worth", icon: <PiggyBank size={15} />, label: "Net Worth" },
+      { href: "/assets", icon: <Gem size={15} />, label: "Assets" },
       {
         href: "/debt-lent",
         icon: <WalletMinimal size={15} />,
@@ -114,6 +112,11 @@ const sections: Section[] = [
         href: "/profile",
         icon: <CircleUserRound size={15} />,
         label: "Profile",
+      },
+      {
+        href: "/privacy",
+        icon: <ShieldCheck size={15} />,
+        label: "Privacy Policy",
       },
     ],
   },

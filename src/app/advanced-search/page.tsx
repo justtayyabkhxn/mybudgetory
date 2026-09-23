@@ -10,6 +10,8 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import BottomNav from "@/components/BottomNav";
 import { CATEGORY_COLORS, CATEGORY_ICONS } from "@/lib/categoryConfig";
+import { usePrivacyMode, MASKED } from "@/hooks/usePrivacyMode";
+import PrivacyToggle from "@/components/PrivacyToggle";
 import {
   Search, TextSearch, RefreshCw, X, SlidersHorizontal,
   ArrowUpCircle, ArrowDownCircle, Download, Trash2,
@@ -38,6 +40,7 @@ const ALL_CATEGORIES = ["Food", "Outing", "Clothes", "Travel", "Vacation", "Medi
 
 export default function AdvancedSearchPage() {
   const router = useRouter();
+  const { hidden } = usePrivacyMode();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [filteredTxs, setFilteredTxs] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -149,6 +152,7 @@ export default function AdvancedSearchPage() {
             >
               <RefreshCw className={`w-4 h-4 text-green-400 ${loading ? "animate-spin" :""}`} />
             </button>
+            <PrivacyToggle />
           </div>
           <Menu />
         </div>
@@ -371,16 +375,16 @@ export default function AdvancedSearchPage() {
             </div>
             <div className="bg-green-900/20 rounded-xl p-3 text-center">
               <p className="text-xs text-green-400/70 font-bold uppercase tracking-wider">Income</p>
-              <p className="text-xl font-black text-green-400">₹{totalIncome.toLocaleString()}</p>
+              <p className="text-xl font-black text-green-400">{hidden ? MASKED : `₹${totalIncome.toLocaleString()}`}</p>
             </div>
             <div className="bg-red-900/20 rounded-xl p-3 text-center">
               <p className="text-xs text-red-400/70 font-bold uppercase tracking-wider">Expenses</p>
-              <p className="text-xl font-black text-red-400">₹{totalExpense.toLocaleString()}</p>
+              <p className="text-xl font-black text-red-400">{hidden ? MASKED : `₹${totalExpense.toLocaleString()}`}</p>
             </div>
             <div className={`${netBalance >= 0 ? "bg-emerald-900/20" : "bg-orange-900/20"} rounded-xl p-3 text-center`}>
               <p className={`text-xs font-bold uppercase tracking-wider ${netBalance >= 0 ? "text-emerald-400/70" : "text-warning-deep/70"}`}>Net</p>
               <p className={`text-xl font-black ${netBalance >= 0 ? "text-emerald-400" : "text-warning-deep"}`}>
-                {netBalance >= 0 ? "+" : ""}₹{Math.abs(netBalance).toLocaleString()}
+                {hidden ? MASKED : `${netBalance >= 0 ? "+" : ""}₹${Math.abs(netBalance).toLocaleString()}`}
               </p>
             </div>
           </motion.div>
@@ -477,7 +481,7 @@ export default function AdvancedSearchPage() {
                       {/* Amount */}
                       <div className="text-right flex-shrink-0">
                         <p className={`font-black text-base ${tx.type === "income" ? "text-green-400" : "text-red-400"}`}>
-                          {tx.type === "income" ? "+" : "-"}₹{tx.amount.toLocaleString()}
+                          {hidden ? MASKED : `${tx.type === "income" ? "+" : "-"}₹${tx.amount.toLocaleString()}`}
                         </p>
                         <p className="text-[10px] text-gray-600 capitalize">{tx.type}</p>
                       </div>

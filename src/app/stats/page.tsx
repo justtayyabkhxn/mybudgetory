@@ -22,6 +22,8 @@ import {
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import FloatingTransactionButton from "@/components/FloatingTransactionButton";
+import PrivacyToggle from "@/components/PrivacyToggle";
+import { usePrivacyMode, MASKED } from "@/hooks/usePrivacyMode";
 
 type Txn = {
   _id: string;
@@ -33,6 +35,9 @@ type Txn = {
 };
 
 export default function StatsPage() {
+  const { hidden } = usePrivacyMode();
+  /** Privacy mode: swap a formatted amount for the mask. */
+  const money = (s: string) => (hidden ? MASKED : s);
   const [txs, setTxs] = useState<Txn[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalIncome, setTotalIncome] = useState(0);
@@ -213,6 +218,7 @@ export default function StatsPage() {
                 <ChartNoAxesCombined size={16} className="text-indigo-400" />
               </div>
               <h1 className="text-3xl font-extrabold tracking-tight">Statistics</h1>
+              <PrivacyToggle />
             </div>
             <p className="text-sm text-gray-500 ml-10">
               {new Date().toLocaleString("default", { month: "long", year: "numeric" })} overview
@@ -232,7 +238,7 @@ export default function StatsPage() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
               <HeroCard
                 label="Total Income"
-                value={`₹ ${totalIncome.toLocaleString()}`}
+                value={money(`₹ ${totalIncome.toLocaleString()}`)}
                 icon={<ArrowUpRight size={16} className="text-emerald-400" />}
                 iconBg="bg-emerald-500/10"
                 valueColor="text-emerald-400"
@@ -240,7 +246,7 @@ export default function StatsPage() {
               />
               <HeroCard
                 label="Total Expenses"
-                value={`₹ ${totalExpenses.toLocaleString()}`}
+                value={money(`₹ ${totalExpenses.toLocaleString()}`)}
                 icon={<ArrowDownRight size={16} className="text-rose-400" />}
                 iconBg="bg-rose-500/10"
                 valueColor="text-rose-400"
@@ -248,7 +254,7 @@ export default function StatsPage() {
               />
               <HeroCard
                 label="Net Balance"
-                value={`₹ ${netBalance.toLocaleString()}`}
+                value={money(`₹ ${netBalance.toLocaleString()}`)}
                 icon={<Equal size={16} className={isPositive ? "text-ink-deep" : "text-warning-deep"} />}
                 iconBg={isPositive ? "bg-primary/10" : "bg-orange-500/10"}
                 valueColor={isPositive ? "text-ink-deep" : "text-orange-300"}
@@ -266,34 +272,34 @@ export default function StatsPage() {
                 iconBg="bg-pink-500/10"
                 title="Most Spending Day"
                 value={`${mostSpentDay}`}
-                sub={mostSpentAmt ? `₹ ${mostSpentAmt}` : undefined}
+                sub={mostSpentAmt ? money(`₹ ${mostSpentAmt}`) : undefined}
               />
               <StatCard
                 icon={<TrendingUp className="w-4 h-4 text-emerald-400" />}
                 iconBg="bg-emerald-500/10"
                 title="Most Inflow Day"
                 value={`${mostInflowDay}`}
-                sub={mostInflowAmt ? `₹ ${mostInflowAmt}` : undefined}
+                sub={mostInflowAmt ? money(`₹ ${mostInflowAmt}`) : undefined}
               />
               <StatCard
                 icon={<BarChart3 className="w-4 h-4 text-blue-300" />}
                 iconBg="bg-blue-500/10"
                 title="Avg Monthly Spending"
-                value={avgMonthlySpending()}
+                value={avgMonthlySpending() === "N/A" ? "N/A" : money(avgMonthlySpending())}
               />
               <StatCard
                 icon={<Calendar className="w-4 h-4 text-warning-deep" />}
                 iconBg="bg-yellow-500/10"
                 title="Max Expense Month"
                 value={`${maxSpentMonth}`}
-                sub={maxSpentMonthAmt ? `₹ ${maxSpentMonthAmt}` : undefined}
+                sub={maxSpentMonthAmt ? money(`₹ ${maxSpentMonthAmt}`) : undefined}
               />
               <StatCard
                 icon={<Calendar className="w-4 h-4 text-emerald-400" />}
                 iconBg="bg-emerald-500/10"
                 title="Max Inflow Month"
                 value={`${maxInflowMonth}`}
-                sub={maxInflowMonthAmt ? `₹ ${maxInflowMonthAmt}` : undefined}
+                sub={maxInflowMonthAmt ? money(`₹ ${maxInflowMonthAmt}`) : undefined}
               />
               <StatCard
                 icon={<Hash className="w-4 h-4 text-blue-400" />}
@@ -313,14 +319,14 @@ export default function StatsPage() {
                 iconBg="bg-purple-500/10"
                 title="Top Spending Category"
                 value={`${topCategory[0]}`}
-                sub={topCategory[1] ? `₹ ${topCategory[1]}` : undefined}
+                sub={topCategory[1] ? money(`₹ ${topCategory[1]}`) : undefined}
               />
               <StatCard
                 icon={<BadgePercent className="w-4 h-4 text-pink-300" />}
                 iconBg="bg-pink-500/10"
                 title="Least Spent Category"
                 value={`${leastCategory[0]}`}
-                sub={leastCategory[1] ? `₹ ${leastCategory[1]}` : undefined}
+                sub={leastCategory[1] ? money(`₹ ${leastCategory[1]}`) : undefined}
               />
               <StatCard
                 icon={<PieChart className="w-4 h-4 text-indigo-400" />}
@@ -339,14 +345,14 @@ export default function StatsPage() {
                 iconBg="bg-red-500/10"
                 title="Largest Expense"
                 value={largestExpenseName || "N/A"}
-                sub={largestExpense ? `₹ ${largestExpense}` : undefined}
+                sub={largestExpense ? money(`₹ ${largestExpense}`) : undefined}
               />
               <StatCard
                 icon={<Banknote className="w-4 h-4 text-green-400" />}
                 iconBg="bg-green-500/10"
                 title="Largest Income"
                 value={largestIncomeName || "N/A"}
-                sub={largestIncome ? `₹ ${largestIncome}` : undefined}
+                sub={largestIncome ? money(`₹ ${largestIncome}`) : undefined}
               />
               <StatCard
                 icon={<ListOrdered className="w-4 h-4 text-orange-300" />}
@@ -356,7 +362,7 @@ export default function StatsPage() {
                   top3Days.length > 0 ? (
                     <div className="space-y-1 mt-1">
                       {top3Days.map((day, index) => (
-                        <p key={index} className="text-sm font-medium text-gray-300">{day}</p>
+                        <p key={index} className="text-sm font-medium text-gray-300">{hidden ? `${day.split(" – ")[0]} – ${MASKED}` : day}</p>
                       ))}
                     </div>
                   ) : "N/A"

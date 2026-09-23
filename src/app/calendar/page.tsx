@@ -12,6 +12,8 @@ import MenuButton from "@/components/Menu";
 import BottomNav from "@/components/BottomNav";
 import { CATEGORY_COLORS, CATEGORY_ICONS } from "@/lib/categoryConfig";
 import { useAuthGuard } from "@/hooks/useAuthGuard";
+import { usePrivacyMode, MASKED } from "@/hooks/usePrivacyMode";
+import PrivacyToggle from "@/components/PrivacyToggle";
 import { apiFetch } from "@/utils/apiFetch";
 import Link from "next/link";
 
@@ -42,6 +44,7 @@ function heatColor(expense: number): { bg: string; bar: string; intensity: numbe
 
 function WeeklyRhythm({ txs }: { txs: Transaction[] }) {
   const today = new Date().getDay();
+  const { hidden } = usePrivacyMode();
 
   const dayData = useMemo(() => Array.from({ length: 7 }, (_, dow) => {
     const dateMap: Record<string, number> = {};
@@ -133,7 +136,7 @@ function WeeklyRhythm({ txs }: { txs: Transaction[] }) {
               </div>
 
               <span className={`text-[9px] font-bold tabular-nums ${avg > 0 ? (isToday ? "text-indigo-300" : "text-gray-400") : "text-ink"}`}>
-                {avg > 0 ? `₹${Math.round(avg) >= 1000 ? `${(Math.round(avg) / 1000).toFixed(1)}k` : Math.round(avg)}` : "—"}
+                {avg > 0 ? hidden ? MASKED : `₹${Math.round(avg) >= 1000 ? `${(Math.round(avg) / 1000).toFixed(1)}k` : Math.round(avg)}` : "—"}
               </span>
               {count > 0 && <span className="text-[8px] text-ink">{count}×</span>}
             </div>
@@ -156,6 +159,7 @@ function CalendarSkeleton() {
 
 export default function CalendarPage() {
   useAuthGuard();
+  const { hidden } = usePrivacyMode();
 
   const [txs, setTxs]                = useState<Transaction[]>([]);
   const [loading, setLoading]         = useState(true);
@@ -226,6 +230,7 @@ export default function CalendarPage() {
               <CalendarDays size={18} className="text-ink-deep" />
             </div>
             <h1 className="text-2xl font-extrabold tracking-tight">Calendar</h1>
+            <PrivacyToggle />
           </div>
           <MenuButton />
         </div>
@@ -284,14 +289,14 @@ export default function CalendarPage() {
                 <TrendingUp size={12} className="text-emerald-400" />
                 <p className="text-[10px] font-bold text-emerald-400/70 uppercase tracking-wider">Income</p>
               </div>
-              <p className="text-lg font-black text-emerald-400 tabular-nums leading-none">₹{monthIncome.toLocaleString()}</p>
+              <p className="text-lg font-black text-emerald-400 tabular-nums leading-none">{hidden ? MASKED : `₹${monthIncome.toLocaleString()}`}</p>
             </div>
             <div className="bg-red-950/40 rounded-2xl p-4">
               <div className="flex items-center gap-1.5 mb-2">
                 <TrendingDown size={12} className="text-red-400" />
                 <p className="text-[10px] font-bold text-red-400/70 uppercase tracking-wider">Expenses</p>
               </div>
-              <p className="text-lg font-black text-red-400 tabular-nums leading-none">₹{monthExpense.toLocaleString()}</p>
+              <p className="text-lg font-black text-red-400 tabular-nums leading-none">{hidden ? MASKED : `₹${monthExpense.toLocaleString()}`}</p>
             </div>
             <div className={`rounded-2xl p-4 ${monthNet >= 0 ? "bg-indigo-950/40" : "bg-orange-950/40"}`}>
               <div className="flex items-center gap-1.5 mb-2">
@@ -299,7 +304,7 @@ export default function CalendarPage() {
                 <p className={`text-[10px] font-bold uppercase tracking-wider ${monthNet >= 0 ? "text-indigo-400/70" : "text-warning-deep/70"}`}>Net</p>
               </div>
               <p className={`text-lg font-black tabular-nums leading-none ${monthNet >= 0 ? "text-indigo-400" : "text-warning-deep"}`}>
-                {monthNet >= 0 ? "+" : "−"}₹{Math.abs(monthNet).toLocaleString()}
+                {hidden ? MASKED : `${monthNet >= 0 ? "+" : "−"}₹${Math.abs(monthNet).toLocaleString()}`}
               </p>
             </div>
           </motion.div>
@@ -369,18 +374,18 @@ export default function CalendarPage() {
                     {/* Expense / income amount */}
                     <div className="w-full">
                       {expense > 0 && (
-                        <p className={`text-[9px] font-black tabular-nums mb-1 ${
+                        <p className={`text-[9px] font-black tabular-nums mb-1 truncate ${
                           heat.intensity >= 1 ? "text-red-400" :
                           heat.intensity >= 0.75 ? "text-warning-deep" :
                           heat.intensity >= 0.5 ? "text-warning-deep" :
                           "text-emerald-400"
                         }`}>
-                          ₹{expense >= 1000 ? `${(expense / 1000).toFixed(1)}k` : expense}
+                          {hidden ? MASKED : `₹${expense >= 1000 ? `${(expense / 1000).toFixed(1)}k` : expense}`}
                         </p>
                       )}
                       {expense === 0 && income > 0 && (
-                        <p className="text-[9px] font-black tabular-nums mb-1 text-emerald-400">
-                          +₹{income >= 1000 ? `${(income / 1000).toFixed(1)}k` : income}
+                        <p className="text-[9px] font-black tabular-nums mb-1 truncate text-emerald-400">
+                          {hidden ? MASKED : `+₹${income >= 1000 ? `${(income / 1000).toFixed(1)}k` : income}`}
                         </p>
                       )}
                       {/* Spend bar */}
@@ -446,12 +451,12 @@ export default function CalendarPage() {
                 <div className="flex items-center gap-2">
                   {selectedExp > 0 && (
                     <span className="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-red-500/15 text-red-400">
-                      <TrendingDown size={10} /> ₹{selectedExp.toLocaleString()}
+                      <TrendingDown size={10} /> {hidden ? MASKED : `₹${selectedExp.toLocaleString()}`}
                     </span>
                   )}
                   {selectedInc > 0 && (
                     <span className="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-400">
-                      <TrendingUp size={10} /> ₹{selectedInc.toLocaleString()}
+                      <TrendingUp size={10} /> {hidden ? MASKED : `₹${selectedInc.toLocaleString()}`}
                     </span>
                   )}
                   <button
@@ -498,7 +503,7 @@ export default function CalendarPage() {
                               </div>
                             </div>
                             <span className={`font-black text-sm flex-shrink-0 ${tx.type === "income" ? "text-emerald-400" : "text-red-400"}`}>
-                              {tx.type === "income" ? "+" : "−"}₹{tx.amount.toLocaleString()}
+                              {hidden ? MASKED : `${tx.type === "income" ? "+" : "−"}₹${tx.amount.toLocaleString()}`}
                             </span>
                           </Link>
                         </motion.li>

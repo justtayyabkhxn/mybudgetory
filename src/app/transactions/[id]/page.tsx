@@ -20,6 +20,8 @@ import Menu from "@/components/Menu";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import EditTransactionModal from "@/components/EditTransactionModal";
 import { useAuthGuard } from "@/hooks/useAuthGuard";
+import { usePrivacyMode, MASKED } from "@/hooks/usePrivacyMode";
+import PrivacyToggle from "@/components/PrivacyToggle";
 import { apiFetch } from "@/utils/apiFetch";
 import { toast } from "@/lib/toast";
 import { CATEGORY_COLORS, CATEGORY_ICONS } from "@/lib/categoryConfig";
@@ -57,6 +59,7 @@ function SkeletonDetail() {
 
 export default function TransactionDetail() {
   useAuthGuard();
+  const { hidden } = usePrivacyMode();
 
   const { id } = useParams();
   const router = useRouter();
@@ -164,12 +167,15 @@ export default function TransactionDetail() {
               </div>
 
               {/* Title */}
-              <h1 className="text-2xl font-black text-ink mb-1 tracking-tight">{tx.title}</h1>
+              <div className="flex items-center justify-center gap-2 mb-1">
+                <h1 className="text-2xl font-black text-ink tracking-tight">{tx.title}</h1>
+                <PrivacyToggle className="relative" />
+              </div>
               <p className="text-sm text-gray-400 mb-5">{tx.category}</p>
 
               {/* Amount */}
               <div className={`text-5xl font-black tracking-tight ${isExpense ? "text-red-400" : "text-emerald-400"}`}>
-                {isExpense ? "−" : "+"}₹{tx.amount.toLocaleString()}
+                {hidden ? MASKED : `${isExpense ? "−" : "+"}₹${tx.amount.toLocaleString()}`}
               </div>
 
               {/* Type badge */}

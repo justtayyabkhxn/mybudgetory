@@ -37,11 +37,13 @@ import {
   getRolling30DayConfig,
   getAvgTxnSizeConfig,
   getIncomeExpenseLineConfig,
+  fmtK,
 } from "@/utils/chartOptions";
 import SlideUp from "./SlideUp";
 import { useTheme } from "@/hooks/useTheme";
 import { alpha, cssVar } from "@/utils/themeColors";
 import { getCatColor } from "@/utils/chartOptions";
+import { MASKED } from "@/hooks/usePrivacyMode";
 
 ChartJS.register(
   CategoryScale, LinearScale, BarElement, PointElement,
@@ -90,6 +92,42 @@ interface Props {
   upiAmount: number;
   transactions?: Transaction[];
   viewDate?: Date;
+  /** Privacy mode: keep chart shapes but mask money ticks and tooltip values. */
+  hidden?: boolean;
+}
+
+/**
+ * Privacy-mode pass over a chart config: money (fmtK) axis ticks become dots
+ * and tooltip values become MASKED. Percent-only charts (savings rate) are
+ * simply not passed through here.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function maskConfig<C extends { data: any; options?: any }>(cfg: C, hidden: boolean): C {
+  if (!hidden) return cfg;
+  const o = cfg.options ?? {};
+  const scales = o.scales
+    ? Object.fromEntries(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        Object.entries(o.scales).map(([k, sc]: [string, any]) => [
+          k,
+          sc?.ticks?.callback === fmtK ? { ...sc, ticks: { ...sc.ticks, callback: () => "•••" } } : sc,
+        ])
+      )
+    : undefined;
+  // Donuts and horizontal bars name each value by its category label
+  const byLabel = o.indexAxis === "y" || !o.scales;
+  const tooltip = {
+    ...o.plugins?.tooltip,
+    callbacks: {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      label: (ctx: any) => `  ${(byLabel ? ctx.label : ctx.dataset.label) || ctx.label}: ${MASKED}`,
+      afterBody: () => [],
+    },
+  };
+  return {
+    ...cfg,
+    options: { ...o, ...(scales && { scales }), plugins: { ...o.plugins, tooltip } },
+  };
 }
 
 // ─── Chart Card Wrapper ───────────────────────────────────────────────────────
@@ -236,6 +274,7 @@ const Charts: React.FC<Props> = ({
   upiAmount,
   transactions = [],
   viewDate,
+  hidden = false,
 }) => {
   // Drag-to-zoom on the cumulative line. No "is zoomed" state on purpose — a
   // re-render mid-zoom rebuilds the options and reverts the zoom that just happened.
@@ -437,12 +476,12 @@ const Charts: React.FC<Props> = ({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <ChartCard title="Income vs Expenses" subtitle="This month's fund split" badge="Donut" accent="indigo" delay={0}>
           <div className="h-[280px] relative">
-            <Doughnut {...getDonutConfig(inflow, expense)} />
+            <Doughnut {...maskConfig(getDonutConfig(inflow, expense), hidden)} />
           </div>
         </ChartCard>
         <ChartCard title="Cash vs UPI" subtitle="Payment mode breakdown" badge="Donut" accent="yellow" delay={0.05}>
           <div className="h-[280px] relative">
-            <Doughnut {...getPaymentModeConfig(cashAmount, upiAmount)} />
+            <Doughnut {...maskConfig(getPaymentModeConfig(cashAmount, upiAmount), hidden)} />
           </div>
         </ChartCard>
       </div>
@@ -450,14 +489,14 @@ const Charts: React.FC<Props> = ({
       {/* Daily Bar */}
       <ChartCard title="Daily Inflow & Expenses" subtitle="Day-by-day breakdown for this month" badge="Bar" accent="green" delay={0.1}>
         <div className="h-[300px] relative">
-          <Bar {...getDailyBarConfig(dailyBarData)} />
+          <Bar {...maskConfig(getDailyBarConfig(dailyBarData), hidden)} />
         </div>
       </ChartCard>
 
       {/* Monthly Overview */}
       <ChartCard title="Monthly Overview" subtitle="Income & expenses per month this year" badge="Column" accent="indigo" delay={0.2}>
         <div className="h-[300px] relative">
-          <Bar {...getMonthlyBarConfig(monthlyBarData)} />
+          <Bar {...maskConfig(getMonthlyBarConfig(monthlyBarData), hidden)} />
         </div>
       </ChartCard>
 
@@ -480,11 +519,11 @@ const Charts: React.FC<Props> = ({
             cumExpense.push(cumE);
           }
         });
-        const cfg = getIncomeExpenseLineConfig({
+        const cfg = maskConfig(getIncomeExpenseLineConfig({
           categories: monthlyBarData.categories,
           inflow: cumInflow,
           expense: cumExpense,
-        });
+        }), hidden);
         const yearCard = (
           <ChartCard title="Cumulative Income vs Expenses" subtitle="Running totals across all months this year" badge="Line" accent="green">
             {zoomReady && (
@@ -538,7 +577,7 @@ const Charts: React.FC<Props> = ({
                 node: (
                   <ChartCard title="Cumulative Spending" subtitle="Running total of expenses this month" badge="New ✦" accent="orange">
                     <div className="h-[280px] relative">
-                      <Line {...getCumulativeConfig({ categories: dayLabels, cumulative: cumulativeExpense, daily: dailyExpenseNulled })} />
+                      <Line {...maskConfig(getCumulativeConfig({ categories: dayLabels, cumulative: cumulativeExpense, daily: dailyExpenseNulled }), hidden)} />
                     </div>
                   </ChartCard>
                 ),
@@ -569,7 +608,7 @@ const Charts: React.FC<Props> = ({
             node: (
               <ChartCard title="Net Monthly Savings" subtitle="Inflow minus expenses per month" badge="Column" accent="green">
                 <div className="h-[280px] relative">
-                  <Bar {...getMonthlySavingsConfig(monthlySavingsData)} />
+                  <Bar {...maskConfig(getMonthlySavingsConfig(monthlySavingsData), hidden)} />
                 </div>
               </ChartCard>
             ),
@@ -580,7 +619,7 @@ const Charts: React.FC<Props> = ({
       {/* Day of Week */}
       <ChartCard title="Day-of-Week Spending" subtitle="Which days do you spend & earn the most?" badge="New ✦" accent="cyan" delay={0.35}>
         <div className="h-[260px] relative">
-          <Bar {...getDayOfWeekConfig({ labels: dowLabels, income: dowIncome, expense: dowExpense })} />
+          <Bar {...maskConfig(getDayOfWeekConfig({ labels: dowLabels, income: dowIncome, expense: dowExpense }), hidden)} />
         </div>
       </ChartCard>
 
@@ -594,7 +633,7 @@ const Charts: React.FC<Props> = ({
             node: (
               <ChartCard title="Category Breakdown" subtitle="Expenses by category this month" badge="Bar" accent="red">
                 <div className="h-[300px] relative">
-                  <Bar {...getCategoryMonthlyBarConfig(categoryWiseMonthlyData)} />
+                  <Bar {...maskConfig(getCategoryMonthlyBarConfig(categoryWiseMonthlyData), hidden)} />
                 </div>
               </ChartCard>
             ),
@@ -605,7 +644,7 @@ const Charts: React.FC<Props> = ({
             node: (
               <ChartCard title="Category Share" subtitle="Proportional view of spending" badge="Donut" accent="orange">
                 <div className="h-[300px] relative">
-                  <Doughnut {...getCategoryMonthlyDonutConfig(categoryWiseMonthlyData)} />
+                  <Doughnut {...maskConfig(getCategoryMonthlyDonutConfig(categoryWiseMonthlyData), hidden)} />
                 </div>
               </ChartCard>
             ),
@@ -616,7 +655,7 @@ const Charts: React.FC<Props> = ({
             node: (
               <ChartCard title="Yearly Category Spending" subtitle="Total per category for this year" badge="Year" accent="yellow">
                 <div className="h-[300px] relative">
-                  <Bar {...getCategoryYearlyBarConfig(categoryWiseYearlyData)} />
+                  <Bar {...maskConfig(getCategoryYearlyBarConfig(categoryWiseYearlyData), hidden)} />
                 </div>
               </ChartCard>
             ),
@@ -627,7 +666,7 @@ const Charts: React.FC<Props> = ({
             node: (
               <ChartCard title="Category Spending Trends" subtitle="Each category's expense since the beginning" badge="New ✦" accent="purple">
                 <div className="h-[320px] relative">
-                  <Line {...getCategoryTrendConfig({ months: allMonthsLabels, series: categoryTrendSeries })} />
+                  <Line {...maskConfig(getCategoryTrendConfig({ months: allMonthsLabels, series: categoryTrendSeries }), hidden)} />
                 </div>
               </ChartCard>
             ),
@@ -638,7 +677,7 @@ const Charts: React.FC<Props> = ({
             node: (
               <ChartCard title="This Month vs Last Month" subtitle="Side-by-side category comparison" badge="New ✦" accent="indigo">
                 <div className="h-[300px] relative">
-                  <Bar {...getMonthOverMonthConfig({ categories: momCats, thisMonth: momThis, lastMonth: momLast, thisMonthLabel, lastMonthLabel })} />
+                  <Bar {...maskConfig(getMonthOverMonthConfig({ categories: momCats, thisMonth: momThis, lastMonth: momLast, thisMonthLabel, lastMonthLabel }), hidden)} />
                 </div>
               </ChartCard>
             ),
@@ -681,7 +720,7 @@ const Charts: React.FC<Props> = ({
                     },
                     tooltip: {
                       callbacks: {
-                        label: (ctx) => ` ₹${Number(ctx.raw).toLocaleString()}`,
+                        label: (ctx) => hidden ? ` ${MASKED}` : ` ₹${Number(ctx.raw).toLocaleString()}`,
                       },
                     },
                   },
@@ -696,35 +735,35 @@ const Charts: React.FC<Props> = ({
       {/* Income Sources */}
       <ChartCard title="Income Sources Over Time" subtitle="Stacked income by category across months" badge="New ✦" accent="green" delay={0.65}>
         <div className="h-[300px] relative">
-          <Bar {...getIncomeSourcesConfig({ months: allMonthsLabels, series: incomeSourcesSeries })} />
+          <Bar {...maskConfig(getIncomeSourcesConfig({ months: allMonthsLabels, series: incomeSourcesSeries }), hidden)} />
         </div>
       </ChartCard>
 
       {/* Cash vs UPI Monthly Trend */}
       <ChartCard title="Cash vs UPI Monthly Trend" subtitle="How you pay — stacked by month" badge="New ✦" accent="yellow" delay={0.7}>
         <div className="h-[280px] relative">
-          <Bar {...getCashUpiTrendConfig({ months: allMonthsLabels, cash: cashTrend, upi: upiTrend })} />
+          <Bar {...maskConfig(getCashUpiTrendConfig({ months: allMonthsLabels, cash: cashTrend, upi: upiTrend }), hidden)} />
         </div>
       </ChartCard>
 
       {/* Week-of-Month */}
       <ChartCard title="Week-of-Month Spending" subtitle="Which week do you spend the most?" badge="New ✦" accent="orange" delay={0.75}>
         <div className="h-[260px] relative">
-          <Bar {...getWeekOfMonthConfig({ weeks: weekLabels, data: weekData })} />
+          <Bar {...maskConfig(getWeekOfMonthConfig({ weeks: weekLabels, data: weekData }), hidden)} />
         </div>
       </ChartCard>
 
       {/* Rolling 30-Day */}
       <ChartCard title="Rolling 30-Day Expenses" subtitle="Daily expense for the last 30 days" badge="New ✦" accent="red" delay={0.8}>
         <div className="h-[280px] relative">
-          <Line {...getRolling30DayConfig({ labels: rolling30Labels, values: rolling30Values })} />
+          <Line {...maskConfig(getRolling30DayConfig({ labels: rolling30Labels, values: rolling30Values }), hidden)} />
         </div>
       </ChartCard>
 
       {/* Average Transaction Size */}
       <ChartCard title="Avg Transaction Size" subtitle="Are your individual transactions getting bigger?" badge="New ✦" accent="cyan" delay={0.85}>
         <div className="h-[280px] relative">
-          <Line {...getAvgTxnSizeConfig({ months: allMonthsLabels, avgExpense: avgExpensePerMonth, avgIncome: avgIncomePerMonth })} />
+          <Line {...maskConfig(getAvgTxnSizeConfig({ months: allMonthsLabels, avgExpense: avgExpensePerMonth, avgIncome: avgIncomePerMonth }), hidden)} />
         </div>
       </ChartCard>
 

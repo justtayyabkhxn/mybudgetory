@@ -3,6 +3,11 @@
 import { useCallback, useEffect, useState } from "react";
 
 const KEY = "privacyMode";
+/** Same-tab broadcast: `storage` events only fire in *other* tabs. */
+const EVENT = "privacymodechange";
+
+/** What a hidden amount renders as. */
+export const MASKED = "₹ ******";
 
 /** Global, persisted "hide amounts" toggle. Masked (******) by default. */
 export function usePrivacyMode() {
@@ -15,16 +20,19 @@ export function usePrivacyMode() {
     const onStorage = (e: StorageEvent) => {
       if (e.key === KEY) setHidden(e.newValue === "true");
     };
+    const onLocal = (e: Event) => setHidden((e as CustomEvent<boolean>).detail);
     window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
+    window.addEventListener(EVENT, onLocal);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener(EVENT, onLocal);
+    };
   }, []);
 
   const toggle = useCallback(() => {
-    setHidden((prev) => {
-      const next = !prev;
-      localStorage.setItem(KEY, String(next));
-      return next;
-    });
+    const next = localStorage.getItem(KEY) === "false";
+    localStorage.setItem(KEY, String(next));
+    window.dispatchEvent(new CustomEvent<boolean>(EVENT, { detail: next }));
   }, []);
 
   return { hidden, toggle };

@@ -19,6 +19,8 @@ import MenuButton from "@/components/Menu";
 import BottomNav from "@/components/BottomNav";
 import { CATEGORY_COLORS, CATEGORY_ICONS } from "@/lib/categoryConfig";
 import { SpeedometerGauge } from "@/components/DashboardInsights";
+import PrivacyToggle from "@/components/PrivacyToggle";
+import { usePrivacyMode, MASKED } from "@/hooks/usePrivacyMode";
 
 interface Transaction {
   _id: string;
@@ -51,6 +53,7 @@ const ALL_CATEGORIES = [
 
 export default function BudgetGoalsPage() {
   const router = useRouter();
+  const { hidden } = usePrivacyMode();
   const [txs, setTxs] = useState<Transaction[]>([]);
   const [goals, setGoals] = useState<BudgetGoal[]>([]);
   const [loading, setLoading] = useState(true);
@@ -245,6 +248,7 @@ export default function BudgetGoalsPage() {
             <h1 className="text-3xl font-extrabold tracking-tight">
               Budget Goals
             </h1>
+            <PrivacyToggle className="mt-1" />
           </div>
           <MenuButton />
         </div>
@@ -266,13 +270,13 @@ export default function BudgetGoalsPage() {
             <div>
               <p className="text-xs text-gray-400 mb-1">Total Spent</p>
               <p className="text-3xl font-black text-red-400">
-                ₹{totalSpent.toLocaleString()}
+                {hidden ? MASKED : `₹${totalSpent.toLocaleString()}`}
               </p>
             </div>
             <div>
               <p className="text-xs text-gray-400 mb-1">Total Limit</p>
               <p className="text-3xl font-black text-indigo-400">
-                {totalLimit > 0 ? `₹${totalLimit.toLocaleString()}` : "—"}
+                {totalLimit > 0 ? (hidden ? MASKED : `₹${totalLimit.toLocaleString()}`) : "—"}
               </p>
             </div>
             {totalLimit > 0 && (
@@ -310,7 +314,7 @@ export default function BudgetGoalsPage() {
                 </p>
                 <p><span className="text-gray-400">Remaining: </span>
                   <span className={`font-bold ${totalLimit - totalSpent >= 0 ? "text-green-400" : "text-red-400"}`}>
-                    {totalLimit - totalSpent >= 0 ? "₹" : "-₹"}{Math.abs(totalLimit - totalSpent).toLocaleString()}
+                    {hidden ? MASKED : `${totalLimit - totalSpent >= 0 ? "₹" : "-₹"}${Math.abs(totalLimit - totalSpent).toLocaleString()}`}
                   </span>
                 </p>
               </div>
@@ -361,7 +365,7 @@ export default function BudgetGoalsPage() {
                         <p className="text-xs text-gray-400">
                           Spent:{" "}
                           <span className="text-red-400 font-semibold">
-                            ₹{spent.toLocaleString()}
+                            {hidden ? MASKED : `₹${spent.toLocaleString()}`}
                           </span>
                         </p>
                       </div>
@@ -404,16 +408,16 @@ export default function BudgetGoalsPage() {
                         <div className="flex-1 space-y-1 text-xs text-gray-400 pb-1">
                           <div className="flex justify-between">
                             <span className="text-gray-600">Spent</span>
-                            <span className="font-semibold text-red-400">₹{spent.toLocaleString()}</span>
+                            <span className="font-semibold text-red-400">{hidden ? MASKED : `₹${spent.toLocaleString()}`}</span>
                           </div>
                           <div className="flex justify-between">
                             <span className="text-gray-600">Limit</span>
-                            <span className="font-semibold text-gray-300">₹{limit.toLocaleString()}</span>
+                            <span className="font-semibold text-gray-300">{hidden ? MASKED : `₹${limit.toLocaleString()}`}</span>
                           </div>
                           <div className="flex justify-between">
                             <span className="text-gray-600">Remaining</span>
                             <span className={`font-semibold ${limit - spent >= 0 ? "text-green-400" : "text-red-400"}`}>
-                              {limit - spent >= 0 ? "₹" : "-₹"}{Math.abs(limit - spent).toLocaleString()}
+                              {hidden ? MASKED : `${limit - spent >= 0 ? "₹" : "-₹"}${Math.abs(limit - spent).toLocaleString()}`}
                             </span>
                           </div>
                         </div>

@@ -200,9 +200,12 @@ export default function SignupPage() {
 
                   <p className="text-center text-[11px] text-ink mt-3">
                     By signing up you agree to our{' '}
-                    <span className="text-gray-500 underline underline-offset-2 cursor-pointer hover:text-gray-400 transition-colors">
-                      Terms of Service
-                    </span>
+                    <Link
+                      href="/privacy"
+                      className="text-gray-500 underline underline-offset-2 cursor-pointer hover:text-gray-400 transition-colors"
+                    >
+                      Privacy Policy
+                    </Link>
                   </p>
                 </div>
               </form>

@@ -4,6 +4,7 @@ import { useRef } from "react";
 import { toPng } from "html-to-image";
 import { Download, TrendingUp, TrendingDown, Wallet } from "lucide-react";
 import { CATEGORY_COLORS } from "@/lib/categoryConfig";
+import { usePrivacyMode, MASKED } from "@/hooks/usePrivacyMode";
 
 interface Transaction {
   _id: string;
@@ -26,6 +27,7 @@ export default function MonthlyReport({
   userName,
 }: MonthlyReportProps) {
   const reportRef = useRef<HTMLDivElement>(null);
+  const { hidden } = usePrivacyMode();
 
   const now = new Date();
   const currentMonth = now.getMonth();
@@ -139,7 +141,7 @@ export default function MonthlyReport({
               </p>
             </div>
             <p className="text-3xl font-black text-green-400">
-              ₹{totalIncome.toLocaleString()}
+              {hidden ? MASKED : `₹${totalIncome.toLocaleString()}`}
             </p>
           </div>
           <div className="bg-red-500/10 rounded-xl p-4">
@@ -150,7 +152,7 @@ export default function MonthlyReport({
               </p>
             </div>
             <p className="text-3xl font-black text-red-400">
-              ₹{totalExpenses.toLocaleString()}
+              {hidden ? MASKED : `₹${totalExpenses.toLocaleString()}`}
             </p>
           </div>
         </div>
@@ -167,8 +169,9 @@ export default function MonthlyReport({
                 savings >= 0 ? "text-green-400" : "text-red-400"
               }`}
             >
-              {savings >= 0 ? "+" : "-"}₹
-              {Math.abs(savings).toLocaleString()}
+              {hidden
+                ? MASKED
+                : `${savings >= 0 ? "+" : "-"}₹${Math.abs(savings).toLocaleString()}`}
             </p>
           </div>
           <div className="text-right">
@@ -212,7 +215,7 @@ export default function MonthlyReport({
                       </span>
                     </div>
                     <span className="text-sm font-black text-gray-200">
-                      ₹{amount.toLocaleString()}
+                      {hidden ? MASKED : `₹${amount.toLocaleString()}`}
                     </span>
                   </div>
                 );
@@ -239,7 +242,7 @@ export default function MonthlyReport({
                 </p>
               </div>
               <p className="text-xl font-black text-red-400">
-                ₹{biggestTx.amount.toLocaleString()}
+                {hidden ? MASKED : `₹${biggestTx.amount.toLocaleString()}`}
               </p>
             </div>
           </div>

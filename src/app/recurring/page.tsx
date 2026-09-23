@@ -24,6 +24,8 @@ import { CATEGORY_COLORS, CATEGORY_ICONS, CATEGORIES } from "@/lib/categoryConfi
 import { useAuthGuard } from "@/hooks/useAuthGuard";
 import { apiFetch } from "@/utils/apiFetch";
 import { toast } from "@/lib/toast";
+import PrivacyToggle from "@/components/PrivacyToggle";
+import { usePrivacyMode, MASKED } from "@/hooks/usePrivacyMode";
 
 interface RecurringTransaction {
   _id: string;
@@ -59,6 +61,7 @@ function SkeletonCard() {
 
 export default function RecurringPage() {
   useAuthGuard();
+  const { hidden } = usePrivacyMode();
 
   const [items, setItems] = useState<RecurringTransaction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -211,6 +214,7 @@ export default function RecurringPage() {
           <div className="flex items-center gap-2">
             <RefreshCcw className="text-violet-400" size={26} />
             <h1 className="text-3xl font-extrabold tracking-tight">Recurring</h1>
+            <PrivacyToggle className="mt-1" />
           </div>
           <MenuButton />
         </div>
@@ -223,7 +227,7 @@ export default function RecurringPage() {
               {activeCount} active
             </div>
             <div className="flex items-center gap-2 px-4 py-2 bg-red-500/10 rounded-xl text-sm font-bold text-red-300">
-              Monthly outflow: ₹{monthlyTotal.toLocaleString()}
+              Monthly outflow: {hidden ? MASKED : `₹${monthlyTotal.toLocaleString()}`}
             </div>
           </div>
         )}
@@ -445,7 +449,7 @@ export default function RecurringPage() {
                   {/* Right */}
                   <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
                     <span className={`text-lg font-black ${item.type === "income" ? "text-emerald-400" : "text-red-400"}`}>
-                      {item.type === "income" ? "+" : "-"}₹{item.amount.toLocaleString()}
+                      {hidden ? MASKED : `${item.type === "income" ? "+" : "-"}₹${item.amount.toLocaleString()}`}
                     </span>
 
                     <button

@@ -14,6 +14,8 @@ import { CATEGORY_COLORS, CATEGORY_ICONS } from "@/lib/categoryConfig";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import EditTransactionModal from "@/components/EditTransactionModal";
 import { useAuthGuard } from "@/hooks/useAuthGuard";
+import { usePrivacyMode, MASKED } from "@/hooks/usePrivacyMode";
+import PrivacyToggle from "@/components/PrivacyToggle";
 import { apiFetch } from "@/utils/apiFetch";
 import { toast } from "@/lib/toast";
 import {
@@ -40,6 +42,7 @@ interface Transaction {
 
 export default function Transactions() {
   useAuthGuard();
+  const { hidden } = usePrivacyMode();
 
   const [txs, setTxs] = useState<Transaction[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -146,6 +149,7 @@ export default function Transactions() {
           <div className="flex items-center gap-2">
             <Receipt className="text-green-400" size={26} />
             <h1 className="text-3xl font-extrabold tracking-tight">Transactions</h1>
+            <PrivacyToggle className="mt-1" />
           </div>
           <MenuButton />
         </div>
@@ -164,7 +168,7 @@ export default function Transactions() {
               </div>
               <div>
                 <p className="text-[10px] font-bold text-green-400/70 uppercase tracking-wider">Income</p>
-                <p className="text-lg font-black text-green-400">₹{filteredIncome.toLocaleString()}</p>
+                <p className="text-lg font-black text-green-400">{hidden ? MASKED : `₹${filteredIncome.toLocaleString()}`}</p>
               </div>
             </div>
             <div className="bg-red-900/20 rounded-2xl p-4 flex items-center gap-3">
@@ -173,7 +177,7 @@ export default function Transactions() {
               </div>
               <div>
                 <p className="text-[10px] font-bold text-red-400/70 uppercase tracking-wider">Expenses</p>
-                <p className="text-lg font-black text-red-400">₹{filteredExpense.toLocaleString()}</p>
+                <p className="text-lg font-black text-red-400">{hidden ? MASKED : `₹${filteredExpense.toLocaleString()}`}</p>
               </div>
             </div>
             <div className={`${filteredNet >= 0 ? "bg-emerald-900/20" : "bg-orange-900/20"} rounded-2xl p-4 flex items-center gap-3`}>
@@ -183,7 +187,7 @@ export default function Transactions() {
               <div>
                 <p className={`text-[10px] font-bold uppercase tracking-wider ${filteredNet >= 0 ? "text-emerald-400/70" : "text-warning-deep/70"}`}>Net</p>
                 <p className={`text-lg font-black ${filteredNet >= 0 ? "text-emerald-400" : "text-warning-deep"}`}>
-                  {filteredNet >= 0 ? "+" : ""}₹{Math.abs(filteredNet).toLocaleString()}
+                  {hidden ? MASKED : `${filteredNet >= 0 ? "+" : ""}₹${Math.abs(filteredNet).toLocaleString()}`}
                 </p>
               </div>
             </div>
@@ -304,7 +308,7 @@ export default function Transactions() {
                   <div className="flex items-center justify-between px-4 py-2 bg-gray-900/60 border-b border-gray-800/60">
                     <span className="text-xs font-black text-gray-500 uppercase tracking-widest">{dateLabel}</span>
                     <span className={`text-xs font-bold ${dayTotal >= 0 ? "text-green-400" : "text-red-400"}`}>
-                      {dayTotal >= 0 ? "+" : ""}₹{Math.abs(dayTotal).toLocaleString()}
+                      {hidden ? MASKED : `${dayTotal >= 0 ? "+" : ""}₹${Math.abs(dayTotal).toLocaleString()}`}
                     </span>
                   </div>
 
@@ -352,7 +356,7 @@ export default function Transactions() {
                                 {/* Amount */}
                                 <div className="text-right flex-shrink-0">
                                   <p className={`font-black text-base leading-none ${tx.type === "income" ? "text-green-400" : "text-red-400"}`}>
-                                    {tx.type === "income" ? "+" : "-"}₹{tx.amount.toLocaleString()}
+                                    {hidden ? MASKED : `${tx.type === "income" ? "+" : "-"}₹${tx.amount.toLocaleString()}`}
                                   </p>
                                 </div>
                               </div>

@@ -32,6 +32,13 @@ const Footer = () => {
           </Link>{" "}
           · © {new Date().getFullYear()}
         </p>
+
+        <Link
+          href="/privacy"
+          className="text-xs text-on-ink-surface/70 underline underline-offset-2 hover:text-primary transition-colors duration-200"
+        >
+          Privacy Policy
+        </Link>
       </div>
     </footer>
   );

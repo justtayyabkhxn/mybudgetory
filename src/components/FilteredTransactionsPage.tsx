@@ -8,6 +8,8 @@ import { SkeletonTransactionRow } from "@/components/SkeletonLoader";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import EditTransactionModal from "@/components/EditTransactionModal";
 import { useAuthGuard } from "@/hooks/useAuthGuard";
+import { usePrivacyMode, MASKED } from "@/hooks/usePrivacyMode";
+import PrivacyToggle from "@/components/PrivacyToggle";
 import { apiFetch } from "@/utils/apiFetch";
 import { toast } from "@/lib/toast";
 import { CATEGORY_COLORS, CATEGORY_ICONS } from "@/lib/categoryConfig";
@@ -37,6 +39,7 @@ interface Props {
 
 export default function FilteredTransactionsPage({ type }: Props) {
   useAuthGuard();
+  const { hidden } = usePrivacyMode();
 
   const [txs, setTxs] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -104,6 +107,7 @@ export default function FilteredTransactionsPage({ type }: Props) {
           <div className="flex items-center gap-2">
             <Icon size={22} className={isExpense ? "text-red-400" : "text-green-400"} />
             <h1 className="text-4xl font-extrabold tracking-tight">{title}</h1>
+            <PrivacyToggle className="mt-1" />
           </div>
           <Menu />
         </div>
@@ -116,7 +120,7 @@ export default function FilteredTransactionsPage({ type }: Props) {
                 {monthName} Total
               </p>
               <p className={`text-3xl font-black ${isExpense ? "text-red-400" : "text-green-400"}`}>
-                ₹{total.toLocaleString()}
+                {hidden ? MASKED : `₹${total.toLocaleString()}`}
               </p>
             </div>
             <p className="text-sm text-gray-500">{filtered.length} transactions</p>
@@ -161,7 +165,7 @@ export default function FilteredTransactionsPage({ type }: Props) {
                     </div>
                     <div className="flex items-center gap-1 flex-shrink-0">
                       <p className={`font-black text-base ${isExpense ? "text-red-400" : "text-green-400"}`}>
-                        {isExpense ? "-" : "+"}₹{tx.amount.toLocaleString()}
+                        {hidden ? MASKED : `${isExpense ? "-" : "+"}₹${tx.amount.toLocaleString()}`}
                       </p>
                       <button
                         onClick={() => setEditingTx(tx)}

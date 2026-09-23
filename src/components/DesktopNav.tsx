@@ -12,8 +12,8 @@ import {
   Coins,
   Divide,
   FileDigit,
+  Gem,
   LogOut,
-  MonitorUp,
   PiggyBank,
   RefreshCcw,
   Target,
@@ -40,6 +40,7 @@ const MONEY: Group = {
     { href: "/expenses", label: "Expenses", icon: <BanknoteArrowDown size={16} />, desc: "Outflows, filtered" },
     { href: "/inflow", label: "Income", icon: <Wallet size={16} />, desc: "Inflows at a glance" },
     { href: "/net-worth", label: "Net Worth", icon: <PiggyBank size={16} />, desc: "Your financial snapshot" },
+    { href: "/assets", label: "Assets", icon: <Gem size={16} />, desc: "Stocks, crypto & metals" },
     { href: "/debt-lent", label: "Debt & Lent", icon: <WalletMinimal size={16} />, desc: "Who owes what" },
   ],
 };
@@ -62,7 +63,6 @@ const TOOLS: Group = {
     { href: "/budget-goals", label: "Budget Goals", icon: <Target size={16} />, desc: "Per-category limits" },
     { href: "/recurring", label: "Recurring", icon: <RefreshCcw size={16} />, desc: "Subscription tracker" },
     { href: "/split", label: "Split Bills", icon: <Divide size={16} />, desc: "Divide with friends" },
-    // { href: "/screen-share", label: "Screen Share", icon: <MonitorUp size={16} />, desc: "Share your screen" },
   ],
 };
 

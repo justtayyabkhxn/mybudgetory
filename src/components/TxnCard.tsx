@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import React from "react";
+import { usePrivacyMode, MASKED } from "@/hooks/usePrivacyMode";
 
 interface TxnCardProps {
   title: string;
@@ -12,6 +13,7 @@ interface TxnCardProps {
 }
 
 export function TxnCard({ title, amount, color, icon, subtitle }: TxnCardProps) {
+  const { hidden } = usePrivacyMode();
   return (
     <motion.div
       whileHover={{ scale: 1.03 }}
@@ -44,7 +46,7 @@ export function TxnCard({ title, amount, color, icon, subtitle }: TxnCardProps) 
 
         {/* Amount - big and bold */}
         <p data-type="currency" className={`text-3xl font-black tracking-tight ${color}`}>
-          {amount}
+          {hidden ? MASKED : amount}
         </p>
       </div>
     </motion.div>

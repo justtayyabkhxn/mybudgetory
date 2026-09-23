@@ -26,6 +26,8 @@ import ConfirmDialog from "@/components/ConfirmDialog";
 import { useAuthGuard } from "@/hooks/useAuthGuard";
 import { apiFetch } from "@/utils/apiFetch";
 import { toast } from "@/lib/toast";
+import PrivacyToggle from "@/components/PrivacyToggle";
+import { usePrivacyMode, MASKED } from "@/hooks/usePrivacyMode";
 
 interface Entry {
   _id: string;
@@ -54,6 +56,7 @@ function SkeletonEntry() {
 
 export default function DebtLentPage() {
   useAuthGuard();
+  const { hidden } = usePrivacyMode();
 
   const [entries, setEntries] = useState<Entry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -200,6 +203,7 @@ export default function DebtLentPage() {
           <div className="flex items-center gap-2">
             <WalletMinimal className="text-warning-deep" size={26} />
             <h1 className="text-3xl font-extrabold tracking-tight">Debt & Lent</h1>
+            <PrivacyToggle className="mt-1" />
           </div>
           <MenuButton />
         </div>
@@ -211,13 +215,13 @@ export default function DebtLentPage() {
               <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-400 mb-1">
                 <TrendingUp size={12} /> You are owed
               </div>
-              <p className="text-2xl font-black text-emerald-300">₹{totalLent.toLocaleString()}</p>
+              <p className="text-2xl font-black text-emerald-300">{hidden ? MASKED : `₹${totalLent.toLocaleString()}`}</p>
             </div>
             <div className="bg-red-500/8 rounded-2xl p-4">
               <div className="flex items-center gap-1.5 text-xs font-bold text-red-400 mb-1">
                 <TrendingDown size={12} /> You owe
               </div>
-              <p className="text-2xl font-black text-red-300">₹{totalDebt.toLocaleString()}</p>
+              <p className="text-2xl font-black text-red-300">{hidden ? MASKED : `₹${totalDebt.toLocaleString()}`}</p>
             </div>
           </div>
         )}
@@ -445,6 +449,7 @@ function EntryCard({
   onDelete: () => void;
   onPayment?: (amount: number) => void;
 }) {
+  const { hidden } = usePrivacyMode();
   const [showPayForm, setShowPayForm] = useState(false);
   const [payInput, setPayInput] = useState("");
   const [paying, setPaying] = useState(false);
@@ -516,8 +521,8 @@ function EntryCard({
           {hasPartialPayment && (
             <div className="mt-2">
               <div className="flex items-center justify-between text-[11px] mb-1">
-                <span className="text-gray-500">Paid: <span className="text-emerald-400 font-semibold">₹{paid.toLocaleString()}</span></span>
-                <span className="text-gray-500">Remaining: <span className={`font-semibold ${isLent ? "text-emerald-300" : "text-red-300"}`}>₹{remaining.toLocaleString()}</span></span>
+                <span className="text-gray-500">Paid: <span className="text-emerald-400 font-semibold">{hidden ? MASKED : `₹${paid.toLocaleString()}`}</span></span>
+                <span className="text-gray-500">Remaining: <span className={`font-semibold ${isLent ? "text-emerald-300" : "text-red-300"}`}>{hidden ? MASKED : `₹${remaining.toLocaleString()}`}</span></span>
               </div>
               <div className="h-1.5 rounded-full bg-canvas/80 overflow-hidden">
                 <div
@@ -534,11 +539,11 @@ function EntryCard({
         <div className="flex items-center gap-1.5 flex-shrink-0">
           <div className="text-right mr-1">
             <span className={`font-black text-base ${isLent ? "text-emerald-400" : "text-red-400"}`}>
-              ₹{entry.amount.toLocaleString()}
+              {hidden ? MASKED : `₹${entry.amount.toLocaleString()}`}
             </span>
             {hasPartialPayment && (
               <p className={`text-[11px] font-semibold ${isLent ? "text-emerald-500" : "text-red-500"}`}>
-                ₹{remaining.toLocaleString()} left
+                {hidden ? MASKED : `₹${remaining.toLocaleString()}`} left
               </p>
             )}
           </div>
@@ -597,7 +602,7 @@ function EntryCard({
           >
             <div className={`mx-4 mb-4 p-3 rounded-xl ${isLent ? "bg-emerald-500/5" : "bg-red-500/5"}`}>
               <p className="text-xs font-semibold text-gray-400 mb-2">
-                Log payment — max ₹{remaining.toLocaleString()}
+                Log payment — max {hidden ? MASKED : `₹${remaining.toLocaleString()}`}
               </p>
               <div className="flex gap-2">
                 <div className="relative flex-1">
@@ -608,7 +613,7 @@ function EntryCard({
                     max={remaining}
                     value={payInput}
                     onChange={e => setPayInput(e.target.value)}
-                    placeholder={`Amount (max ₹${remaining.toLocaleString()})`}
+                    placeholder={`Amount (max ${hidden ? MASKED : `₹${remaining.toLocaleString()}`})`}
                     className="w-full bg-canvas-soft/80 text-ink placeholder-mute rounded-lg pl-8 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>

@@ -8,6 +8,8 @@ import {
 } from "lucide-react";
 import MenuButton from "@/components/Menu";
 import Header from "@/components/Header";
+import PrivacyToggle from "@/components/PrivacyToggle";
+import { usePrivacyMode, MASKED } from "@/hooks/usePrivacyMode";
 
 type Person = {
   name: string;
@@ -30,6 +32,7 @@ declare global {
 const STORAGE_KEY = "split-data";
 
 export default function SplitPage() {
+  const { hidden } = usePrivacyMode();
   const [totalAmount, setTotalAmount]   = useState<number | "">("");
   const [people, setPeople]             = useState<Person[]>([]);
   const [name, setName]                 = useState("");
@@ -140,6 +143,7 @@ export default function SplitPage() {
                 <Users2 size={16} className="text-indigo-400" />
               </div>
               <h1 className="text-3xl font-extrabold tracking-tight">Split Expenses</h1>
+              <PrivacyToggle className="mt-1" />
             </div>
             <p className="text-sm text-gray-500 ml-10">Divide bills equally among friends</p>
           </div>
@@ -256,7 +260,7 @@ export default function SplitPage() {
             <div className="flex items-center gap-4 mb-5 p-4 rounded-xl bg-canvas/80">
               <div className="flex-1">
                 <p className="text-xs text-gray-500 mb-0.5">Each person owes</p>
-                <p className="text-2xl font-extrabold text-indigo-300">₹ {equalShare.toFixed(2)}</p>
+                <p className="text-2xl font-extrabold text-indigo-300">{hidden ? MASKED : `₹ ${equalShare.toFixed(2)}`}</p>
               </div>
               <div className="flex gap-3 text-right">
                 <div>
@@ -298,7 +302,7 @@ export default function SplitPage() {
                           {p.name}
                         </p>
                         <p className="text-xs text-gray-500 mt-0.5">
-                          Owes ₹ {equalShare.toFixed(2)}
+                          Owes {hidden ? MASKED : `₹ ${equalShare.toFixed(2)}`}
                         </p>
                         {/* Paid toggle */}
                         <button

@@ -9,6 +9,7 @@ import {
   AlertTriangle,
   Check,
   ChevronDown,
+  ChevronRight,
   Download,
   Eye,
   EyeOff,
@@ -16,12 +17,17 @@ import {
   Loader2,
   Lock,
   Shield,
+  ShieldCheck,
   Trash2,
   Upload,
   User,
   X,
 } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { usePrivacyMode } from "@/hooks/usePrivacyMode";
+import { clearQueue } from "@/lib/offlineQueue";
+import { toast } from "@/lib/toast";
 
 type UserProfile = {
   name: string;
@@ -220,8 +226,160 @@ function DeleteModal({
   );
 }
 
+// ─── Delete account modal ─────────────────────────────────────────────────────
+const DELETED_ON_ACCOUNT_DELETE = [
+  "Your profile (name, email, password)",
+  "All transactions and expenses",
+  "Bank balance and net-worth history",
+  "Assets and their valuations",
+  "Budget goals, debts and recurring payments",
+  "Split-bill events you created",
+];
+
+function DeleteAccountModal({
+  open,
+  onClose,
+  onConfirm,
+  isDeleting,
+  error,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onConfirm: (password: string) => void;
+  isDeleting: boolean;
+  error: string | null;
+}) {
+  const [password, setPassword] = useState("");
+
+  // Forget the typed password whenever the dialog is dismissed
+  const close = () => {
+    setPassword("");
+    onClose();
+  };
+
+  return (
+    <AnimatePresence>
+      {open && (
+        <>
+          <motion.div
+            className="fixed inset-0 bg-scrim/70 backdrop-blur-sm z-50"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={isDeleting ? undefined : close}
+          />
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            initial={{ opacity: 0, scale: 0.94 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.94 }}
+            transition={{ type: "spring", stiffness: 260, damping: 22 }}
+            onClick={isDeleting ? undefined : close}
+          >
+            <form
+              className="w-full max-w-sm bg-canvas rounded-2xl p-6 shadow-lg"
+              onClick={(e) => e.stopPropagation()}
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (password && !isDeleting) onConfirm(password);
+              }}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2 text-red-400">
+                  <AlertTriangle size={18} />
+                  <span className="text-sm font-black uppercase tracking-widest">
+                    Delete account
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={close}
+                  disabled={isDeleting}
+                  className="text-gray-600 hover:text-gray-300 transition"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              <p className="text-gray-300 text-sm leading-relaxed mb-3">
+                This <span className="text-ink font-bold">permanently</span> deletes your account
+                and everything in it. It cannot be undone.
+              </p>
+              <ul className="text-xs text-gray-500 space-y-1 mb-4">
+                {DELETED_ON_ACCOUNT_DELETE.map((item) => (
+                  <li key={item} className="flex items-start gap-2">
+                    <Trash2 size={12} className="text-red-400 mt-0.5 shrink-0" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+
+              <label className="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-1.5 block">
+                Confirm with your password
+              </label>
+              <PasswordField
+                placeholder="Current password"
+                value={password}
+                onChange={setPassword}
+              />
+              {error && (
+                <p className="text-xs text-red-400 font-semibold mt-2">✗ {error}</p>
+              )}
+
+              <div className="flex gap-3 mt-5">
+                <button
+                  type="button"
+                  onClick={close}
+                  disabled={isDeleting}
+                  className="flex-1 py-2.5 rounded-xl bg-canvas-soft/80 hover:bg-primary-pale text-gray-300 text-sm font-semibold transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={!password || isDeleting}
+                  className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 disabled:opacity-40 disabled:cursor-not-allowed text-on-solid text-sm font-bold transition flex items-center justify-center gap-2"
+                >
+                  {isDeleting ? (
+                    <Loader2 size={15} className="animate-spin" />
+                  ) : (
+                    <Trash2 size={15} />
+                  )}
+                  {isDeleting ? "Deleting…" : "Delete forever"}
+                </button>
+              </div>
+            </form>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+}
+
+/**
+ * Drops everything this browser holds for the signed-in user — the same
+ * session teardown as Sign Out (cookie + token), plus the offline queue and
+ * the per-user caches, since the account they belonged to no longer exists.
+ */
+async function clearLocalSession() {
+  try {
+    await fetch("/api/logout", { method: "POST" });
+  } catch {
+    /* cookie clear is best-effort */
+  }
+  clearQueue();
+  const userKeys: string[] = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && (k.startsWith("ai_") || k === "split-data")) userKeys.push(k);
+  }
+  userKeys.forEach((k) => localStorage.removeItem(k));
+  localStorage.removeItem("token");
+}
+
 // ─── Main page ────────────────────────────────────────────────────────────────
 export default function Profile() {
+  const router = useRouter();
   const { hidden, toggle } = usePrivacyMode();
   const [user, setUser] = useState<UserProfile | null>(null);
   const [txs, setTxs] = useState<Transaction[]>([]);
@@ -244,6 +402,11 @@ export default function Profile() {
   const [showDelete, setShowDelete] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteStatus, setDeleteStatus] = useState<{ msg: string; ok: boolean } | null>(null);
+
+  // delete account
+  const [showDeleteAccount, setShowDeleteAccount] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const [deleteAccountError, setDeleteAccountError] = useState<string | null>(null);
 
   // export success flash
   const [exportDone, setExportDone] = useState(false);
@@ -349,6 +512,47 @@ export default function Profile() {
       setDeleteStatus({ msg: "Error deleting transactions.", ok: false });
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  // Plain fetch rather than apiFetch: a wrong password comes back as 401, which
+  // apiFetch treats as an expired session and signs the user out.
+  const handleDeleteAccount = async (password: string) => {
+    setIsDeletingAccount(true);
+    setDeleteAccountError(null);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("/api/user", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ password }),
+      });
+      if (res.status === 401) {
+        const data = await res.json().catch(() => ({}));
+        // A missing/expired session also 401s — only a password miss says so
+        if (data.error === "Incorrect password") {
+          setDeleteAccountError("Incorrect password");
+        } else {
+          await clearLocalSession();
+          window.location.href = "/login";
+        }
+        return;
+      }
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setDeleteAccountError(data.error || "Could not delete account. Try again.");
+        return;
+      }
+      await clearLocalSession();
+      toast("Account deleted", "success");
+      router.replace("/login");
+    } catch {
+      setDeleteAccountError("Could not delete account. Try again.");
+    } finally {
+      setIsDeletingAccount(false);
     }
   };
 
@@ -724,7 +928,54 @@ export default function Profile() {
           </form>
         </Section>
 
+        {/* ── Privacy ───────────────────────────────────────────────────────── */}
+        <motion.div
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, delay: 0.27 }}
+        >
+          <Link
+            href="/privacy"
+            className="flex items-center gap-3 bg-canvas/80 rounded-2xl px-5 py-4 text-sm font-semibold text-body hover:bg-canvas-soft/80 transition"
+          >
+            <ShieldCheck size={16} className="text-ink-deep" />
+            Privacy policy
+            <ChevronRight size={16} className="ml-auto text-gray-500" />
+          </Link>
+        </motion.div>
+
+        {/* ── Danger zone ───────────────────────────────────────────────────── */}
+        <Section
+          icon={<AlertTriangle size={14} />}
+          title="Danger zone"
+          accent="text-red-400"
+          delay={0.3}
+        >
+          <p className="text-xs text-gray-500">
+            Permanently delete your account and all of its data — transactions, balances,
+            assets, goals, debts, recurring payments and split events. This cannot be undone.
+          </p>
+          <button
+            onClick={() => {
+              setDeleteAccountError(null);
+              setShowDeleteAccount(true);
+            }}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-red-600/10 hover:bg-red-600/20 text-red-400 text-sm font-bold transition"
+          >
+            <Trash2 size={15} />
+            <span>Delete account</span>
+          </button>
+        </Section>
+
       </div>
+
+      <DeleteAccountModal
+        open={showDeleteAccount}
+        onClose={() => setShowDeleteAccount(false)}
+        onConfirm={handleDeleteAccount}
+        isDeleting={isDeletingAccount}
+        error={deleteAccountError}
+      />
 
       {/* Delete modal */}
       <DeleteModal

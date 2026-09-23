@@ -23,7 +23,10 @@ import {
   RotateCcw,
   Maximize2,
   Minimize2,
+  Gem,
+  ChevronRight,
 } from "lucide-react";
+import Link from "next/link";
 import {
   Chart as ChartJS,
   LineElement,
@@ -40,6 +43,8 @@ import Footer from "@/components/Footer";
 import FloatingTransactionButton from "@/components/FloatingTransactionButton";
 import MenuButton from "@/components/Menu";
 import BottomNav from "@/components/BottomNav";
+import PrivacyToggle from "@/components/PrivacyToggle";
+import { usePrivacyMode, MASKED } from "@/hooks/usePrivacyMode";
 import { useAuthGuard } from "@/hooks/useAuthGuard";
 import { apiFetch } from "@/utils/apiFetch";
 import { toast } from "@/lib/toast";
@@ -66,7 +71,20 @@ const CHART = {
   get surface() { return cssVar("--color-canvas"); },
   get tooltipBg() { return chartChrome().tooltipBg; },
   get tooltipText() { return chartChrome().tooltipText; },
+  // Assets line — a category accent distinct from the rising/falling cash hues
+  get assets() { return cssVar("--color-cat-outing"); },
+  // Total line — the foreground colour, so it reads as the headline series
+  get total() { return cssVar("--color-ink"); },
 };
+
+// Balance-chart series toggled from the legend row. Cash stays dataset 0 so the
+// glow and peak plugins (which key off index 0) only ever touch the cash line.
+type SeriesKey = "cash" | "assets" | "total";
+const SERIES: { key: SeriesKey; label: string; color: () => string; width: number }[] = [
+  { key: "cash", label: "Cash", color: () => CHART.up, width: 2 },
+  { key: "assets", label: "Assets", color: () => CHART.assets, width: 2 },
+  { key: "total", label: "Total", color: () => CHART.total, width: 2.5 },
+];
 
 // Soft drop shadow under the balance line stroke (dataset 0 only) — neutral so it
 // works under both green (rising) and red (falling) segments
@@ -88,7 +106,8 @@ const lineGlowPlugin = {
 // Selective direct label on the extreme — marks the peak balance in view
 const peakLabelPlugin = {
   id: "nwPeak",
-  afterDatasetsDraw(chart: ChartJS) {
+  afterDatasetsDraw(chart: ChartJS, _args: unknown, opts: { masked?: boolean }) {
+    if (!chart.isDatasetVisible(0)) return;
     const data = chart.data.datasets[0]?.data as (number | null)[] | undefined;
     if (!data || data.filter(v => v !== null).length < 3) return;
     let maxIdx = -1;
@@ -99,7 +118,7 @@ const peakLabelPlugin = {
     const pt = chart.getDatasetMeta(0).data[maxIdx];
     if (!pt) return;
     const { ctx, chartArea } = chart;
-    const label = `peak ${formatAmount(maxVal)}`;
+    const label = opts?.masked ? "peak" : `peak ${formatAmount(maxVal)}`;
     ctx.save();
     ctx.font = `600 10px ${ChartJS.defaults.font.family}`;
     const w = ctx.measureText(label).width;
@@ -245,9 +264,14 @@ export default function NetWorthPage() {
   // Chart.js bakes theme tokens into concrete colours at config-build time, so
   // the canvases have to remount when the theme flips.
   const { resolved: theme } = useTheme();
+  const { hidden } = usePrivacyMode();
+  /** Privacy mode: swap a formatted amount for the mask. */
+  const money = (s: string) => (hidden ? MASKED : s);
 
   const [bankBalance, setBankBalance] = useState<number>(0);
-  const [history, setHistory] = useState<{ date: string; balance: number; estimated?: boolean }[]>([]);
+  const [history, setHistory] = useState<{ date: string; balance: number; assets?: number; estimated?: boolean }[]>([]);
+  const [assetsTotal, setAssetsTotal] = useState<number>(0);
+  const [seriesOn, setSeriesOn] = useState<Record<SeriesKey, boolean>>({ cash: true, assets: true, total: true });
   const [loading, setLoading] = useState(true);
   const [editMode, setEditMode] = useState(false);
   const [newBalance, setNewBalance] = useState("");
@@ -327,6 +351,7 @@ export default function NetWorthPage() {
     const data = await res.json();
     setBankBalance(data.bankBalance || 0);
     setHistory(data.history || []);
+    setAssetsTotal(data.assetsTotal || 0);
   };
 
   // Read-only. The balance itself already moves with every transaction; the
@@ -463,6 +488,11 @@ export default function NetWorthPage() {
     ? (lastMonthly.delta / Math.abs(monthlyData[monthlyData.length - 2].balance)) * 100
     : null;
 
+  // With no holdings the Assets/Total lines would only repeat 0 and the cash
+  // line, so the chart keeps its cash-only look.
+  const hasAssets = assetsTotal > 0 || history.some(h => (h.assets ?? 0) > 0);
+  const netWorthTotal = bankBalance + assetsTotal;
+
   const milestonesReached = MILESTONES.filter(m => m <= bankBalance).length;
   const nextMilestone = MILESTONES.find(m => m > bankBalance) ?? null;
 
@@ -478,6 +508,7 @@ export default function NetWorthPage() {
           <div className="flex items-center gap-2">
             <PiggyBank className="text-warning-deep" size={26} />
             <h1 className="text-3xl font-extrabold tracking-tight">Net Worth</h1>
+            <PrivacyToggle />
             <button
               onClick={refreshAll}
               className="ml-1 p-1.5 rounded-lg hover:bg-gray-800 transition-colors cursor-pointer"
@@ -535,7 +566,7 @@ export default function NetWorthPage() {
                       </div>
                     ) : (
                       <p className="text-3xl font-black text-amber-300 mt-2">
-                        ₹{fmtINR(bankBalance)}
+                        {money(`₹${fmtINR(bankBalance)}`)}
                       </p>
                     )}
                   </div>
@@ -552,32 +583,37 @@ export default function NetWorthPage() {
               </motion.div>
             )}
 
-            {/* Assets placeholder */}
+            {/* Assets — links through to the holdings page */}
             {loading ? (
               <SkeletonBar />
             ) : (
-              <motion.div
-                {...cardMotion(0.08)}
-                className="bg-gray-900/60 rounded-2xl p-6"
-              >
-                <div className="flex items-center gap-2 mb-1">
-                  <div className="w-7 h-7 bg-blue-500/20 rounded-lg flex items-center justify-center">
-                    <TrendingUp size={14} className="text-blue-400" />
+              <motion.div {...cardMotion(0.08)}>
+                <Link
+                  href="/assets"
+                  className="group block h-full bg-gray-900/60 rounded-2xl p-6 hover:bg-gray-900/80 transition-colors"
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="w-7 h-7 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                      <Gem size={14} className="text-blue-400" />
+                    </div>
+                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Assets</p>
+                    <ChevronRight size={14} className="ml-auto text-gray-500 group-hover:text-blue-400 transition-colors" />
                   </div>
-                  <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Assets</p>
-                </div>
-                <p className="text-3xl font-black text-blue-300 mt-2">₹0</p>
-                <p className="text-xs text-gray-600 mt-1">Coming soon</p>
+                  <p className="text-3xl font-black text-blue-300 mt-2">{money(`₹${fmtINR(Math.round(assetsTotal))}`)}</p>
+                  <p className="text-xs text-gray-600 mt-1">
+                    {hasAssets ? "Stocks, crypto & metals · manage" : "Add stocks, crypto or metals →"}
+                  </p>
+                </Link>
               </motion.div>
             )}
 
-            {/* Total Net Worth */}
+            {/* Total Net Worth — the hero, first in reading order */}
             {loading ? (
-              <SkeletonBar />
+              <SkeletonBar className="h-24 order-first" />
             ) : (
               <motion.div
-                {...cardMotion(0.16)}
-                className="bg-canvas/80 rounded-2xl p-6"
+                {...cardMotion(0)}
+                className="order-first bg-canvas/80 rounded-2xl p-6"
               >
                 <div className="flex items-center gap-2 mb-1">
                   <div className="w-7 h-7 bg-emerald-500/20 rounded-lg flex items-center justify-center">
@@ -586,17 +622,23 @@ export default function NetWorthPage() {
                   <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Total Net Worth</p>
                 </div>
                 <p className="text-3xl font-black text-emerald-300 mt-2">
-                  ₹{fmtINR(bankBalance)}
+                  {money(`₹${fmtINR(Math.round(netWorthTotal))}`)}
                 </p>
-                {lastMonthly?.delta != null && lastMonthlyPct !== null ? (
+                <div className="flex items-center gap-4 mt-2 text-xs">
+                  <span className="text-gray-500">
+                    Cash <span className="font-bold text-ink tabular-nums">{money(`₹${fmtINR(bankBalance)}`)}</span>
+                  </span>
+                  <Link href="/assets" className="text-gray-500 hover:text-blue-400 transition-colors">
+                    Assets <span className="font-bold text-ink tabular-nums">{money(`₹${fmtINR(Math.round(assetsTotal))}`)}</span>
+                  </Link>
+                </div>
+                {lastMonthly?.delta != null && lastMonthlyPct !== null && (
                   <p className="text-xs mt-1">
                     <span className={`font-bold ${lastMonthly.delta >= 0 ? "text-emerald-400" : "text-red-400"}`}>
                       {lastMonthly.delta >= 0 ? "▲" : "▼"} {Math.abs(lastMonthlyPct).toFixed(1)}%
                     </span>
-                    <span className="text-gray-600 ml-1.5">this month</span>
+                    <span className="text-gray-600 ml-1.5">cash this month</span>
                   </p>
-                ) : (
-                  <p className="text-xs text-gray-600 mt-1">Bank balance + assets</p>
                 )}
               </motion.div>
             )}
@@ -614,25 +656,25 @@ export default function NetWorthPage() {
                 {
                   icon: <Trophy size={13} className="text-warning-deep" />,
                   label: "All-time high",
-                  value: formatAmount(allTimeHigh),
-                  sub: allTimeHigh <= bankBalance ? "Right now 🎉" : `${formatAmount(allTimeHigh - bankBalance)} above today`,
+                  value: money(formatAmount(allTimeHigh)),
+                  sub: allTimeHigh <= bankBalance ? "Right now 🎉" : `${money(formatAmount(allTimeHigh - bankBalance))} above today`,
                 },
                 {
                   icon: <ArrowUpRight size={13} className={totalGrowth >= 0 ? "text-emerald-400" : "text-red-400"} />,
                   label: "Total growth",
-                  value: `${totalGrowth >= 0 ? "+" :""}${formatAmount(totalGrowth)}`,
+                  value: money(`${totalGrowth >= 0 ? "+" :""}${formatAmount(totalGrowth)}`),
                   sub: "since first snapshot",
                 },
                 {
                   icon: <Zap size={13} className="text-violet-400" />,
                   label: "Best month",
-                  value: bestMonth?.delta != null ? `+${formatAmount(Math.max(0, bestMonth.delta))}` : "—",
+                  value: bestMonth?.delta != null ? money(`+${formatAmount(Math.max(0, bestMonth.delta))}`) : "—",
                   sub: bestMonth?.delta != null ? bestMonth.month : "needs 2+ months",
                 },
                 {
                   icon: <Activity size={13} className="text-blue-400" />,
                   label: "Avg / month",
-                  value: `${avgDelta >= 0 ? "+" :""}${formatAmount(avgDelta)}`,
+                  value: money(`${avgDelta >= 0 ? "+" :""}${formatAmount(avgDelta)}`),
                   sub: "monthly pace",
                 },
               ].map((s, i) => (
@@ -715,7 +757,7 @@ export default function NetWorthPage() {
                   </div>
                   {nextMilestone !== null ? (
                     <>
-                      <p className="text-2xl font-black text-amber-300">{formatAmount(nextMilestone)}</p>
+                      <p className="text-2xl font-black text-amber-300">{money(formatAmount(nextMilestone))}</p>
                       <div className="mt-2 w-full bg-gray-800 rounded-full h-1.5">
                         <div
                           className="h-1.5 rounded-full bg-warning transition-all"
@@ -723,7 +765,7 @@ export default function NetWorthPage() {
                         />
                       </div>
                       <p className="text-[11px] text-gray-500 mt-1.5">
-                        ₹{fmtINR(remaining)} away
+                        {money(`₹${fmtINR(remaining)}`)} away
                         {monthsToMilestone !== null && (
                           <span className="text-warning-deep font-semibold ml-1">
                             · ~{monthsToMilestone} month{monthsToMilestone !== 1 ? "s" : ""} at current pace
@@ -783,6 +825,39 @@ export default function NetWorthPage() {
               bankBalance,
               ...projPoints.map(p => p.value),
             ];
+            // Assets and Total share the axes but stop at today — the projection
+            // stays cash-only.
+            const assetsData: (number | null)[] = [
+              ...visibleHistory.map(h => h.assets ?? 0),
+              ...projPoints.map(() => null),
+            ];
+            const totalData: (number | null)[] = [
+              ...visibleHistory.map(h => h.balance + (h.assets ?? 0)),
+              ...projPoints.map(() => null),
+            ];
+            const showAssetLines = hasAssets;
+            const overlayLine = (key: "assets" | "total", data: (number | null)[]) => {
+              const s = SERIES.find(x => x.key === key)!;
+              return {
+                label: s.label,
+                data,
+                hidden: !seriesOn[key],
+                borderColor: s.color(),
+                backgroundColor: "transparent",
+                fill: false,
+                cubicInterpolationMode: "monotone" as const,
+                borderWidth: s.width,
+                borderJoinStyle: "round" as const,
+                borderCapStyle: "round" as const,
+                pointRadius: (ctx: { dataIndex: number }) => (ctx.dataIndex === lastRealIdx ? 3 : 0),
+                pointHoverRadius: 4,
+                pointBackgroundColor: s.color(),
+                pointBorderColor: CHART.surface,
+                pointBorderWidth: 2,
+                pointHitRadius: 8,
+                spanGaps: false,
+              };
+            };
 
             return (
               <motion.div {...cardMotion(0.32)} className="space-y-4">
@@ -857,20 +932,20 @@ export default function NetWorthPage() {
                         <TrendingUp size={14} className="text-emerald-400" />
                         <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Balance History</p>
                       </div>
-                      <p className="text-2xl font-black text-ink">₹{fmtINR(bankBalance)}</p>
+                      <p className="text-2xl font-black text-ink">{money(`₹${fmtINR(bankBalance)}`)}</p>
                     </div>
                     <div className="flex flex-col items-end gap-1">
                       {rangeChangePct !== null && visibleHistory.length > 1 && (
                         <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${isUp ? "bg-emerald-500/15 text-emerald-400" : "bg-red-500/15 text-red-400"}`}>
                           {isUp ? "▲" : "▼"} {Math.abs(Number(rangeChangePct))}%
                           <span className="font-semibold opacity-70 ml-1">
-                            ({isUp ? "+" : "-"}₹{fmtINR(Math.abs(rangeChange))})
+                            ({money(`${isUp ? "+" : "-"}₹${fmtINR(Math.abs(rangeChange))}`)})
                           </span>
                         </span>
                       )}
                       <span className="text-[10px] text-gray-600">
                         {rangeDef.ytd ? "year to date" : rangeDef.months === null ? "all time" : `last ${rangeDef.label.toLowerCase()}`}
-                        {avgDelta !== 0 && <> · avg {avgDelta >= 0 ? "+" : ""}₹{fmtINR(avgDelta)}/mo</>}
+                        {avgDelta !== 0 && <> · avg {money(`${avgDelta >= 0 ? "+" : ""}₹${fmtINR(avgDelta)}`)}/mo</>}
                       </span>
                       {/* The toolbar toggle sits outside this card, so fullscreen needs its own exit */}
                       {fullscreen && (
@@ -891,8 +966,14 @@ export default function NetWorthPage() {
                         <thead className="sticky top-0 bg-canvas-soft/80">
                           <tr className="text-left text-[10px] text-gray-500 uppercase tracking-wider">
                             <th className="py-2 font-bold">Date</th>
-                            <th className="py-2 font-bold text-right">Balance</th>
+                            <th className="py-2 font-bold text-right">{showAssetLines ? "Cash" : "Balance"}</th>
                             <th className="py-2 font-bold text-right">Change</th>
+                            {showAssetLines && (
+                              <>
+                                <th className="py-2 font-bold text-right">Assets</th>
+                                <th className="py-2 font-bold text-right">Total</th>
+                              </>
+                            )}
                           </tr>
                         </thead>
                         <tbody className="tabular-nums">
@@ -908,10 +989,16 @@ export default function NetWorthPage() {
                                   <span className="ml-1.5 text-[10px] text-gray-600" title="Interpolated between recorded balances">~est</span>
                                 )}
                               </td>
-                              <td className="py-2 text-right font-semibold text-gray-200">₹{fmtINR(h.balance)}</td>
+                              <td className="py-2 text-right font-semibold text-gray-200">{money(`₹${fmtINR(h.balance)}`)}</td>
                               <td className={`py-2 text-right text-xs font-bold ${d === null ? "text-ink" : d >= 0 ? "text-emerald-400" : "text-red-400"}`}>
-                                {d === null ? "—" : `${d >= 0 ?"▲ +" :"▼ -"}₹${fmtINR(Math.abs(d))}`}
+                                {d === null ? "—" : `${d >= 0 ?"▲ +" :"▼ -"}${money(`₹${fmtINR(Math.abs(d))}`)}`}
                               </td>
+                              {showAssetLines && (
+                                <>
+                                  <td className="py-2 text-right text-gray-400">{money(`₹${fmtINR(Math.round(h.assets ?? 0))}`)}</td>
+                                  <td className="py-2 text-right font-semibold text-ink">{money(`₹${fmtINR(Math.round(h.balance + (h.assets ?? 0)))}`)}</td>
+                                </>
+                              )}
                             </tr>
                           ))}
                         </tbody>
@@ -919,6 +1006,33 @@ export default function NetWorthPage() {
                     </div>
                   ) : (
                     <>
+                    {showAssetLines && (
+                      <div className="px-6 pb-2 flex items-center gap-1.5 flex-wrap" role="group" aria-label="Chart series">
+                        {SERIES.map(s => {
+                          const on = seriesOn[s.key];
+                          return (
+                            <button
+                              key={s.key}
+                              onClick={() => setSeriesOn(prev => ({ ...prev, [s.key]: !prev[s.key] }))}
+                              aria-pressed={on}
+                              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all cursor-pointer ${
+                                on ? "bg-gray-800/80 text-gray-200" : "text-gray-600 hover:text-gray-400"
+                              }`}
+                            >
+                              <span
+                                className="w-3.5 rounded-full"
+                                style={{
+                                  height: s.width,
+                                  background: s.color(),
+                                  opacity: on ? 1 : 0.35,
+                                }}
+                              />
+                              {s.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
                     {zoomReady && (
                       <div className="px-6 pb-1 flex items-center justify-end gap-3 h-5">
                         <span className="text-[10px] text-gray-600">drag to zoom · shift+drag to pan</span>
@@ -940,6 +1054,7 @@ export default function NetWorthPage() {
                             {
                               label: "Balance",
                               data: realData,
+                              hidden: showAssetLines && !seriesOn.cash,
                               borderColor: isUp ? CHART.up : CHART.down,
                               // Direction-colored line: each segment green when rising, red when falling
                               segment: {
@@ -991,6 +1106,9 @@ export default function NetWorthPage() {
                               pointHitRadius: 8,
                               spanGaps: false,
                             }] : []),
+                            ...(showAssetLines
+                              ? [overlayLine("assets", assetsData), overlayLine("total", totalData)]
+                              : []),
                           ],
                         }}
                         options={{
@@ -1008,13 +1126,17 @@ export default function NetWorthPage() {
                           hover: { mode: "index", intersect: false, axis: "x" },
                           plugins: {
                             legend: { display: false },
+                            // Read by peakLabelPlugin (not a registered plugin, so untyped)
+                            ...({ nwPeak: { masked: hidden } } as object),
                             tooltip: {
                               ...baseTooltip,
                               filter: (item) => item.raw !== null,
                               callbacks: {
                                 label: (item) => {
-                                  const prefix = item.datasetIndex === 1 ? " Projected " : " Balance ";
-                                  return `${prefix}₹${fmtINR(Number(item.raw))}`;
+                                  const name = item.dataset.label;
+                                  // "Cash" once the other series are on screen, so the three rows read as a set
+                                  const prefix = name === "Balance" ? (showAssetLines ? "Cash" : "Balance") : name;
+                                  return ` ${prefix} ${money(`₹${fmtINR(Number(item.raw))}`)}`;
                                 },
                               },
                             },
@@ -1044,7 +1166,7 @@ export default function NetWorthPage() {
                             y: {
                               position: "left",
                               grace: "12%",
-                              ticks: { color: CHART.tick, font: { size: 11 }, maxTicksLimit: 6, padding: 6, callback: (v) => formatAmount(Number(v)) },
+                              ticks: { color: CHART.tick, font: { size: 11 }, maxTicksLimit: 6, padding: 6, callback: (v) => (hidden ? "•••" : formatAmount(Number(v))) },
                               grid: { color: CHART.grid },
                               border: { display: false },
                             },
@@ -1060,12 +1182,12 @@ export default function NetWorthPage() {
                     <div className="px-6 pb-4 flex items-center gap-4 flex-wrap">
                       <div className="flex items-center gap-1.5">
                         <div className="w-4 h-px border-t-2 border-dashed border-gray-500" />
-                        <span className="text-[10px] text-gray-600">Projected at {avgDelta >= 0 ? "+" : ""}₹{fmtINR(avgDelta)}/mo</span>
+                        <span className="text-[10px] text-gray-600">Projected at {money(`${avgDelta >= 0 ? "+" : ""}₹${fmtINR(avgDelta)}`)}/mo</span>
                       </div>
                       <div className="flex items-center gap-3 ml-auto text-[10px] text-gray-600">
                         {projPoints.map(p => (
                           <span key={p.months}>
-                            +{p.months}mo: <span className="text-gray-400 font-semibold">₹{fmtINR(Math.max(0, Math.round(p.value)))}</span>
+                            +{p.months}mo: <span className="text-gray-400 font-semibold">{money(`₹${fmtINR(Math.max(0, Math.round(p.value)))}`)}</span>
                           </span>
                         ))}
                       </div>
@@ -1120,7 +1242,7 @@ export default function NetWorthPage() {
                                 callbacks: {
                                   label: (item) => {
                                     const v = Number(item.raw);
-                                    return ` ${v >= 0 ? "+" :"-"}₹${fmtINR(Math.abs(v))}`;
+                                    return ` ${money(`${v >= 0 ? "+" :"-"}₹${fmtINR(Math.abs(v))}`)}`;
                                   },
                                 },
                               },
@@ -1133,7 +1255,7 @@ export default function NetWorthPage() {
                               },
                               y: {
                                 grace: "10%",
-                                ticks: { color: CHART.tick, font: { size: 11 }, maxTicksLimit: 4, padding: 6, callback: (v) => formatAmount(Number(v)) },
+                                ticks: { color: CHART.tick, font: { size: 11 }, maxTicksLimit: 4, padding: 6, callback: (v) => (hidden ? "•••" : formatAmount(Number(v))) },
                                 grid: { color: (ctx) => (ctx.tick.value === 0 ? CHART.gridZero : CHART.grid) },
                                 border: { display: false },
                               },
@@ -1152,12 +1274,12 @@ export default function NetWorthPage() {
                           return (
                             <div key={i} className="flex flex-col gap-0.5">
                               <p className="text-[11px] text-gray-500 font-semibold">{row.month}</p>
-                              <p className="text-sm font-black text-ink tabular-nums">₹{fmtINR(row.balance)}</p>
+                              <p className="text-sm font-black text-ink tabular-nums">{money(`₹${fmtINR(row.balance)}`)}</p>
                               {row.delta !== null ? (
                                 <span className={`text-[11px] font-bold ${rowUp ? "text-emerald-400" : "text-red-400"}`}>
                                   {rowUp ? "▲" : "▼"} {pct !== null ? `${Math.abs(Number(pct))}%` : ""}
                                   <span className="font-normal text-gray-600 ml-1">
-                                    ({rowUp ? "+" : "-"}₹{fmtINR(Math.abs(row.delta))})
+                                    ({money(`${rowUp ? "+" : "-"}₹${fmtINR(Math.abs(row.delta))}`)})
                                   </span>
                                 </span>
                               ) : (

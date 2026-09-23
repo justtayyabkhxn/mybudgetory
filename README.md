@@ -189,6 +189,21 @@ src/
 
 ---
 
+## Android app (Flutter)
+
+A native Android client lives in [`android/`](android/README.md). It reproduces every feature of the web app,
+talks to the same backend, and opens straight on Login or Dashboard.
+
+```bash
+cd android
+flutter pub get
+flutter run                       # or: flutter build apk --release
+```
+
+See `android/README.md` for the feature parity table, API base URL override and Android-specific notes.
+
+---
+
 ## Contributing
 
 Contributions and suggestions are welcome. Fork the repo and open a pull request.
