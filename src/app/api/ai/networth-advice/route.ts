@@ -49,7 +49,7 @@ ${monthLines}`;
         Authorization: `Bearer ${groqKey}`,
       },
       body: JSON.stringify({
-        model: "openai/gpt-oss-120b",
+        model: "qwen/qwen3.8-27b",
         messages: [{ role: "user", content: prompt }],
         max_tokens: 420,
         temperature: 0.6,
