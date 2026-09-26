@@ -71,19 +71,19 @@ const CHART = {
   get surface() { return cssVar("--color-canvas"); },
   get tooltipBg() { return chartChrome().tooltipBg; },
   get tooltipText() { return chartChrome().tooltipText; },
-  // Assets line — a category accent distinct from the rising/falling cash hues
+  // Assets line — a category accent distinct from the rising/falling net worth hues
   get assets() { return cssVar("--color-cat-outing"); },
-  // Total line — the foreground colour, so it reads as the headline series
-  get total() { return cssVar("--color-ink"); },
+  // Cash line — the bank-balance amber, matching the Bank Balance card
+  get cash() { return cssVar("--color-warning"); },
 };
 
-// Balance-chart series toggled from the legend row. Cash stays dataset 0 so the
-// glow and peak plugins (which key off index 0) only ever touch the cash line.
-type SeriesKey = "cash" | "assets" | "total";
+// Chart series toggled from the legend row. Net worth stays dataset 0 so the
+// glow and peak plugins (which key off index 0) only ever touch the headline line.
+type SeriesKey = "total" | "cash" | "assets";
 const SERIES: { key: SeriesKey; label: string; color: () => string; width: number }[] = [
-  { key: "cash", label: "Cash", color: () => CHART.up, width: 2 },
-  { key: "assets", label: "Assets", color: () => CHART.assets, width: 2 },
-  { key: "total", label: "Total", color: () => CHART.total, width: 2.5 },
+  { key: "total", label: "Net worth", color: () => CHART.up, width: 2.5 },
+  { key: "cash", label: "Cash", color: () => CHART.cash, width: 1.5 },
+  { key: "assets", label: "Assets", color: () => CHART.assets, width: 1.5 },
 ];
 
 // Soft drop shadow under the balance line stroke (dataset 0 only) — neutral so it
@@ -103,7 +103,7 @@ const lineGlowPlugin = {
   },
 };
 
-// Selective direct label on the extreme — marks the peak balance in view
+// Selective direct label on the extreme — marks the peak net worth in view
 const peakLabelPlugin = {
   id: "nwPeak",
   afterDatasetsDraw(chart: ChartJS, _args: unknown, opts: { masked?: boolean }) {
@@ -197,25 +197,32 @@ function nwCacheKey() {
   return `ai_networth_${monday.getFullYear()}-${monday.getMonth() + 1}-${monday.getDate()}`;
 }
 
-function getMonthlyData(history: { date: string; balance: number }[], bankBalance: number) {
-  const byMonth: Record<string, number> = {};
+type HistoryPoint = { date: string; balance: number; assets?: number; estimated?: boolean };
+
+/** Net worth on a history day — cash plus the holdings valued that day. */
+const netWorthOf = (h: HistoryPoint) => h.balance + (h.assets ?? 0);
+
+// Month-end net worth (cash + assets), with the current month taken from the
+// live figures. Cash and assets ride along so the AI can see the mix.
+function getMonthlyData(history: HistoryPoint[], cash: number, assets: number) {
+  const byMonth: Record<string, { cash: number; assets: number }> = {};
   history.forEach(h => {
     const d = new Date(h.date);
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-    byMonth[key] = h.balance;
+    byMonth[key] = { cash: h.balance, assets: h.assets ?? 0 };
   });
   const now = new Date();
   const currentKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-  byMonth[currentKey] = bankBalance;
+  byMonth[currentKey] = { cash, assets };
   const sorted = Object.keys(byMonth).sort();
+  const totalOf = (k: string) => Math.round(byMonth[k].cash + byMonth[k].assets);
   return sorted.map((key, i) => {
-    const bal = byMonth[key];
-    const prev = i > 0 ? byMonth[sorted[i - 1]] : null;
-    const delta = prev !== null ? bal - prev : null;
+    const netWorth = totalOf(key);
+    const delta = i > 0 ? netWorth - totalOf(sorted[i - 1]) : null;
     const [yr, mo] = key.split("-");
     const month = new Date(Number(yr), Number(mo) - 1, 1)
       .toLocaleDateString("en-IN", { month: "short", year: "2-digit" });
-    return { month, balance: bal, delta };
+    return { month, netWorth, cash: byMonth[key].cash, assets: Math.round(byMonth[key].assets), delta };
   });
 }
 
@@ -269,9 +276,9 @@ export default function NetWorthPage() {
   const money = (s: string) => (hidden ? MASKED : s);
 
   const [bankBalance, setBankBalance] = useState<number>(0);
-  const [history, setHistory] = useState<{ date: string; balance: number; assets?: number; estimated?: boolean }[]>([]);
+  const [history, setHistory] = useState<HistoryPoint[]>([]);
   const [assetsTotal, setAssetsTotal] = useState<number>(0);
-  const [seriesOn, setSeriesOn] = useState<Record<SeriesKey, boolean>>({ cash: true, assets: true, total: true });
+  const [seriesOn, setSeriesOn] = useState<Record<SeriesKey, boolean>>({ total: true, cash: true, assets: true });
   const [loading, setLoading] = useState(true);
   const [editMode, setEditMode] = useState(false);
   const [newBalance, setNewBalance] = useState("");
@@ -320,6 +327,9 @@ export default function NetWorthPage() {
       window.removeEventListener("keydown", onKey);
     };
   }, [fullscreen]);
+
+  // The headline figure everything on this page is measured against
+  const netWorthTotal = Math.round(bankBalance + assetsTotal);
 
   const [aiAdvice, setAiAdvice] = useState<string | null>(null);
   const [healthScore, setHealthScore] = useState<number | null>(null);
@@ -426,16 +436,20 @@ export default function NetWorthPage() {
     setNewBalance("");
   };
 
-  const fetchAIAdvice = async (currentBalance: number, currentHistory: { date: string; balance: number }[]) => {
+  const fetchAIAdvice = async () => {
     if (aiLoading) return;
     setAiLoading(true);
     setAiError(false);
     try {
-      const monthlyData = getMonthlyData(currentHistory, currentBalance);
       const res = await apiFetch("/api/ai/networth-advice", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ bankBalance: currentBalance, monthlyData }),
+        body: JSON.stringify({
+          netWorth: netWorthTotal,
+          cash: bankBalance,
+          assets: Math.round(assetsTotal),
+          monthlyData,
+        }),
       });
       const data = await res.json();
       if (data.advice) {
@@ -455,7 +469,7 @@ export default function NetWorthPage() {
 
   /* ── derived data ─────────────────────────────────────── */
 
-  const monthlyData = useMemo(() => getMonthlyData(history, bankBalance), [history, bankBalance]);
+  const monthlyData = useMemo(() => getMonthlyData(history, bankBalance, assetsTotal), [history, bankBalance, assetsTotal]);
   const avgDelta = useMemo(() => getAvgMonthlyDelta(monthlyData), [monthlyData]);
 
   const rangeDef = RANGES.find(r => r.key === range)!;
@@ -473,28 +487,27 @@ export default function NetWorthPage() {
     return filtered.length >= 2 ? filtered : history;
   }, [history, rangeDef.months, rangeDef.ytd]);
 
+  // With no holdings the Cash/Assets lines would only repeat the net worth line
+  // and 0, so the chart keeps its single-line look.
+  const hasAssets = assetsTotal > 0 || history.some(h => (h.assets ?? 0) > 0);
+
   const allTimeHigh = useMemo(
-    () => Math.max(bankBalance, ...history.map(h => h.balance)),
-    [history, bankBalance]
+    () => Math.round(Math.max(netWorthTotal, ...history.map(netWorthOf))),
+    [history, netWorthTotal]
   );
-  const totalGrowth = history.length > 0 ? bankBalance - history[0].balance : 0;
+  const totalGrowth = history.length > 0 ? netWorthTotal - Math.round(netWorthOf(history[0])) : 0;
   const bestMonth = useMemo(() => {
     const withDelta = monthlyData.filter(m => m.delta !== null);
     if (!withDelta.length) return null;
     return withDelta.reduce((best, m) => (m.delta! > best.delta! ? m : best));
   }, [monthlyData]);
   const lastMonthly = monthlyData.length > 1 ? monthlyData[monthlyData.length - 1] : null;
-  const lastMonthlyPct = lastMonthly?.delta != null && monthlyData[monthlyData.length - 2].balance !== 0
-    ? (lastMonthly.delta / Math.abs(monthlyData[monthlyData.length - 2].balance)) * 100
+  const lastMonthlyPct = lastMonthly?.delta != null && monthlyData[monthlyData.length - 2].netWorth !== 0
+    ? (lastMonthly.delta / Math.abs(monthlyData[monthlyData.length - 2].netWorth)) * 100
     : null;
 
-  // With no holdings the Assets/Total lines would only repeat 0 and the cash
-  // line, so the chart keeps its cash-only look.
-  const hasAssets = assetsTotal > 0 || history.some(h => (h.assets ?? 0) > 0);
-  const netWorthTotal = bankBalance + assetsTotal;
-
-  const milestonesReached = MILESTONES.filter(m => m <= bankBalance).length;
-  const nextMilestone = MILESTONES.find(m => m > bankBalance) ?? null;
+  const milestonesReached = MILESTONES.filter(m => m <= netWorthTotal).length;
+  const nextMilestone = MILESTONES.find(m => m > netWorthTotal) ?? null;
 
   return (
     <div key={theme} className="min-h-screen md:pt-20 text-ink p-4 sm:p-8 pb-28">
@@ -621,8 +634,8 @@ export default function NetWorthPage() {
                   </div>
                   <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Total Net Worth</p>
                 </div>
-                <p className="text-3xl font-black text-emerald-300 mt-2">
-                  {money(`₹${fmtINR(Math.round(netWorthTotal))}`)}
+                <p className="text-4xl font-black text-emerald-300 mt-2">
+                  {money(`₹${fmtINR(netWorthTotal)}`)}
                 </p>
                 <div className="flex items-center gap-4 mt-2 text-xs">
                   <span className="text-gray-500">
@@ -637,7 +650,7 @@ export default function NetWorthPage() {
                     <span className={`font-bold ${lastMonthly.delta >= 0 ? "text-emerald-400" : "text-red-400"}`}>
                       {lastMonthly.delta >= 0 ? "▲" : "▼"} {Math.abs(lastMonthlyPct).toFixed(1)}%
                     </span>
-                    <span className="text-gray-600 ml-1.5">cash this month</span>
+                    <span className="text-gray-600 ml-1.5">this month</span>
                   </p>
                 )}
               </motion.div>
@@ -657,7 +670,7 @@ export default function NetWorthPage() {
                   icon: <Trophy size={13} className="text-warning-deep" />,
                   label: "All-time high",
                   value: money(formatAmount(allTimeHigh)),
-                  sub: allTimeHigh <= bankBalance ? "Right now 🎉" : `${money(formatAmount(allTimeHigh - bankBalance))} above today`,
+                  sub: allTimeHigh <= netWorthTotal ? "Right now 🎉" : `${money(formatAmount(allTimeHigh - netWorthTotal))} above today`,
                 },
                 {
                   icon: <ArrowUpRight size={13} className={totalGrowth >= 0 ? "text-emerald-400" : "text-red-400"} />,
@@ -692,7 +705,7 @@ export default function NetWorthPage() {
 
           {/* Health Score + Milestone row */}
           {!loading && (() => {
-            const remaining = nextMilestone !== null ? nextMilestone - bankBalance : 0;
+            const remaining = nextMilestone !== null ? nextMilestone - netWorthTotal : 0;
             const monthsToMilestone = avgDelta > 0 && nextMilestone !== null
               ? Math.ceil(remaining / avgDelta)
               : null;
@@ -761,7 +774,7 @@ export default function NetWorthPage() {
                       <div className="mt-2 w-full bg-gray-800 rounded-full h-1.5">
                         <div
                           className="h-1.5 rounded-full bg-warning transition-all"
-                          style={{ width: `${Math.min(100, Math.round((bankBalance / nextMilestone) * 100))}%` }}
+                          style={{ width: `${Math.min(100, Math.round((netWorthTotal / nextMilestone) * 100))}%` }}
                         />
                       </div>
                       <p className="text-[11px] text-gray-500 mt-1.5">
@@ -772,7 +785,7 @@ export default function NetWorthPage() {
                           </span>
                         )}
                         {avgDelta <= 0 && (
-                          <span className="text-gray-600 ml-1">· grow your savings to see ETA</span>
+                          <span className="text-gray-600 ml-1">· grow your net worth to see ETA</span>
                         )}
                       </p>
                     </>
@@ -788,8 +801,8 @@ export default function NetWorthPage() {
           {loading ? (
             <SkeletonBar className="h-72" />
           ) : history.length > 0 && (() => {
-            const first = visibleHistory[0].balance;
-            const last = visibleHistory[visibleHistory.length - 1].balance;
+            const first = netWorthOf(visibleHistory[0]);
+            const last = netWorthOf(visibleHistory[visibleHistory.length - 1]);
             const rangeChange = last - first;
             const rangeChangePct = first !== 0 ? ((rangeChange / Math.abs(first)) * 100).toFixed(1) : null;
             const isUp = rangeChange >= 0;
@@ -801,7 +814,7 @@ export default function NetWorthPage() {
             };
             const projActive = showProjection && avgDelta !== 0 && history.length > 1;
             const projPoints = projActive
-              ? rangeDef.projSteps.map(s => ({ label: projLabel(s), value: bankBalance + avgDelta * s, months: s }))
+              ? rangeDef.projSteps.map(s => ({ label: projLabel(s), value: netWorthTotal + avgDelta * s, months: s }))
               : [];
 
             // Short ranges show day+month; long ranges show month+year
@@ -817,26 +830,26 @@ export default function NetWorthPage() {
             const allLabels = [...historyLabels, ...projPoints.map(p => p.label)];
             const lastRealIdx = visibleHistory.length - 1;
             const realData: (number | null)[] = [
-              ...visibleHistory.map(h => h.balance),
+              ...visibleHistory.map(h => Math.round(netWorthOf(h))),
               ...projPoints.map(() => null),
             ];
             const projData: (number | null)[] = [
               ...Array(lastRealIdx).fill(null),
-              bankBalance,
+              netWorthTotal,
               ...projPoints.map(p => p.value),
             ];
-            // Assets and Total share the axes but stop at today — the projection
-            // stays cash-only.
-            const assetsData: (number | null)[] = [
-              ...visibleHistory.map(h => h.assets ?? 0),
+            // Cash and Assets break the net worth line down; they share the axes
+            // but stop at today — the projection is net worth only.
+            const cashData: (number | null)[] = [
+              ...visibleHistory.map(h => h.balance),
               ...projPoints.map(() => null),
             ];
-            const totalData: (number | null)[] = [
-              ...visibleHistory.map(h => h.balance + (h.assets ?? 0)),
+            const assetsData: (number | null)[] = [
+              ...visibleHistory.map(h => Math.round(h.assets ?? 0)),
               ...projPoints.map(() => null),
             ];
             const showAssetLines = hasAssets;
-            const overlayLine = (key: "assets" | "total", data: (number | null)[]) => {
+            const overlayLine = (key: "cash" | "assets", data: (number | null)[]) => {
               const s = SERIES.find(x => x.key === key)!;
               return {
                 label: s.label,
@@ -918,7 +931,7 @@ export default function NetWorthPage() {
                   </div>
                 </div>
 
-                {/* Balance History card — becomes a full-viewport overlay in fullscreen */}
+                {/* Net Worth History card — becomes a full-viewport overlay in fullscreen */}
                 <div
                   className={
                     fullscreen
@@ -930,9 +943,9 @@ export default function NetWorthPage() {
                     <div>
                       <div className="flex items-center gap-2 mb-1">
                         <TrendingUp size={14} className="text-emerald-400" />
-                        <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Balance History</p>
+                        <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Net Worth History</p>
                       </div>
-                      <p className="text-2xl font-black text-ink">{money(`₹${fmtINR(bankBalance)}`)}</p>
+                      <p className="text-2xl font-black text-ink">{money(`₹${fmtINR(netWorthTotal)}`)}</p>
                     </div>
                     <div className="flex flex-col items-end gap-1">
                       {rangeChangePct !== null && visibleHistory.length > 1 && (
@@ -966,20 +979,19 @@ export default function NetWorthPage() {
                         <thead className="sticky top-0 bg-canvas-soft/80">
                           <tr className="text-left text-[10px] text-gray-500 uppercase tracking-wider">
                             <th className="py-2 font-bold">Date</th>
-                            <th className="py-2 font-bold text-right">{showAssetLines ? "Cash" : "Balance"}</th>
+                            <th className="py-2 font-bold text-right">Net worth</th>
                             <th className="py-2 font-bold text-right">Change</th>
                             {showAssetLines && (
                               <>
+                                <th className="py-2 font-bold text-right">Cash</th>
                                 <th className="py-2 font-bold text-right">Assets</th>
-                                <th className="py-2 font-bold text-right">Total</th>
                               </>
                             )}
                           </tr>
                         </thead>
                         <tbody className="tabular-nums">
                           {visibleHistory.map((h, i) => {
-                            const prevBal = i > 0 ? visibleHistory[i - 1].balance : null;
-                            const d = prevBal !== null ? h.balance - prevBal : null;
+                            const d = i > 0 ? Math.round(netWorthOf(h)) - Math.round(netWorthOf(visibleHistory[i - 1])) : null;
                             return { h, d };
                           }).reverse().map(({ h, d }, i) => (
                             <tr key={i} className="border-t border-gray-800/60">
@@ -989,14 +1001,14 @@ export default function NetWorthPage() {
                                   <span className="ml-1.5 text-[10px] text-gray-600" title="Interpolated between recorded balances">~est</span>
                                 )}
                               </td>
-                              <td className="py-2 text-right font-semibold text-gray-200">{money(`₹${fmtINR(h.balance)}`)}</td>
+                              <td className="py-2 text-right font-semibold text-ink">{money(`₹${fmtINR(Math.round(netWorthOf(h)))}`)}</td>
                               <td className={`py-2 text-right text-xs font-bold ${d === null ? "text-ink" : d >= 0 ? "text-emerald-400" : "text-red-400"}`}>
                                 {d === null ? "—" : `${d >= 0 ?"▲ +" :"▼ -"}${money(`₹${fmtINR(Math.abs(d))}`)}`}
                               </td>
                               {showAssetLines && (
                                 <>
+                                  <td className="py-2 text-right text-gray-400">{money(`₹${fmtINR(h.balance)}`)}</td>
                                   <td className="py-2 text-right text-gray-400">{money(`₹${fmtINR(Math.round(h.assets ?? 0))}`)}</td>
-                                  <td className="py-2 text-right font-semibold text-ink">{money(`₹${fmtINR(Math.round(h.balance + (h.assets ?? 0)))}`)}</td>
                                 </>
                               )}
                             </tr>
@@ -1052,9 +1064,9 @@ export default function NetWorthPage() {
                           labels: allLabels,
                           datasets: [
                             {
-                              label: "Balance",
+                              label: "Net worth",
                               data: realData,
-                              hidden: showAssetLines && !seriesOn.cash,
+                              hidden: showAssetLines && !seriesOn.total,
                               borderColor: isUp ? CHART.up : CHART.down,
                               // Direction-colored line: each segment green when rising, red when falling
                               segment: {
@@ -1081,8 +1093,8 @@ export default function NetWorthPage() {
                               pointHoverRadius: 5,
                               pointBackgroundColor: (ctx) => {
                                 if (ctx.dataIndex !== lastRealIdx || lastRealIdx === 0) return CHART.up;
-                                const prevBal = visibleHistory[lastRealIdx - 1].balance;
-                                return visibleHistory[lastRealIdx].balance >= prevBal ? CHART.up : CHART.down;
+                                const prev = netWorthOf(visibleHistory[lastRealIdx - 1]);
+                                return netWorthOf(visibleHistory[lastRealIdx]) >= prev ? CHART.up : CHART.down;
                               },
                               pointBorderColor: CHART.surface,
                               pointBorderWidth: 2,
@@ -1107,7 +1119,7 @@ export default function NetWorthPage() {
                               spanGaps: false,
                             }] : []),
                             ...(showAssetLines
-                              ? [overlayLine("assets", assetsData), overlayLine("total", totalData)]
+                              ? [overlayLine("cash", cashData), overlayLine("assets", assetsData)]
                               : []),
                           ],
                         }}
@@ -1133,10 +1145,7 @@ export default function NetWorthPage() {
                               filter: (item) => item.raw !== null,
                               callbacks: {
                                 label: (item) => {
-                                  const name = item.dataset.label;
-                                  // "Cash" once the other series are on screen, so the three rows read as a set
-                                  const prefix = name === "Balance" ? (showAssetLines ? "Cash" : "Balance") : name;
-                                  return ` ${prefix} ${money(`₹${fmtINR(Number(item.raw))}`)}`;
+                                  return ` ${item.dataset.label} ${money(`₹${fmtINR(Number(item.raw))}`)}`;
                                 },
                               },
                             },
@@ -1212,7 +1221,7 @@ export default function NetWorthPage() {
                             <span className="w-2 h-2 rounded-[2px] bg-emerald-400/80" /> gained
                           </span>
                           <span className="flex items-center gap-1">
-                            <span className="w-2 h-2 rounded-[2px] bg-red-400/80" /> spent down
+                            <span className="w-2 h-2 rounded-[2px] bg-red-400/80" /> dropped
                           </span>
                         </div>
                       </div>
@@ -1267,14 +1276,14 @@ export default function NetWorthPage() {
                       <div className="px-6 py-4 mt-1 border-t border-gray-800/60 grid grid-cols-3 gap-3">
                         {recent.map((row, i) => {
                           const rowUp = row.delta === null || row.delta >= 0;
-                          const prevBalance = monthlyData[monthlyData.length - recent.length + i - 1]?.balance;
+                          const prevBalance = monthlyData[monthlyData.length - recent.length + i - 1]?.netWorth;
                           const pct = row.delta !== null && prevBalance
                             ? ((row.delta / Math.abs(prevBalance)) * 100).toFixed(1)
                             : null;
                           return (
                             <div key={i} className="flex flex-col gap-0.5">
                               <p className="text-[11px] text-gray-500 font-semibold">{row.month}</p>
-                              <p className="text-sm font-black text-ink tabular-nums">{money(`₹${fmtINR(row.balance)}`)}</p>
+                              <p className="text-sm font-black text-ink tabular-nums">{money(`₹${fmtINR(row.netWorth)}`)}</p>
                               {row.delta !== null ? (
                                 <span className={`text-[11px] font-bold ${rowUp ? "text-emerald-400" : "text-red-400"}`}>
                                   {rowUp ? "▲" : "▼"} {pct !== null ? `${Math.abs(Number(pct))}%` : ""}
@@ -1347,7 +1356,7 @@ export default function NetWorthPage() {
                       <span className="text-[10px] text-gray-600">Cached · refreshes next Monday</span>
                     </div>
                     <button
-                      onClick={() => fetchAIAdvice(bankBalance, history)}
+                      onClick={() => fetchAIAdvice()}
                       disabled={aiLoading}
                       className="text-[11px] text-gray-600 hover:text-violet-400 flex items-center gap-1 transition-colors cursor-pointer disabled:opacity-40"
                     >
@@ -1365,7 +1374,7 @@ export default function NetWorthPage() {
                 <div className="flex items-center justify-between">
                   <p className="text-xs text-red-400">Could not load insights. Try again.</p>
                   <button
-                    onClick={() => fetchAIAdvice(bankBalance, history)}
+                    onClick={() => fetchAIAdvice()}
                     className="text-[11px] text-gray-500 hover:text-gray-300 flex items-center gap-1 cursor-pointer"
                   >
                     <RefreshCw size={11} /> Retry
@@ -1377,7 +1386,7 @@ export default function NetWorthPage() {
                     Get a personalised analysis of your net worth trajectory, health score, and actionable tips.
                   </p>
                   <button
-                    onClick={() => fetchAIAdvice(bankBalance, history)}
+                    onClick={() => fetchAIAdvice()}
                     className="flex items-center gap-2 px-4 py-2 rounded-xl bg-violet-500/15 text-violet-300 text-xs font-semibold hover:bg-violet-500/25 transition-all cursor-pointer"
                   >
                     <Sparkles size={13} />

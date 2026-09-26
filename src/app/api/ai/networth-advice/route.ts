@@ -3,9 +3,13 @@ import { getUserFromToken } from "@/utils/getUserFromToken";
 
 interface MonthEntry {
   month: string;
-  balance: number;
+  netWorth: number;
+  cash: number;
+  assets: number;
   delta: number | null;
 }
+
+const inr = (n: number) => `₹${Math.round(n).toLocaleString("en-IN")}`;
 
 export async function POST(req: NextRequest) {
   const user = await getUserFromToken(req);
@@ -14,31 +18,38 @@ export async function POST(req: NextRequest) {
   const groqKey = process.env.GROQ_API_KEY;
   if (!groqKey) return NextResponse.json({ error: "Groq API key not configured" }, { status: 500 });
 
-  let bankBalance: number;
+  let netWorth: number;
+  let cash: number;
+  let assets: number;
   let monthlyData: MonthEntry[];
   try {
-    ({ bankBalance, monthlyData } = await req.json());
+    ({ netWorth, cash, assets, monthlyData } = await req.json());
   } catch {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
+  if (![netWorth, cash, assets].every(Number.isFinite) || !Array.isArray(monthlyData)) {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
   const monthLines = monthlyData
     .map(m =>
-      `  ${m.month}: ₹${m.balance.toLocaleString("en-IN")}` +
-      (m.delta !== null ? ` (${m.delta >= 0 ? "+" : ""}₹${m.delta.toLocaleString("en-IN")})` : " — first entry")
+      `  ${m.month}: net worth ${inr(m.netWorth)}` +
+      (m.delta !== null ? ` (${m.delta >= 0 ? "+" : "-"}${inr(Math.abs(m.delta))})` : " — first entry") +
+      ` [cash ${inr(m.cash)}, assets ${inr(m.assets)}]`
     )
     .join("\n");
 
-  const prompt = `You are a sharp personal finance advisor for an Indian user. Analyze their net worth data and respond ONLY with valid JSON in this exact format (no markdown, no extra text):
+  const prompt = `You are a sharp personal finance advisor for an Indian user. Analyze their NET WORTH (cash + investment assets) and respond ONLY with valid JSON in this exact format (no markdown, no extra text):
 {"advice":"3-4 sentence paragraph","healthScore":75,"healthReason":"short phrase"}
 
 Rules:
-- advice: reference actual rupee amounts, give 2 specific actionable tips, warm but direct tone, no greeting
-- healthScore: integer 0-100. 80-100=strong consistent growth, 60-79=good with minor dips, 40-59=flat/irregular, 20-39=declining trend, 0-19=significant decline
-- healthReason: one short phrase (5-7 words max) explaining the score
+- Focus on total net worth and its trend — that is the headline number. Treat cash and assets only as its breakdown; do not centre the advice on the bank balance.
+- advice: lead with the net worth figure and its recent trend, reference actual rupee amounts, give 2 specific actionable tips for growing net worth (the cash/assets mix may inform one tip), warm but direct tone, no greeting
+- healthScore: integer 0-100, judged on the net worth trend. 80-100=strong consistent growth, 60-79=good with minor dips, 40-59=flat/irregular, 20-39=declining trend, 0-19=significant decline
+- healthReason: one short phrase (5-7 words max) explaining the score, about net worth
 
-Current net worth: ₹${bankBalance.toLocaleString("en-IN")}
-Monthly history (oldest first):
+Current net worth: ${inr(netWorth)} (cash ${inr(cash)}, assets ${inr(assets)})
+Monthly net worth history (oldest first):
 ${monthLines}`;
 
   try {
