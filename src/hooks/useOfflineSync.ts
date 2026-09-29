@@ -2,42 +2,7 @@
 import { useEffect, useRef, useCallback } from "react";
 import { getQueue, dequeue } from "@/lib/offlineQueue";
 import { toast } from "@/lib/toast";
-
-async function submitOne(
-  txnForm: ReturnType<typeof getQueue>[number]["form"],
-  token: string
-): Promise<void> {
-  const res = await fetch("/api/transactions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(txnForm),
-  });
-  if (!res.ok) {
-    const data = await res.json();
-    throw new Error(data.error || "Failed to add transaction");
-  }
-
-  const balanceFetch = await fetch("/api/networth", {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  const balanceData = await balanceFetch.json();
-  const currentBalance = balanceData.bankBalance || 0;
-  const amount = parseFloat(txnForm.amount);
-  const adjustment = txnForm.type === "income" ? amount : -amount;
-  const newBalance = currentBalance + adjustment;
-
-  await fetch("/api/networth/update", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ newBalance, paymentMode: txnForm.paymentMode }),
-  });
-}
+import { submitTransaction } from "@/lib/submitTransaction";
 
 export function useOfflineSync(onSynced?: () => void) {
   const syncingRef = useRef(false);
@@ -55,7 +20,7 @@ export function useOfflineSync(onSynced?: () => void) {
 
     for (const pending of queue) {
       try {
-        await submitOne(pending.form, token);
+        await submitTransaction(pending.form, token);
         dequeue(pending.id);
         synced++;
       } catch {

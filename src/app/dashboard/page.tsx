@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
 import { AddTransactionForm } from "../../components/AddTransactionForm";
+import QuickLog from "@/components/QuickLog";
 import Link from "next/link";
 import Menu from "@/components/Menu";
 import {
@@ -315,7 +316,8 @@ export default function Dashboard() {
           </motion.div>
 
           {/* Add Transaction Form */}
-          <div className="order-3 lg:order-2">
+          <div className="order-3 lg:order-2 flex flex-col gap-3">
+            <QuickLog onAdd={fetchTransactions} />
             <AddTransactionForm onAdd={fetchTransactions} />
           </div>
 

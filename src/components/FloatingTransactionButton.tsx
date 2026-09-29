@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Plus, X } from "lucide-react";
 import { AddTransactionForm } from "@/components/AddTransactionForm";
 import { motion, AnimatePresence } from "framer-motion";
+import QuickLog from "@/components/QuickLog";
 
 interface Props {
   onAdd?: () => void;
@@ -25,6 +26,8 @@ export default function FloatingTransactionButton({ onAdd }: Props = {}) {
 
   return (
     <>
+      {!open && <QuickLog variant="fab" onAdd={onAdd} />}
+
       {/* ── FAB ───────────────────────────────────────────────────────────── */}
       <motion.button
         onClick={() => setOpen(true)}

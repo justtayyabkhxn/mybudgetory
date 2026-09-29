@@ -6,7 +6,9 @@ export async function POST(req: Request) {
   const userId = getUserId(req.headers.get("authorization") || "");
   if (!userId) return unauthorized();
 
-  const { person, amount, type, dueDate, reason } = await req.json();
+  const { person, amount, type, dueDate, reason, dateAdded } = await req.json();
+  // Optional backdating (Quick Log: "lent 500 to Rahul yesterday"); defaults to now.
+  const added = dateAdded ? new Date(dateAdded) : null;
   await connectDB();
   try {
     const entry = await DebtLent.create({
@@ -14,6 +16,7 @@ export async function POST(req: Request) {
       status: "pending",
       reason,
       ...(dueDate ? { dueDate: new Date(dueDate) } : {}),
+      ...(added && !isNaN(added.getTime()) ? { dateAdded: added } : {}),
     });
     return Response.json({ entry }, { status: 201 });
   } catch {
