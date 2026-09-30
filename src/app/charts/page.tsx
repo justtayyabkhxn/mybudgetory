@@ -1,14 +1,12 @@
 "use client";
 
+import MobileHeader from "@/components/MobileHeader";
 import { useEffect, useState } from "react";
 import Charts from "@/components/Charts";
-import Menu from "@/components/Menu";
 import Footer from "@/components/Footer";
-import Header from "@/components/Header";
 import FloatingTransactionButton from "@/components/FloatingTransactionButton";
 import BottomNav from "@/components/BottomNav";
 import CountUp from "@/components/CountUp";
-import PrivacyToggle from "@/components/PrivacyToggle";
 import { usePrivacyMode, MASKED } from "@/hooks/usePrivacyMode";
 import { TrendingUp, TrendingDown, BarChartBig, Wallet, Sparkles, Flame, ChevronLeft, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
@@ -337,20 +335,11 @@ const ChartsPage = () => {
   const monthName = viewDate.toLocaleString("default", { month: "long" });
 
   return (
+    <>
+    <MobileHeader icon={BarChartBig} title="Charts" />
     <main className="min-h-screen md:pt-20 text-ink p-4 sm:p-5 pb-28">
       <div className="max-w-5xl mx-auto">
-        <div className="md:hidden">
-          <Header />
-        </div>
 
-        <div className="flex justify-between items-center mt-4 mb-6">
-          <div className="flex items-center gap-3">
-            <BarChartBig className="w-7 h-7 text-indigo-400" />
-            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">Charts</h1>
-            <PrivacyToggle className="mt-1" />
-          </div>
-          <Menu />
-        </div>
 
         {/* Hero stats row */}
         {loading ? (
@@ -479,6 +468,7 @@ const ChartsPage = () => {
       <Footer />
       <BottomNav />
     </main>
+    </>
   );
 };
 

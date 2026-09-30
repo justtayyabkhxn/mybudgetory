@@ -1,11 +1,10 @@
 "use client";
 
+import MobileHeader from "@/components/MobileHeader";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Papa from "papaparse";
 import { motion } from "framer-motion";
-import MenuButton from "@/components/Menu";
-import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import FloatingTransactionButton from "@/components/FloatingTransactionButton";
 import BottomNav from "@/components/BottomNav";
@@ -15,7 +14,6 @@ import ConfirmDialog from "@/components/ConfirmDialog";
 import EditTransactionModal from "@/components/EditTransactionModal";
 import { useAuthGuard } from "@/hooks/useAuthGuard";
 import { usePrivacyMode, MASKED } from "@/hooks/usePrivacyMode";
-import PrivacyToggle from "@/components/PrivacyToggle";
 import { apiFetch } from "@/utils/apiFetch";
 import { toast } from "@/lib/toast";
 import {
@@ -138,21 +136,11 @@ export default function Transactions() {
   }, {});
 
   return (
+    <>
+    <MobileHeader icon={Receipt} title="Transactions" />
     <div className="min-h-screen md:pt-20 text-ink p-4 sm:p-8 pb-28">
       <div className="max-w-5xl mx-auto">
-        <div className="md:hidden">
-          <Header />
-        </div>
 
-        {/* Page title row */}
-        <div className="flex items-center justify-between mt-4 mb-6">
-          <div className="flex items-center gap-2">
-            <Receipt className="text-green-400" size={26} />
-            <h1 className="text-3xl font-extrabold tracking-tight">Transactions</h1>
-            <PrivacyToggle className="mt-1" />
-          </div>
-          <MenuButton />
-        </div>
 
         {/* Summary bar */}
         {!loading && txs.length > 0 && (
@@ -462,5 +450,6 @@ export default function Transactions() {
       />
 
     </div>
+    </>
   );
 }

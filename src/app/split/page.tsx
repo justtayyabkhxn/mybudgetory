@@ -1,14 +1,12 @@
 "use client";
 
+import MobileHeader from "@/components/MobileHeader";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   Users2, Trash2, Contact, Plus, CheckCircle2, Circle,
   IndianRupee, MessageCircle, UserMinus, ChevronRight,
 } from "lucide-react";
-import MenuButton from "@/components/Menu";
-import Header from "@/components/Header";
-import PrivacyToggle from "@/components/PrivacyToggle";
 import { usePrivacyMode, MASKED } from "@/hooks/usePrivacyMode";
 
 type Person = {
@@ -122,6 +120,8 @@ export default function SplitPage() {
   const pendingCount = people.length - paidCount;
 
   return (
+    <>
+    <MobileHeader icon={Users2} title="Split Expenses" />
     <div className="min-h-screen md:pt-20 text-ink">
 
       {/* ── Background glow blobs ── */}
@@ -131,23 +131,10 @@ export default function SplitPage() {
       </div>
 
       <div className="relative z-10 max-w-2xl mx-auto px-5 py-6">
-        <div className="md:hidden">
-          <Header />
-        </div>
 
         {/* ── Page header ── */}
         <div className="flex justify-between items-start mb-8 mt-2">
-          <div>
-            <div className="flex items-center gap-2.5 mb-1">
-              <div className="w-8 h-8 rounded-lg bg-indigo-500/20 flex items-center justify-center">
-                <Users2 size={16} className="text-indigo-400" />
-              </div>
-              <h1 className="text-3xl font-extrabold tracking-tight">Split Expenses</h1>
-              <PrivacyToggle className="mt-1" />
-            </div>
-            <p className="text-sm text-gray-500 ml-10">Divide bills equally among friends</p>
-          </div>
-          <MenuButton />
+          <p className="text-sm text-gray-500">Divide bills equally among friends</p>
         </div>
 
         {/* ── Step 1: Total Amount ── */}
@@ -353,6 +340,7 @@ export default function SplitPage() {
         <div className="h-12" />
       </div>
     </div>
+    </>
   );
 }
 

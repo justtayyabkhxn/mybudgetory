@@ -1,5 +1,6 @@
 "use client";
 
+import MobileHeader from "@/components/MobileHeader";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
@@ -13,13 +14,10 @@ import {
   Save,
   X,
 } from "lucide-react";
-import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import MenuButton from "@/components/Menu";
 import BottomNav from "@/components/BottomNav";
 import { CATEGORY_COLORS, CATEGORY_ICONS } from "@/lib/categoryConfig";
 import { SpeedometerGauge } from "@/components/DashboardInsights";
-import PrivacyToggle from "@/components/PrivacyToggle";
 import { usePrivacyMode, MASKED } from "@/hooks/usePrivacyMode";
 
 interface Transaction {
@@ -236,22 +234,11 @@ export default function BudgetGoalsPage() {
   const monthName = now.toLocaleString("default", { month: "long" });
 
   return (
+    <>
+    <MobileHeader icon={Target} title="Budget Goals" />
     <div className="min-h-screen md:pt-20 text-ink p-4 sm:p-8 pb-24">
       <div className="max-w-5xl mx-auto">
-        <div className="md:hidden">
-          <Header />
-        </div>
 
-        <div className="flex items-center justify-between mt-4 mb-6">
-          <div className="flex items-center gap-2">
-            <Target className="text-warning-deep" size={28} />
-            <h1 className="text-3xl font-extrabold tracking-tight">
-              Budget Goals
-            </h1>
-            <PrivacyToggle className="mt-1" />
-          </div>
-          <MenuButton />
-        </div>
 
         {/* Total Overview */}
         <motion.div
@@ -496,5 +483,6 @@ export default function BudgetGoalsPage() {
       <Footer />
       <BottomNav />
     </div>
+    </>
   );
 }

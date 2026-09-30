@@ -1,5 +1,6 @@
 "use client";
 
+import MobileHeader from "@/components/MobileHeader";
 import DatePicker from "@/components/DatePicker";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -14,9 +15,7 @@ import {
   Calendar,
   X,
 } from "lucide-react";
-import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import MenuButton from "@/components/Menu";
 import BottomNav from "@/components/BottomNav";
 import FloatingTransactionButton from "@/components/FloatingTransactionButton";
 import ConfirmDialog from "@/components/ConfirmDialog";
@@ -24,7 +23,6 @@ import { CATEGORY_COLORS, CATEGORY_ICONS, CATEGORIES } from "@/lib/categoryConfi
 import { useAuthGuard } from "@/hooks/useAuthGuard";
 import { apiFetch } from "@/utils/apiFetch";
 import { toast } from "@/lib/toast";
-import PrivacyToggle from "@/components/PrivacyToggle";
 import { usePrivacyMode, MASKED } from "@/hooks/usePrivacyMode";
 
 interface RecurringTransaction {
@@ -203,21 +201,11 @@ export default function RecurringPage() {
     .reduce((s, i) => s + i.amount, 0);
 
   return (
+    <>
+    <MobileHeader icon={RefreshCcw} title="Recurring" />
     <div className="min-h-screen md:pt-20 text-ink p-4 sm:p-8 pb-28">
       <div className="max-w-3xl mx-auto">
-        <div className="md:hidden">
-          <Header />
-        </div>
 
-        {/* Page Header */}
-        <div className="flex items-center justify-between mt-4 mb-6">
-          <div className="flex items-center gap-2">
-            <RefreshCcw className="text-violet-400" size={26} />
-            <h1 className="text-3xl font-extrabold tracking-tight">Recurring</h1>
-            <PrivacyToggle className="mt-1" />
-          </div>
-          <MenuButton />
-        </div>
 
         {/* Summary chips */}
         {!loading && items.length > 0 && (
@@ -500,5 +488,6 @@ export default function RecurringPage() {
         onCancel={() => setDeleteId(null)}
       />
     </div>
+    </>
   );
 }

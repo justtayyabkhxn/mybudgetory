@@ -1,6 +1,6 @@
 "use client";
 
-import MenuButton from "@/components/Menu";
+import MobileHeader from "@/components/MobileHeader";
 import BottomNav from "@/components/BottomNav";
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
@@ -10,6 +10,7 @@ import {
   Check,
   ChevronDown,
   ChevronRight,
+  CircleUserRound,
   Download,
   Eye,
   EyeOff,
@@ -587,20 +588,8 @@ export default function Profile() {
   return (
     <main className="min-h-screen md:pt-20 text-ink pb-28">
 
-      {/* Header */}
-      <div className="md:hidden sticky top-0 z-40 bg-canvas-soft/80 backdrop-blur-xl border-b border-hairline">
-        <div className="max-w-2xl mx-auto px-4 py-3">
-          <p className="text-xs text-gray-500 font-semibold uppercase tracking-widest">
-            MyBudgetory
-          </p>
-          <h1 className="text-lg font-black text-ink">Profile</h1>
-        </div>
-      </div>
-
-      {/* Menu button — fixed outside stacking context so backdrop/drawer render correctly */}
-      <div className="fixed top-3 right-4 z-50">
-        <MenuButton />
-      </div>
+      {/* Profile has no title in the body, so the bar shows it. */}
+      <MobileHeader icon={CircleUserRound} title="Profile" showTitle />
 
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-5 relative">
 

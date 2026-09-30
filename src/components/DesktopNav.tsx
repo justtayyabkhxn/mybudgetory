@@ -26,6 +26,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import ThemeToggle from "./ThemeToggle";
+import PrivacyToggle from "./PrivacyToggle";
 
 type Item = { href: string; label: string; icon: React.ReactNode; desc: string };
 type Group = { label: string; icon: React.ReactNode; items: Item[] };
@@ -328,6 +329,12 @@ export default function DesktopNav() {
         >
           <LogOut size={16} />
         </button>
+
+        <PrivacyToggle
+          unstyled
+          size={16}
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-on-ink-surface/10 text-on-ink-surface transition-colors duration-150 hover:bg-on-ink-surface/20"
+        />
 
         <ThemeToggle
           variant="inline"

@@ -1,5 +1,5 @@
 "use client";
-import MenuButton from "@/components/Menu";
+import MobileHeader from "@/components/MobileHeader";
 import { useEffect, useState } from "react";
 import {
   TrendingDown,
@@ -20,9 +20,7 @@ import {
   ArrowDownRight,
 } from "lucide-react";
 import Footer from "@/components/Footer";
-import Header from "@/components/Header";
 import FloatingTransactionButton from "@/components/FloatingTransactionButton";
-import PrivacyToggle from "@/components/PrivacyToggle";
 import { usePrivacyMode, MASKED } from "@/hooks/usePrivacyMode";
 
 type Txn = {
@@ -197,6 +195,8 @@ export default function StatsPage() {
   const isPositive = netBalance >= 0;
 
   return (
+    <>
+    <MobileHeader icon={ChartNoAxesCombined} title="Statistics" />
     <div className="min-h-screen md:pt-20 text-ink">
 
       {/* ── Background glow blobs ── */}
@@ -206,25 +206,12 @@ export default function StatsPage() {
       </div>
 
       <div className="relative z-10 max-w-5xl mx-auto px-5 py-6">
-        <div className="md:hidden">
-          <Header />
-        </div>
 
         {/* ── Page header ── */}
         <div className="flex justify-between items-start mb-8 mt-2">
-          <div>
-            <div className="flex items-center gap-2.5 mb-1">
-              <div className="w-8 h-8 rounded-lg bg-indigo-500/20 flex items-center justify-center">
-                <ChartNoAxesCombined size={16} className="text-indigo-400" />
-              </div>
-              <h1 className="text-3xl font-extrabold tracking-tight">Statistics</h1>
-              <PrivacyToggle />
-            </div>
-            <p className="text-sm text-gray-500 ml-10">
-              {new Date().toLocaleString("default", { month: "long", year: "numeric" })} overview
-            </p>
-          </div>
-          <MenuButton />
+          <p className="text-sm text-gray-500">
+            {new Date().toLocaleString("default", { month: "long", year: "numeric" })} overview
+          </p>
         </div>
 
         {loading ? (
@@ -376,6 +363,7 @@ export default function StatsPage() {
       </div>
       <FloatingTransactionButton />
     </div>
+    </>
   );
 }
 

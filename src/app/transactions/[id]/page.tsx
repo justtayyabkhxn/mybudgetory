@@ -1,5 +1,6 @@
 "use client";
 
+import MobileHeader from "@/components/MobileHeader";
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { motion } from "framer-motion";
@@ -14,14 +15,12 @@ import {
   MessageSquare,
   TrendingUp,
   TrendingDown,
+  Receipt,
 } from "lucide-react";
-import Header from "@/components/Header";
-import Menu from "@/components/Menu";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import EditTransactionModal from "@/components/EditTransactionModal";
 import { useAuthGuard } from "@/hooks/useAuthGuard";
 import { usePrivacyMode, MASKED } from "@/hooks/usePrivacyMode";
-import PrivacyToggle from "@/components/PrivacyToggle";
 import { apiFetch } from "@/utils/apiFetch";
 import { toast } from "@/lib/toast";
 import { CATEGORY_COLORS, CATEGORY_ICONS } from "@/lib/categoryConfig";
@@ -110,11 +109,10 @@ export default function TransactionDetail() {
   const CatIcon = tx ? (CATEGORY_ICONS[tx.category] || CATEGORY_ICONS["Others"]) : null;
 
   return (
+    <>
+    <MobileHeader icon={Receipt} title="Transaction" />
     <div className="min-h-screen md:pt-20 text-ink p-4 sm:p-8 pb-16">
       <div className="max-w-lg mx-auto">
-        <div className="md:hidden">
-          <Header />
-        </div>
 
         {/* Nav row */}
         <div className="flex items-center justify-between mt-4 mb-8">
@@ -125,7 +123,6 @@ export default function TransactionDetail() {
             <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
             Back
           </button>
-          <Menu />
         </div>
 
         {/* Content */}
@@ -169,7 +166,6 @@ export default function TransactionDetail() {
               {/* Title */}
               <div className="flex items-center justify-center gap-2 mb-1">
                 <h1 className="text-2xl font-black text-ink tracking-tight">{tx.title}</h1>
-                <PrivacyToggle className="relative" />
               </div>
               <p className="text-sm text-gray-400 mb-5">{tx.category}</p>
 
@@ -269,6 +265,7 @@ export default function TransactionDetail() {
         }}
       />
     </div>
+    </>
   );
 }
 

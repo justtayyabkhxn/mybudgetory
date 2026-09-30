@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Zap, X, Loader2, WifiOff, Info, ArrowLeft, Banknote, CreditCard, Pencil, Check, ArrowUpCircle, ArrowDownCircle, Mic } from "lucide-react";
 import DatePicker from "@/components/DatePicker";
+import Sheet from "@/components/Sheet";
 import CategorySelect from "@/components/CategorySelect";
 import { toast } from "@/lib/toast";
 import { useSpeechToText } from "@/hooks/useSpeechToText";
@@ -346,7 +346,6 @@ function DebtEditor({ draft, onSave, onCancel }: {
 
 export default function QuickLog({ onAdd, variant = "pill" }: Props) {
   const [open, setOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
   const [text, setText] = useState("");
   const [placeholder, setPlaceholder] = useState(PLACEHOLDERS[0]);
   const [showHelp, setShowHelp] = useState(false);
@@ -382,8 +381,6 @@ export default function QuickLog({ onAdd, variant = "pill" }: Props) {
     if (!open || drafts || parsing) stopListening();
   }, [open, drafts, parsing, stopListening]);
 
-  useEffect(() => setMounted(true), []);
-
   useEffect(() => {
     setIsOffline(!navigator.onLine);
     const on = () => setIsOffline(false);
@@ -396,25 +393,6 @@ export default function QuickLog({ onAdd, variant = "pill" }: Props) {
     };
   }, []);
 
-  useEffect(() => {
-    if (!open) return;
-    document.body.style.overflow = "hidden";
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key !== "Escape" || busy) return;
-      // First Escape leaves the row editor; the next one closes the sheet.
-      if (editingKey) return setEditingKey(null);
-      setOpen(false);
-      setDrafts(null);
-      setSkipped([]);
-      setShowHelp(false);
-      setError("");
-    };
-    window.addEventListener("keydown", onKey);
-    return () => {
-      document.body.style.overflow = "";
-      window.removeEventListener("keydown", onKey);
-    };
-  }, [open, busy, editingKey]);
 
   // Focus the box whenever the input step is showing.
   useEffect(() => {
@@ -584,7 +562,7 @@ export default function QuickLog({ onAdd, variant = "pill" }: Props) {
         </span>
         <span className="min-w-0">
           <span className="block font-bold text-ink">Quick Log</span>
-          <span className="block truncate text-xs">Type or say it — we&apos;ll log it</span>
+          <span className="hidden sm:block truncate text-xs">Type or say it — we&apos;ll log it</span>
         </span>
       </button>
     );
@@ -881,77 +859,42 @@ export default function QuickLog({ onAdd, variant = "pill" }: Props) {
   );
 
   const sheet = (
-    <AnimatePresence>
-      {open && (
-        <>
-          <motion.div
-            className="fixed inset-0 z-[70] bg-scrim/70 backdrop-blur-sm"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={close}
-          />
-          <motion.div
-            className="fixed inset-x-0 bottom-0 sm:inset-0 sm:flex sm:items-center sm:justify-center z-[80] px-0 sm:px-4 pointer-events-none"
-            initial={{ y: "100%", opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: "100%", opacity: 0 }}
-            transition={{ type: "spring", stiffness: 280, damping: 28 }}
-          >
-            <div
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="quick-log-title"
-              className="pointer-events-auto relative w-full sm:max-w-md max-h-[92dvh] overflow-y-auto
-                         bg-canvas rounded-t-3xl sm:rounded-2xl shadow-lg p-5 pb-8 sm:pb-5"
-            >
-              <div className="flex items-center gap-1 mb-1 pr-8">
-                <h2 id="quick-log-title" className="flex items-center gap-2 text-lg font-bold text-ink">
-                  <Zap size={18} className="text-primary" strokeWidth={2.5} />
-                  Quick Log
-                </h2>
-                {!drafts && (
-                  <button
-                    type="button"
-                    onClick={() => setShowHelp((v) => !v)}
-                    aria-expanded={showHelp}
-                    aria-label="How to use Quick Log"
-                    className={`p-1.5 rounded-full transition-colors cursor-pointer ${
-                      showHelp ? "text-primary bg-canvas-soft/80" : "text-gray-400 hover:text-ink"
-                    }`}
-                  >
-                    <Info size={16} />
-                  </button>
-                )}
-              </div>
-              <button
-                onClick={close}
-                className="absolute top-4 right-4 p-1.5 rounded-full bg-canvas-soft/80 text-gray-400 hover:text-ink transition-colors cursor-pointer"
-                aria-label="Close"
-              >
-                <X size={16} />
-              </button>
-
-              {!drafts && (
-                <p className="text-xs text-gray-500 mb-4">
-                  Separate items with commas or &ldquo;and&rdquo; to log several at once.
-                </p>
-              )}
-
-              <AnimatePresence mode="wait" initial={false}>
-                {drafts ? previewStep : inputStep}
-              </AnimatePresence>
-            </div>
-          </motion.div>
-        </>
+    <Sheet
+      open={open}
+      onClose={close}
+      onEscape={() => { if (editingKey) setEditingKey(null); else close(); }}
+      titleId="quick-log-title"
+      title={<><Zap size={18} className="text-primary" strokeWidth={2.5} />Quick Log</>}
+      headerExtra={!drafts && (
+        <button
+          type="button"
+          onClick={() => setShowHelp((v) => !v)}
+          aria-expanded={showHelp}
+          aria-label="How to use Quick Log"
+          className={`p-1.5 rounded-full transition-colors cursor-pointer ${
+            showHelp ? "text-primary bg-canvas-soft/80" : "text-gray-400 hover:text-ink"
+          }`}
+        >
+          <Info size={16} />
+        </button>
       )}
-    </AnimatePresence>
+    >
+      {!drafts && (
+        <p className="text-xs text-gray-500 mb-4">
+          Separate items with commas or &ldquo;and&rdquo; to log several at once.
+        </p>
+      )}
+
+      <AnimatePresence mode="wait" initial={false}>
+        {drafts ? previewStep : inputStep}
+      </AnimatePresence>
+    </Sheet>
   );
 
   return (
     <>
       {trigger}
-      {mounted && createPortal(sheet, document.body)}
+      {sheet}
     </>
   );
 }

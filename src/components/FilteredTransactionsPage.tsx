@@ -1,15 +1,13 @@
 "use client";
 
+import MobileHeader from "@/components/MobileHeader";
 import { useEffect, useState, useMemo } from "react";
-import Header from "@/components/Header";
-import Menu from "@/components/Menu";
 import FloatingTransactionButton from "@/components/FloatingTransactionButton";
 import { SkeletonTransactionRow } from "@/components/SkeletonLoader";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import EditTransactionModal from "@/components/EditTransactionModal";
 import { useAuthGuard } from "@/hooks/useAuthGuard";
 import { usePrivacyMode, MASKED } from "@/hooks/usePrivacyMode";
-import PrivacyToggle from "@/components/PrivacyToggle";
 import { apiFetch } from "@/utils/apiFetch";
 import { toast } from "@/lib/toast";
 import { CATEGORY_COLORS, CATEGORY_ICONS } from "@/lib/categoryConfig";
@@ -99,18 +97,11 @@ export default function FilteredTransactionsPage({ type }: Props) {
   const monthName = now.toLocaleString("default", { month: "long" });
 
   return (
+    <>
+    <MobileHeader icon={Icon} title={title} />
     <div className="min-h-screen text-ink p-4 sm:p-8 pb-24">
       <div className="max-w-5xl mx-auto">
-        <Header />
 
-        <div className="flex justify-between items-center mt-4 mb-5">
-          <div className="flex items-center gap-2">
-            <Icon size={22} className={isExpense ? "text-red-400" : "text-green-400"} />
-            <h1 className="text-4xl font-extrabold tracking-tight">{title}</h1>
-            <PrivacyToggle className="mt-1" />
-          </div>
-          <Menu />
-        </div>
 
         {/* Summary bar */}
         {!loading && (
@@ -209,5 +200,6 @@ export default function FilteredTransactionsPage({ type }: Props) {
         onSave={updated => setTxs(prev => prev.map(t => t._id === updated._id ? updated : t))}
       />
     </div>
+    </>
   );
 }

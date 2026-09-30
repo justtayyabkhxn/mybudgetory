@@ -1,5 +1,6 @@
 "use client";
 
+import MobileHeader from "@/components/MobileHeader";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import {
@@ -38,12 +39,9 @@ import {
   Tooltip,
 } from "chart.js";
 import { Line, Bar } from "react-chartjs-2";
-import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import FloatingTransactionButton from "@/components/FloatingTransactionButton";
-import MenuButton from "@/components/Menu";
 import BottomNav from "@/components/BottomNav";
-import PrivacyToggle from "@/components/PrivacyToggle";
 import { usePrivacyMode, MASKED } from "@/hooks/usePrivacyMode";
 import { useAuthGuard } from "@/hooks/useAuthGuard";
 import { apiFetch } from "@/utils/apiFetch";
@@ -497,27 +495,19 @@ export default function NetWorthPage() {
   const nextMilestone = MILESTONES.find(m => m > bankBalance) ?? null;
 
   return (
+    <>
+    <MobileHeader icon={PiggyBank} title="Net Worth" />
     <div key={theme} className="min-h-screen md:pt-20 text-ink p-4 sm:p-8 pb-28">
       <div className="max-w-6xl mx-auto">
-        <div className="md:hidden">
-          <Header />
-        </div>
 
-        {/* Page header */}
-        <div className="flex items-center justify-between mt-4 mb-8">
-          <div className="flex items-center gap-2">
-            <PiggyBank className="text-warning-deep" size={26} />
-            <h1 className="text-3xl font-extrabold tracking-tight">Net Worth</h1>
-            <PrivacyToggle />
-            <button
-              onClick={refreshAll}
-              className="ml-1 p-1.5 rounded-lg hover:bg-gray-800 transition-colors cursor-pointer"
-              title="Refresh"
-            >
-              <RefreshCw className={`w-4 h-4 text-green-400 ${loading ? "animate-spin" :""}`} />
-            </button>
-          </div>
-          <MenuButton />
+        <div className="flex justify-end mb-3">
+          <button
+            onClick={refreshAll}
+            className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-semibold text-gray-500 hover:text-ink transition-colors cursor-pointer"
+            title="Refresh"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} /> Refresh
+          </button>
         </div>
 
         <div className="space-y-4">
@@ -1394,5 +1384,6 @@ export default function NetWorthPage() {
       <FloatingTransactionButton />
       <BottomNav />
     </div>
+    </>
   );
 }

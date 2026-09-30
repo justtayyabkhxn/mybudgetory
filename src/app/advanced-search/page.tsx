@@ -1,17 +1,15 @@
 "use client";
 
+import MobileHeader from "@/components/MobileHeader";
 import DatePicker from "@/components/DatePicker";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import Menu from "@/components/Menu";
-import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import BottomNav from "@/components/BottomNav";
 import { CATEGORY_COLORS, CATEGORY_ICONS } from "@/lib/categoryConfig";
 import { usePrivacyMode, MASKED } from "@/hooks/usePrivacyMode";
-import PrivacyToggle from "@/components/PrivacyToggle";
 import {
   Search, TextSearch, RefreshCw, X, SlidersHorizontal,
   ArrowUpCircle, ArrowDownCircle, Download, Trash2,
@@ -134,27 +132,19 @@ export default function AdvancedSearchPage() {
   const inputClass = "w-full bg-canvas-soft/80 text-ink placeholder-mute rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-200";
 
   return (
+    <>
+    <MobileHeader icon={TextSearch} title="Advanced Search" />
     <div className="min-h-screen md:pt-20 text-ink pb-28">
       <div className="max-w-5xl mx-auto p-4 sm:p-8">
-        <div className="md:hidden">
-          <Header />
-        </div>
 
-        {/* Page header */}
-        <div className="flex items-center justify-between mt-4 mb-6">
-          <div className="flex items-center gap-2">
-            <TextSearch className="text-fuchsia-400" size={26} />
-            <h1 className="text-3xl font-extrabold tracking-tight">Advanced Search</h1>
-            <button
-              onClick={fetchTransactions}
-              className="ml-1 p-1.5 rounded-lg bg-canvas/80 hover:bg-canvas-soft/80 cursor-pointer transition-colors"
-              title="Refresh"
-            >
-              <RefreshCw className={`w-4 h-4 text-green-400 ${loading ? "animate-spin" :""}`} />
-            </button>
-            <PrivacyToggle />
-          </div>
-          <Menu />
+        <div className="flex justify-end mb-3">
+          <button
+            onClick={fetchTransactions}
+            className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-semibold text-gray-500 hover:text-ink transition-colors cursor-pointer"
+            title="Refresh"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} /> Refresh
+          </button>
         </div>
 
         {/* Search bar */}
@@ -505,6 +495,7 @@ export default function AdvancedSearchPage() {
       <Footer />
       <BottomNav />
     </div>
+    </>
   );
 }
 

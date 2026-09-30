@@ -47,3 +47,6 @@ next-env.d.ts
 /android/app/build
 /android/capacitor-cordova-android-plugins
 /www
+
+# goldie output
+/goldie/out/

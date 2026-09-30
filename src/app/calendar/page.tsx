@@ -1,19 +1,17 @@
 "use client";
 
+import MobileHeader from "@/components/MobileHeader";
 import { useEffect, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ChevronLeft, ChevronRight, CalendarDays, X,
   Activity, TrendingDown, TrendingUp, Wallet,
 } from "lucide-react";
-import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import MenuButton from "@/components/Menu";
 import BottomNav from "@/components/BottomNav";
 import { CATEGORY_COLORS, CATEGORY_ICONS } from "@/lib/categoryConfig";
 import { useAuthGuard } from "@/hooks/useAuthGuard";
 import { usePrivacyMode, MASKED } from "@/hooks/usePrivacyMode";
-import PrivacyToggle from "@/components/PrivacyToggle";
 import { apiFetch } from "@/utils/apiFetch";
 import Link from "next/link";
 
@@ -217,23 +215,11 @@ export default function CalendarPage() {
   const maxDayExpense  = Math.max(...Array.from({ length: daysInMonth }, (_, i) => getExpenseForDay(i + 1)), 1);
 
   return (
+    <>
+    <MobileHeader icon={CalendarDays} title="Calendar" />
     <div className="min-h-screen md:pt-20 text-ink p-4 sm:p-6 pb-28">
       <div className="max-w-3xl mx-auto">
-        <div className="md:hidden">
-          <Header />
-        </div>
 
-        {/* Page title */}
-        <div className="flex items-center justify-between mt-4 mb-6">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center">
-              <CalendarDays size={18} className="text-ink-deep" />
-            </div>
-            <h1 className="text-2xl font-extrabold tracking-tight">Calendar</h1>
-            <PrivacyToggle />
-          </div>
-          <MenuButton />
-        </div>
 
         {/* Month navigator */}
         <div className="flex items-center gap-3 mb-4">
@@ -523,5 +509,6 @@ export default function CalendarPage() {
       <Footer />
       <BottomNav />
     </div>
+    </>
   );
 }

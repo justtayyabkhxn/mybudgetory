@@ -1,11 +1,12 @@
 "use client";
 
+import MobileHeader from "@/components/MobileHeader";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
 import { AddTransactionForm } from "../../components/AddTransactionForm";
 import QuickLog from "@/components/QuickLog";
+import AskMoney from "@/components/AskMoney";
 import Link from "next/link";
-import Menu from "@/components/Menu";
 import {
   BanknoteArrowUp,
   FileDigit,
@@ -14,14 +15,11 @@ import {
   HandMetal,
   Pencil,
   Trash2,
-  Eye,
-  EyeOff,
   ArrowDownCircle,
   ArrowUpCircle,
   PiggyBank,
 } from "lucide-react";
 import Footer from "@/components/Footer";
-import Header from "@/components/Header";
 import axios from "axios";
 import CountUp from "@/components/CountUp";
 import { SkeletonTransactionRow } from "@/components/SkeletonLoader";
@@ -57,7 +55,7 @@ type User = {
 
 export default function Dashboard() {
   useAuthGuard();
-  const { hidden, toggle } = usePrivacyMode();
+  const { hidden } = usePrivacyMode();
 
   const [user, setUser] = useState<User | null>(null);
   const [txs, setTxs] = useState<Transaction[]>([]);
@@ -135,50 +133,25 @@ export default function Dashboard() {
     inflow > 0 ? Math.round(((inflow - expense) / inflow) * 100) : 0;
 
   return (
+    <>
+    <MobileHeader icon={FileDigit} title="Dashboard" />
     <div className="min-h-screen md:pt-20 text-ink p-4 sm:p-8 pb-24">
       <div className={menuOpen ? "overflow-hidden h-screen" : ""}>
         <div className="max-w-5xl mx-auto">
-          {/* Header */}
-          <div className="md:hidden">
-            <Header />
-          </div>
-
-          {/* Dashboard Title Row */}
+          {/* Greeting */}
           <div className="mb-5 mt-4 flex items-start justify-between">
-            <div className="mt-0">
-              <div className="flex items-center gap-2">
-                <FileDigit color="var(--color-positive)" />
-                <h1 className="text-4xl font-extrabold tracking-tight">
-                  Dashboard
-                </h1>
-                <button
-                  onClick={() => fetchTransactions()}
-                  className="ml-2 mt-1 p-1 rounded cursor-pointer"
-                  title="Refresh Data"
-                >
-                  <RefreshCw
-                    className={`w-6 h-6 text-green-300 ${
-                      loading ? "animate-spin" : ""
-                    }`}
-                  />
-                </button>
-                <button
-                  onClick={toggle}
-                  className="mt-1 p-1 rounded cursor-pointer text-gray-500 hover:text-gray-300"
-                  title={hidden ? "Show amounts" : "Hide amounts"}
-                >
-                  {hidden ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
-              </div>
-              <p className="text-gray-400 mt-1 flex items-center font-bold gap-x-1">
-                Welcome back <HandMetal color="var(--color-warning-deep)" />,{" "}
-                <span className="text-green-300">{user?.name || "User"}</span>
-              </p>
-            </div>
-
-            {/* Top-aligned so the 40px button lines up with the title row —
-                the same header pattern the other pages use. */}
-            <Menu />
+            <p className="text-gray-400 flex items-center font-bold gap-x-1">
+              Welcome back <HandMetal color="var(--color-warning-deep)" />,{" "}
+              <span className="text-green-300">{user?.name || "User"}</span>
+              <button
+                onClick={() => fetchTransactions()}
+                className="ml-1 p-1 rounded cursor-pointer"
+                title="Refresh Data"
+                aria-label="Refresh"
+              >
+                <RefreshCw className={`w-4 h-4 text-green-300 ${loading ? "animate-spin" : ""}`} />
+              </button>
+            </p>
 
             {menuOpen && (
               <div
@@ -259,11 +232,6 @@ export default function Dashboard() {
                     className="text-lg sm:text-2xl font-black text-red-400"
                   />
                 )}
-                {!loading && (
-                  <p className="text-[10px] text-gray-500 font-medium mt-1">
-                    {hidden ? "today ₹ ******" : `today ₹${today.toLocaleString()}`}
-                  </p>
-                )}
               </Link>
 
               <div className="bg-canvas-soft/80 rounded-xl p-3 sm:p-4">
@@ -291,12 +259,22 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Spend vs income bar */}
-            {!loading && inflow > 0 && (
+            {/* Spend vs income bar, with today's spend as a pill. The row shows
+                even without income so the pill is always there. */}
+            {!loading && (
               <div className="flex items-center justify-between gap-3">
-                <p className="text-[11px] text-gray-500 font-semibold">
-                  {Math.min(100, Math.round((expense / inflow) * 100))}% of this month&apos;s income spent
-                </p>
+                <div className="flex min-w-0 items-center gap-2">
+                  {inflow > 0 && (
+                    <p className="text-[11px] text-gray-500 font-semibold whitespace-nowrap">
+                      {Math.min(100, Math.round((expense / inflow) * 100))}% of{" "}
+                      <span className="hidden sm:inline">this month&apos;s </span>income spent
+                    </p>
+                  )}
+                  <span className="shrink-0 rounded-full bg-red-500/10 px-2 py-0.5 text-[11px] font-semibold text-red-400 whitespace-nowrap">
+                    Today {hidden ? "₹ ******" : `₹${today.toLocaleString()}`}
+                  </span>
+                </div>
+                {inflow > 0 && (
                 <div className="w-16 sm:w-20 h-1.5 rounded-full bg-canvas/80 overflow-hidden shrink-0">
                   <motion.div
                     initial={{ width: 0 }}
@@ -311,13 +289,17 @@ export default function Dashboard() {
                     }`}
                   />
                 </div>
+                )}
               </div>
             )}
           </motion.div>
 
           {/* Add Transaction Form */}
           <div className="order-3 lg:order-2 flex flex-col gap-3">
-            <QuickLog onAdd={fetchTransactions} />
+            <div className="grid grid-cols-2 gap-3">
+              <QuickLog onAdd={fetchTransactions} />
+              <AskMoney />
+            </div>
             <AddTransactionForm onAdd={fetchTransactions} />
           </div>
 
@@ -331,7 +313,7 @@ export default function Dashboard() {
 
           {/* Recent Transactions + Spending Pace — side by side on desktop, matched height */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6 lg:items-stretch">
-          <div className="bg-canvas/80 rounded-xl p-6 flex flex-col lg:h-full lg:min-h-0">
+          <div className="bg-canvas/80 rounded-xl p-2 md:p-6 flex flex-col lg:h-full lg:min-h-0">
             <div className="flex items-center gap-2 mb-4 shrink-0">
               <RefreshCcwDot className="text-ink-deep" />
               <h2 className="text-xl font-semibold">Recent Transactions</h2>
@@ -368,22 +350,22 @@ export default function Dashboard() {
                           </div>
                           <div>
                             <p className="font-bold">{tx.title}</p>
-                            <p className="text-sm text-gray-400">
+                            <p className="text-xs md:text-sm text-gray-400">
                               {new Date(tx.date).toLocaleDateString()} &bull;{" "}
                               {tx.category} &bull; {tx.paymentMode}
                             </p>
-                            <p className="text-sm text-gray-400">{tx.comment}</p>
+                            <p className="text-xs md:text-sm text-gray-400">{tx.comment}</p>
                           </div>
                         </div>
                         <div className="text-right flex items-center gap-1">
                           <p
-                            className={`font-bold ${
+                            className={`font-bold  ${
                               tx.type === "income"
                                 ? "text-green-300"
                                 : "text-red-400"
                             }`}
                           >
-                            {hidden ? "₹ ******" : `${tx.type ==="income" ?"+ " :"- "}₹ ${tx.amount}`}
+                            {hidden ? "₹ ***" : `${tx.type ==="income" ?"+ " :"- "}₹ ${tx.amount}`}
                           </p>
                           <button
                             onClick={(e) => {
@@ -455,5 +437,6 @@ export default function Dashboard() {
         onSave={updated => setTxs(prev => prev.map(t => t._id === updated._id ? { ...t, ...updated } : t))}
       />
     </div>
+    </>
   );
 }

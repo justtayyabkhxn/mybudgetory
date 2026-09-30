@@ -1,5 +1,6 @@
 "use client";
 
+import MobileHeader from "@/components/MobileHeader";
 import DatePicker from "@/components/DatePicker";
 import { useEffect, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -18,15 +19,12 @@ import {
   CreditCard,
   MessageCircle,
 } from "lucide-react";
-import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import MenuButton from "@/components/Menu";
 import BottomNav from "@/components/BottomNav";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { useAuthGuard } from "@/hooks/useAuthGuard";
 import { apiFetch } from "@/utils/apiFetch";
 import { toast } from "@/lib/toast";
-import PrivacyToggle from "@/components/PrivacyToggle";
 import { usePrivacyMode, MASKED } from "@/hooks/usePrivacyMode";
 
 interface Entry {
@@ -192,21 +190,11 @@ export default function DebtLentPage() {
   const clearedEntries = entries.filter(e => e.status === "cleared");
 
   return (
+    <>
+    <MobileHeader icon={WalletMinimal} title="Debt & Lent" />
     <div className="min-h-screen md:pt-20 text-ink p-4 sm:p-8 pb-28">
       <div className="max-w-3xl mx-auto">
-        <div className="md:hidden">
-          <Header />
-        </div>
 
-        {/* Page Header */}
-        <div className="flex items-center justify-between mt-4 mb-6">
-          <div className="flex items-center gap-2">
-            <WalletMinimal className="text-warning-deep" size={26} />
-            <h1 className="text-3xl font-extrabold tracking-tight">Debt & Lent</h1>
-            <PrivacyToggle className="mt-1" />
-          </div>
-          <MenuButton />
-        </div>
 
         {/* Summary cards */}
         {!loading && entries.length > 0 && (
@@ -433,6 +421,7 @@ export default function DebtLentPage() {
         onCancel={() => setDeleteId(null)}
       />
     </div>
+    </>
   );
 }
 
