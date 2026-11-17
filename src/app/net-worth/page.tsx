@@ -922,7 +922,7 @@ export default function NetWorthPage() {
                         <TrendingUp size={14} className="text-emerald-400" />
                         <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Balance History</p>
                       </div>
-                      <p className="text-2xl font-black text-ink">{money(`₹${fmtINR(bankBalance)}`)}</p>
+                      <p className="text-2xl font-black text-ink">{money(`₹${fmtINR(bankBalance+assetsTotal)}`)}</p>
                     </div>
                     <div className="flex flex-col items-end gap-1">
                       {rangeChangePct !== null && visibleHistory.length > 1 && (
