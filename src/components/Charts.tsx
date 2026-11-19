@@ -38,6 +38,7 @@ import {
   getAvgTxnSizeConfig,
   getIncomeExpenseLineConfig,
   fmtK,
+  lineCrosshairPlugin,
 } from "@/utils/chartOptions";
 import SlideUp from "./SlideUp";
 import { useTheme } from "@/hooks/useTheme";
@@ -47,7 +48,8 @@ import { MASKED } from "@/hooks/usePrivacyMode";
 
 ChartJS.register(
   CategoryScale, LinearScale, BarElement, PointElement,
-  LineElement, ArcElement, Title, Tooltip, Legend, Filler
+  LineElement, ArcElement, Title, Tooltip, Legend, Filler,
+  lineCrosshairPlugin
 );
 
 /**

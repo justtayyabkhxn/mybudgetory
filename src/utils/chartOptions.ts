@@ -61,12 +61,9 @@ function areaGrad(color: string, opacity = 0.35): any {
   };
 }
 
-function hexAlpha(hex: string, alpha: number): string {
-  // Convert hex to rgba
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  return `rgba(${r},${g},${b},${alpha})`;
+function hexAlpha(color: string, alpha: number): string {
+  // Tokens may resolve to non-hex colours — alphaOf handles both forms
+  return alphaOf(color, alpha);
 }
 
 // ─── Shared style primitives ──────────────────────────────────────────────────
@@ -235,7 +232,7 @@ export function getDailyBarConfig(d: {
 }
 
 // ─── 4. Cumulative Spending Line ──────────────────────────────────────────────
-export function getCumulativeConfig(d: {
+function buildCumulativeConfig(d: {
   categories: string[];
   cumulative: (number | null)[];
   daily: (number | null)[];
@@ -418,7 +415,7 @@ export function getMonthlySavingsConfig(d: {
 }
 
 // ─── 7. Savings Rate Line ─────────────────────────────────────────────────────
-export function getSavingsRateConfig(d: {
+function buildSavingsRateConfig(d: {
   categories: string[];
   rates: (number | null)[];
 }): { data: ChartData<"line">; options: ChartOptions<"line"> } {
@@ -623,7 +620,7 @@ export function getCategoryMonthlyDonutConfig(d: {
       cutout: "62%",
       animation: { duration: 900 },
       plugins: {
-        legend: { display: true, position: "bottom", labels: { ...LEG_LABELS, padding: 10 } },
+        legend: { display: true, position: "bottom", labels: { ...LEG_LABELS(), padding: 10 } },
         tooltip: {
           ...TT(),
           callbacks: {
@@ -686,7 +683,7 @@ export function getCategoryYearlyBarConfig(d: {
 }
 
 // ─── 12. Category Spending Trends (multi-line) ───────────────────────────────
-export function getCategoryTrendConfig(d: {
+function buildCategoryTrendConfig(d: {
   months: string[];
   series: { name: string; color: string; data: number[] }[];
 }): { data: ChartData<"line">; options: ChartOptions<"line"> } {
@@ -711,7 +708,7 @@ export function getCategoryTrendConfig(d: {
       maintainAspectRatio: false,
       animation: { duration: 800 },
       plugins: {
-        legend: { display: true, labels: { ...LEG_LABELS, padding: 12 } },
+        legend: { display: true, labels: { ...LEG_LABELS(), padding: 12 } },
         tooltip: {
           ...TT(),
           mode: "index",
@@ -817,7 +814,7 @@ export function getIncomeSourcesConfig(d: {
       maintainAspectRatio: false,
       animation: { duration: 800 },
       plugins: {
-        legend: { display: true, labels: { ...LEG_LABELS, padding: 12 } },
+        legend: { display: true, labels: { ...LEG_LABELS(), padding: 12 } },
         tooltip: {
           ...TT(),
           mode: "index",
@@ -962,7 +959,7 @@ export function getWeekOfMonthConfig(d: {
 }
 
 // ─── 17. Rolling 30-Day Expense Line ─────────────────────────────────────────
-export function getRolling30DayConfig(d: {
+function buildRolling30DayConfig(d: {
   labels: string[];
   values: number[];
 }): { data: ChartData<"line">; options: ChartOptions<"line"> } {
@@ -1015,7 +1012,7 @@ export function getRolling30DayConfig(d: {
 }
 
 // ─── 19. Income vs Expense Line (full year) ──────────────────────────────────
-export function getIncomeExpenseLineConfig(d: {
+function buildIncomeExpenseLineConfig(d: {
   categories: string[];
   inflow: (number | null)[];
   expense: (number | null)[];
@@ -1028,7 +1025,7 @@ export function getIncomeExpenseLineConfig(d: {
           label: "Income",
           data: d.inflow,
           borderColor: cssVar("--color-positive"),
-          backgroundColor: areaGrad(cssVar("--color-positive"), 0.25),
+          backgroundColor: areaGrad(cssVar("--color-positive"), 0.18),
           fill: true,
           tension: 0.4,
           pointRadius: 0,
@@ -1103,7 +1100,7 @@ export function getIncomeExpenseLineConfig(d: {
 }
 
 // ─── 18. Average Transaction Size Line ───────────────────────────────────────
-export function getAvgTxnSizeConfig(d: {
+function buildAvgTxnSizeConfig(d: {
   months: string[];
   avgExpense: number[];
   avgIncome: number[];
@@ -1168,3 +1165,87 @@ export function getAvgTxnSizeConfig(d: {
     },
   };
 }
+
+// ─── Line-chart finish ───────────────────────────────────────────────────────
+// One pass applied to every line config so they share the same anatomy:
+// monotone curves (no overshoot past real values), 2px round-capped strokes,
+// hover markers ringed in the surface colour, index-mode hover with a dashed
+// crosshair, and a quieter axis grid.
+type LineCfg = { data: ChartData<"line">; options: ChartOptions<"line"> };
+
+function polishLine(cfg: LineCfg): LineCfg {
+  const surface = chartChrome().surface;
+  cfg.data.datasets = cfg.data.datasets.map((ds) => {
+    const stroke = typeof ds.borderColor === "string" ? ds.borderColor : undefined;
+    const explicitRadius = typeof ds.pointRadius === "number" ? ds.pointRadius : 0;
+    return {
+      ...ds,
+      cubicInterpolationMode: "monotone" as const,
+      borderWidth: Math.min(typeof ds.borderWidth === "number" ? ds.borderWidth : 2, 2.25),
+      borderJoinStyle: "round" as const,
+      borderCapStyle: "round" as const,
+      // Resting markers only where a builder asked for them, and smaller
+      pointRadius: explicitRadius > 0 ? Math.min(explicitRadius, 3) : ds.pointRadius ?? 0,
+      pointBorderColor: explicitRadius > 0 ? surface : ds.pointBorderColor,
+      pointBorderWidth: explicitRadius > 0 ? 1.5 : ds.pointBorderWidth,
+      pointHoverRadius: 5,
+      pointHoverBorderWidth: 2,
+      pointHoverBorderColor: surface,
+      pointHoverBackgroundColor: ds.pointHoverBackgroundColor ?? stroke,
+      pointHitRadius: 10,
+    };
+  });
+
+  const o = cfg.options;
+  o.interaction = { mode: "index", intersect: false, axis: "x" };
+  o.hover = { mode: "index", intersect: false, axis: "x" };
+  o.animation = { duration: 600, easing: "easeOutQuart" };
+  o.plugins = {
+    ...o.plugins,
+    tooltip: { ...o.plugins?.tooltip, mode: "index", intersect: false, boxPadding: 4, caretPadding: 8 },
+    ...({ lineCrosshair: { enabled: true } } as object),
+  };
+  const x = o.scales?.x;
+  const y = o.scales?.y;
+  if (x) {
+    x.ticks = { ...x.ticks, maxRotation: 0, autoSkip: true, autoSkipPadding: 14, padding: 6 };
+  }
+  if (y) {
+    y.ticks = { ...y.ticks, maxTicksLimit: 5, padding: 8 };
+    y.grid = { ...y.grid, drawTicks: false };
+    y.border = { display: false, dash: [3, 4] };
+  }
+  return cfg;
+}
+
+/**
+ * Dashed vertical guide at the hovered x on line charts. Registered globally
+ * (see Charts.tsx) but inert unless a config sets `plugins.lineCrosshair.enabled`.
+ */
+export const lineCrosshairPlugin = {
+  id: "lineCrosshair",
+  defaults: { enabled: false },
+  afterDatasetsDraw(chart: import("chart.js").Chart, _args: unknown, opts: { enabled?: boolean }) {
+    if (!opts?.enabled) return;
+    const active = chart.tooltip?.getActiveElements();
+    if (!active?.length) return;
+    const { top, bottom } = chart.chartArea;
+    const ctx = chart.ctx;
+    ctx.save();
+    ctx.strokeStyle = alphaOf(cssVar("--color-mute"), 0.45);
+    ctx.setLineDash([3, 3]);
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(active[0].element.x, top);
+    ctx.lineTo(active[0].element.x, bottom);
+    ctx.stroke();
+    ctx.restore();
+  },
+};
+
+export const getCumulativeConfig = (d: Parameters<typeof buildCumulativeConfig>[0]) => polishLine(buildCumulativeConfig(d));
+export const getSavingsRateConfig = (d: Parameters<typeof buildSavingsRateConfig>[0]) => polishLine(buildSavingsRateConfig(d));
+export const getCategoryTrendConfig = (d: Parameters<typeof buildCategoryTrendConfig>[0]) => polishLine(buildCategoryTrendConfig(d));
+export const getRolling30DayConfig = (d: Parameters<typeof buildRolling30DayConfig>[0]) => polishLine(buildRolling30DayConfig(d));
+export const getIncomeExpenseLineConfig = (d: Parameters<typeof buildIncomeExpenseLineConfig>[0]) => polishLine(buildIncomeExpenseLineConfig(d));
+export const getAvgTxnSizeConfig = (d: Parameters<typeof buildAvgTxnSizeConfig>[0]) => polishLine(buildAvgTxnSizeConfig(d));
